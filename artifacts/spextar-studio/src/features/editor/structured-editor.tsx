@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type { TopicContent } from '@/domain/topic-content';
 import { contentKey } from '@/domain/topic-content';
-import { editorDocument, mergeEditorDocument, structuredContentIssue, validLink } from '@/domain/structured-content';
+import { calloutKinds, calloutLabels, editorDocument, mergeEditorDocument, structuredContentIssue, validLink } from '@/domain/structured-content';
 import { replaceEditorDocument, studioExtensions } from './editor-extensions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -127,6 +127,8 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
         bold: e.isActive('bold'), italic: e.isActive('italic'), underline: e.isActive('underline'), strike: e.isActive('strike'), code: e.isActive('code'),
         codeBlock: e.isActive('codeBlock'), quote: e.isActive('blockquote'), bullet: e.isActive('bulletList'), ordered: e.isActive('orderedList'),
         link: e.isActive('link'), table: e.isActive('table'),
+        calloutKind: calloutKinds.find((kind) => e.isActive('callout', { kind })),
+        canCallout: can.setCallout('note'), canUnsetCallout: can.unsetCallout(),
         canBold: can.toggleBold(), canItalic: can.toggleItalic(), canUnderline: can.toggleUnderline?.() ?? false,
         canStrike: can.toggleStrike(), canCode: can.toggleCode(), canCodeBlock: can.toggleCodeBlock(),
         canQuote: can.toggleBlockquote(), canBullet: can.toggleBulletList(), canOrdered: can.toggleOrderedList(),
@@ -188,6 +190,14 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
           {btn('Bullet list', <List />, () => run((c) => c.toggleBulletList()), s.canBullet, s.bullet)}
           {btn('Ordered list', <ListOrdered />, () => run((c) => c.toggleOrderedList()), s.canOrdered, s.ordered)}
           {btn('Horizontal rule', <Minus />, () => run((c) => c.setHorizontalRule()), s.canHr)}
+        </div>
+        <div className="se-group" role="group" aria-label="Technical callouts">
+          {calloutKinds.map((kind) => <span key={kind}>
+            {btn(`${calloutLabels[kind]} callout`, <span>{calloutLabels[kind]}</span>,
+              () => run((c) => c.setCallout(kind)), s.canCallout, s.calloutKind === kind)}
+          </span>)}
+          {s.calloutKind && btn('Remove callout', <span>Unwrap</span>,
+            () => run((c) => c.unsetCallout()), s.canUnsetCallout)}
         </div>
         <div className="se-group" role="group" aria-label="Table">
           {btn('Insert table', <Table2 />, () => run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true })), s.canTable && !s.table)}

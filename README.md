@@ -20,7 +20,9 @@ metadata, hierarchy, ordering and duplication to the existing Supabase tables/RP
 F3 persists structured JSON Topic drafts in backend mode with revision-safe
 autosave and identity-scoped browser recovery. Slice 2A adds an open-source Tiptap
 editor with SPEXTAR-owned JSON, durable Topic-scoped node IDs and safe read-only
-handling for unsupported content. Demo body edits remain session-only.
+handling for unsupported content. Slice 2B adds semantic Note, Tip, Caution and
+Warning blocks using the same draft persistence, without schema changes.
+Demo body edits remain session-only.
 See [the F3 contract](artifacts/spextar-studio/F3.md). Publishing execution and
 document import are not implemented as backend persistence.
 Authenticated live creation-function contracts and two-account RLS acceptance

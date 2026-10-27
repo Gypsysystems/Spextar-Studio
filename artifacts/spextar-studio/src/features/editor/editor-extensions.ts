@@ -5,6 +5,7 @@ import { EditorState, Plugin } from '@tiptap/pm/state';
 import { Fragment, Slice, type Node as ProseNode } from '@tiptap/pm/model';
 import { editorDocument, identifiedNodes, validLink } from '@/domain/structured-content';
 import type { TopicContent } from '@/domain/topic-content';
+import { Callout } from './callout-extension';
 
 /** SPEXTAR-owned node identity, independent of hosted/proprietary editor extensions. */
 const NodeIdentity = Extension.create({
@@ -71,6 +72,7 @@ const NodeIdentity = Extension.create({
 
 export function studioExtensions() {
   return [
+    Callout,
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
       link: { openOnClick: false, autolink: false, linkOnPaste: false,

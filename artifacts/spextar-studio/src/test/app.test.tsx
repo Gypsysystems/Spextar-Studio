@@ -17,6 +17,20 @@ async function mount(path = '/workspaces', authenticated = true) {
 }
 
 describe('foundation routes and navigation', () => {
+  it('keeps semantic callout edits session-only in demo without draft persistence or recovery writes', async () => {
+    const { user, services, unmount } = await mount(base + '/author/mx4-getting-started');
+    const save = vi.spyOn(services.topicDrafts, 'save');
+    await screen.findByTestId('input-topic-body');
+    const storageBefore = { ...localStorage };
+    await user.click(screen.getByRole('button', { name: 'Tip callout' }));
+    expect(screen.getByTestId('input-topic-body').querySelector('[data-callout-kind="tip"]')).toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
+    expect({ ...localStorage }).toEqual(storageBefore);
+    unmount();
+    await mount(base + '/author/mx4-getting-started');
+    await screen.findByTestId('input-topic-body');
+    expect(screen.getByTestId('input-topic-body').querySelector('aside')).toBeNull();
+  });
   it('requires explicit demo entry before application data is fetched', async () => {
     const services = createDemoServices({ latencyMs: 0 });
     const list = vi.spyOn(services.workspaces, 'listWorkspaces');

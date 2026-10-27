@@ -3,12 +3,16 @@ import { ServiceError } from '@/services/contracts';
 
 /** SPEXTAR's version-1 authoring vocabulary. No editor-library types cross this boundary. */
 export const identifiedNodes = ['paragraph', 'heading', 'blockquote', 'bulletList', 'orderedList', 'listItem',
-  'codeBlock', 'horizontalRule', 'table', 'tableRow', 'tableCell', 'tableHeader'] as const;
+  'codeBlock', 'horizontalRule', 'table', 'tableRow', 'tableCell', 'tableHeader', 'callout'] as const;
+export const calloutKinds = ['note', 'tip', 'caution', 'warning'] as const;
+export type CalloutKind = typeof calloutKinds[number];
+export const calloutLabels: Record<CalloutKind, string> = { note: 'Note', tip: 'Tip', caution: 'Caution', warning: 'Warning' };
 type ObjectJSON = { [key: string]: JSONValue };
 const object = (value: JSONValue | undefined): value is ObjectJSON => !!value && typeof value === 'object' && !Array.isArray(value);
 const inline = new Set(['text', 'hardBreak']);
 const blocks = new Set<string>(identifiedNodes.filter((name) => !['listItem', 'tableRow', 'tableCell', 'tableHeader'].includes(name)));
 const attributes: Record<string, string[]> = {
+  callout: ['kind'],
   heading: ['level'], orderedList: ['start', 'type'], codeBlock: ['language'],
   tableCell: ['colspan', 'rowspan', 'colwidth', 'align'], tableHeader: ['colspan', 'rowspan', 'colwidth', 'align'],
 };
@@ -32,7 +36,7 @@ export function structuredContentIssue(input: TopicContent): string | null {
     if (!inline.has(type) && !identifiedNodes.includes(type as typeof identifiedNodes[number])) return `Unsupported node: ${type}.`;
     if (Object.keys(value).some((key) => !['type', ...(type === 'text' ? ['text', 'marks'] :
       type === 'hardBreak' ? ['marks'] : ['attrs', 'content'])].includes(key))) return `Unsupported ${type} properties.`;
-    const allowedChild = parent === 'doc' || parent === 'blockquote' || parent === 'listItem' || parent === 'tableCell' || parent === 'tableHeader'
+    const allowedChild = parent === 'doc' || parent === 'callout' || parent === 'blockquote' || parent === 'listItem' || parent === 'tableCell' || parent === 'tableHeader'
       ? blocks.has(type) : parent === 'paragraph' || parent === 'heading' ? inline.has(type)
         : parent === 'codeBlock' ? type === 'text' : parent === 'bulletList' || parent === 'orderedList' ? type === 'listItem'
           : parent === 'table' ? type === 'tableRow' : parent === 'tableRow' ? ['tableCell', 'tableHeader'].includes(type) : false;
@@ -60,6 +64,7 @@ export function structuredContentIssue(input: TopicContent): string | null {
       return `Unsupported ${type} attributes.`;
     if (object(attrs)) {
       if (attrs.id !== undefined && attrs.id !== null && (typeof attrs.id !== 'string' || !/^[\w.:-]{1,200}$/.test(attrs.id))) return 'Invalid node identity.';
+      if (type === 'callout' && !(calloutKinds as readonly unknown[]).includes(attrs.kind)) return 'Unsupported callout kind.';
       if (type === 'heading' && ![1, 2, 3].includes(attrs.level as number)) return 'Only heading levels 1–3 are supported.';
       if (type === 'orderedList' && ((attrs.start !== undefined && !positive(attrs.start))
         || (attrs.type !== undefined && attrs.type !== null && !['1', 'a', 'A', 'i', 'I'].includes(attrs.type as string)))) return 'Unsupported numbered list settings.';
@@ -71,10 +76,11 @@ export function structuredContentIssue(input: TopicContent): string | null {
           || attrs.colwidth.length !== (attrs.colspan ?? 1) || attrs.colwidth.some((width) => !positive(width) || (width as number) > 10000))) return 'Invalid table column widths.';
       }
     } else if (type === 'heading') return 'Missing heading level.';
+    if (type === 'callout' && !object(attrs)) return 'Missing callout kind.';
     const children = value.content ?? [];
     if (!Array.isArray(children)) return 'Invalid node children.';
     if (['text', 'hardBreak', 'horizontalRule'].includes(type) && children.length) return 'Unexpected leaf-node children.';
-    if (['blockquote', 'bulletList', 'orderedList', 'listItem', 'table', 'tableRow', 'tableCell', 'tableHeader'].includes(type) && !children.length) return 'Empty structural container.';
+    if (['callout', 'blockquote', 'bulletList', 'orderedList', 'listItem', 'table', 'tableRow', 'tableCell', 'tableHeader'].includes(type) && !children.length) return 'Empty structural container.';
     if (type === 'listItem' && (!object(children[0]) || children[0].type !== 'paragraph')) return 'List items must start with a paragraph.';
     for (const child of children) { const issue = check(child, type); if (issue) return issue; }
     if (type === 'table' && !validTable(children as ObjectJSON[])) return 'The saved table has an inconsistent grid; its JSON has been preserved.';

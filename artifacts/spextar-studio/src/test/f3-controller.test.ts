@@ -27,6 +27,47 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => { controllers.splice(0).forEach((controller) => controller.stop()); });
 
 describe('F3 autosave and recovery controller', () => {
+  it('saves and recovers semantic callouts with metadata/IDs through conflicts and retries', async () => {
+    const { controller, service, setServer, getServer } = setup();
+    await boot(controller);
+    controller.changeDocument({ type: 'doc', version: 1, metadata: { locale: 'en' }, content: [
+      { type: 'callout', attrs: { kind: 'caution' }, content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Disconnect power first', marks: [{ type: 'bold' }] }] },
+      ] },
+    ] });
+    const local = controller.getSnapshot().content;
+    expect(readRecovery(scope)[0].copy.content).toEqual(local);
+    expect(JSON.stringify(local)).toContain('"id"');
+    setServer({ topicId: scope.topicId, content: body('Remote newer'), revision: 1, updatedAt: new Date().toISOString(), updatedBy: 'other' });
+    await vi.advanceTimersByTimeAsync(700);
+    expect(controller.getSnapshot().status).toBe('conflict');
+    await controller.retry();
+    expect(getServer()?.content).toEqual(body('Remote newer'));
+    await controller.reload();
+    controller.restore();
+    vi.mocked(service.save).mockRejectedValueOnce(new ServiceError('Offline', 'network'));
+    await vi.advanceTimersByTimeAsync(700);
+    expect(controller.getSnapshot().status).toBe('error');
+    expect(readRecovery(scope)[0].copy.content).toEqual(local);
+    await controller.retry();
+    expect(getServer()).toMatchObject({ content: local, revision: 2 });
+    expect(readRecovery(scope)).toHaveLength(0);
+    controller.stop();
+    const reloaded = new TopicDraftController(service, scope, true);
+    controllers.push(reloaded);
+    await boot(reloaded);
+    expect(reloaded.getSnapshot().content).toEqual(local);
+  });
+  it('does not save callout changes for read-only membership', async () => {
+    const { controller, service } = setup(false);
+    await boot(controller);
+    controller.changeDocument({ type: 'doc', version: 1, content: [
+      { type: 'callout', attrs: { kind: 'note' }, content: [{ type: 'paragraph' }] },
+    ] });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(service.save).not.toHaveBeenCalled();
+    expect(readRecovery(scope)).toHaveLength(0);
+  });
   it('writes recovery immediately, debounces saves and clears matching recovery after confirmation', async () => {
     const { controller, service, afterSave } = setup();
     await boot(controller);

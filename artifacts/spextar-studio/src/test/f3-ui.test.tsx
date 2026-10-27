@@ -24,6 +24,24 @@ function setup(role = 'author', recovery?: string) {
 }
 
 describe('F3 Author integration', () => {
+  it('persists semantic callouts through the existing draft adapter and reload without F2 writes', async () => {
+    const { user, db, calls, view, client } = setup();
+    await screen.findByText('No saved body yet');
+    await user.click(screen.getByRole('button', { name: 'Note callout' }));
+    await user.type(screen.getByTestId('input-topic-body'), 'Technical note');
+    await screen.findByText(/Saved · revision/, {}, { timeout: 4000 });
+    await user.click(screen.getByRole('button', { name: 'Caution callout' }));
+    await waitFor(() => expect(screen.getByTestId('body-save-status')).toHaveTextContent(/Saved · revision/), { timeout: 4000 });
+    const saved = db.topic_drafts[0].content as ReturnType<typeof emptyContent>;
+    expect(JSON.stringify(saved)).toContain('"kind":"caution"');
+    expect(contentText(saved).trim()).toBe('Technical note');
+    expect(calls.filter((call) => call.patch || call.insert).every((call) => call.table === 'topic_drafts')).toBe(true);
+    view.unmount();
+    render(<App services={createSupabaseServices(client)} />);
+    const area = await screen.findByTestId('input-topic-body');
+    await waitFor(() => expect(area.querySelector('[data-callout-kind="caution"]')).toHaveTextContent('Technical note'));
+    expect(db.topic_drafts[0].content).toEqual(saved);
+  });
   it('shows unsaved/saved states, restores saved body on remount and keeps F2 metadata separate', async () => {
     const { user, db, calls, view, client } = setup();
     await screen.findByText('No saved body yet');
