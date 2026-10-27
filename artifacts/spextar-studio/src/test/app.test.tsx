@@ -24,6 +24,11 @@ describe('foundation routes and navigation', () => {
     const storageBefore = { ...localStorage };
     await user.click(screen.getByRole('button', { name: 'Tip callout' }));
     expect(screen.getByTestId('input-topic-body').querySelector('[data-callout-kind="tip"]')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Find and replace' }));
+    await user.type(screen.getByRole('textbox', { name: 'Find in this topic' }), 'guide');
+    await user.type(screen.getByRole('textbox', { name: 'Replace with' }), 'manual');
+    await user.click(screen.getByRole('button', { name: 'Replace all' }));
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('This manual describes');
     expect(save).not.toHaveBeenCalled();
     expect({ ...localStorage }).toEqual(storageBefore);
     unmount();

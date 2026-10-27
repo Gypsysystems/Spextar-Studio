@@ -135,7 +135,8 @@ describe('callout Author controls', () => {
     const area = await screen.findByRole('textbox', { name: 'Topic body' });
     expect(area).toHaveAttribute('contenteditable', 'false');
     expect(within(area).getByRole('note', { name: 'Warning' })).toBeVisible();
-    within(screen.getByRole('toolbar')).getAllByRole('button').forEach((button) => expect(button).toBeDisabled());
+    within(screen.getByRole('toolbar')).getAllByRole('button').filter((button) => button.getAttribute('aria-label') !== 'Find and replace')
+      .forEach((button) => expect(button).toBeDisabled());
     const editor = (area as HTMLElement & { editor: Editor }).editor;
     act(() => { editor.commands.setCallout('tip'); editor.commands.unsetCallout(); editor.commands.insertContent('forbidden'); });
     expect(changed).not.toHaveBeenCalled();

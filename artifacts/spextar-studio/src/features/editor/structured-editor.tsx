@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNod
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react';
 import {
   Bold, Code, Columns3, Heading1, Heading2, Heading3, Italic, Link2, List, ListOrdered, Minus, Pilcrow,
-  Quote, Redo2, Rows3, SquareCode, Strikethrough, Table2, Trash2, Underline, Undo2,
+  Quote, Redo2, Rows3, Search, SquareCode, Strikethrough, Table2, Trash2, Underline, Undo2,
 } from 'lucide-react';
 import type { TopicContent } from '@/domain/topic-content';
 import { contentKey } from '@/domain/topic-content';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import './structured-editor.css';
+import { TopicSearchPanel } from './topic-search-panel';
 
 type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean };
 
@@ -118,6 +119,19 @@ export function StructuredEditor({ content, editable, onChange, loading = false 
 }
 
 function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchButton = useRef<HTMLButtonElement>(null);
+  const closeSearch = () => { setSearchOpen(false); editor.commands.setTopicSearch(''); searchButton.current?.focus(); };
+  useEffect(() => {
+    const shortcut = (event: globalThis.KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || !['f', 'h'].includes(event.key.toLowerCase())
+        || !(event.target instanceof Node) || !editor.view.dom.closest('.se-root')?.contains(event.target)) return;
+      event.preventDefault(); setSearchOpen(true);
+      requestAnimationFrame(() => editor.view.dom.closest('.se-root')?.querySelector<HTMLInputElement>('[data-topic-find]')?.focus());
+    };
+    document.addEventListener('keydown', shortcut);
+    return () => document.removeEventListener('keydown', shortcut);
+  }, [editor]);
   const s = useEditorState({
     editor,
     selector: ({ editor: e }) => {
@@ -165,7 +179,12 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
 
   return (
     <>
-      <div ref={bar} role="toolbar" aria-label="Topic body formatting" aria-disabled={!enabled} className="se-toolbar" onKeyDown={onKey}>
+      <div ref={bar} role="toolbar" aria-label="Topic body formatting" className="se-toolbar" onKeyDown={onKey}>
+        <div className="se-group" role="group" aria-label="Topic search">
+          <button ref={searchButton} type="button" className="se-btn" aria-label="Find and replace" title="Find and replace (Ctrl/Cmd+F)"
+            aria-expanded={searchOpen} onMouseDown={(e) => e.preventDefault()}
+            onClick={() => searchOpen ? closeSearch() : setSearchOpen(true)}><Search /></button>
+        </div>
         <div className="se-group" role="group" aria-label="History">
           {btn('Undo', <Undo2 />, () => run((c) => c.undo()), s.canUndo)}
           {btn('Redo', <Redo2 />, () => run((c) => c.redo()), s.canRedo)}
@@ -213,6 +232,7 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
           </>}
         </div>
       </div>
+      {searchOpen && <TopicSearchPanel editor={editor} editable={enabled} onClose={closeSearch} />}
       {linkRange && <LinkDialog editor={editor} range={linkRange} onClose={() => setLinkRange(null)} />}
     </>
   );

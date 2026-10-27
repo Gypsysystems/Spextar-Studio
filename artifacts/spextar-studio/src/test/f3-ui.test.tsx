@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import App from '@/App';
 import { createSupabaseServices } from '@/services/supabase-adapter';
 import { supabaseDouble, testUser } from './supabase-double';
-import { contentText, emptyContent, withText } from '@/domain/topic-content';
+import { contentText, emptyContent, withText, type TopicContent } from '@/domain/topic-content';
 import { readRecovery, rememberRecovery } from '@/services/topic-draft-recovery';
 
-function setup(role = 'author', recovery?: string) {
+function setup(role = 'author', recovery?: string, initialContent?: TopicContent) {
   const fake = supabaseDouble();
   const at = '2026-10-27T10:00:00Z';
   fake.db.documents.push({ id: 'doc-a', project_id: 'project-a', title: 'Manual', slug: 'manual', description: null,
@@ -15,6 +15,7 @@ function setup(role = 'author', recovery?: string) {
   fake.db.topics.push({ id: 'topic-a', document_id: 'doc-a', title: 'Install', slug: 'install',
     status: 'draft', settings: {}, parent_topic_id: null, sort_order: 0, created_by: testUser.id, created_at: at, updated_at: at });
   fake.db.project_members[0].role = role;
+  if (initialContent) fake.db.topic_drafts.push({ topic_id: 'topic-a', content: initialContent, revision: 1, updated_at: at, updated_by: testUser.id });
   const scope = { userId: testUser.id, projectId: 'project-a', documentId: 'doc-a', topicId: 'topic-a' };
   if (recovery) rememberRecovery(scope, withText(emptyContent(), recovery), null);
   window.history.replaceState(null, '', '/workspaces/ws-a/projects/project-a/author/doc-a');
@@ -24,6 +25,67 @@ function setup(role = 'author', recovery?: string) {
 }
 
 describe('F3 Author integration', () => {
+  const searchContent: TopicContent = { type: 'doc', version: 1, metadata: { locale: 'en' }, content: [
+    { type: 'callout', attrs: { id: 'callout-id', kind: 'warning' }, content: [
+      { type: 'paragraph', attrs: { id: 'p-id' }, content: [
+        { type: 'text', text: 'Pump ', marks: [{ type: 'bold' }] }, { type: 'text', text: 'pump', marks: [{ type: 'italic' }] },
+      ] },
+    ] },
+  ] };
+  it('searches without writes and persists replacements through recovery, network retry and reload', async () => {
+    const { user, db, calls, errors, scope, view, client } = setup('author', undefined, searchContent);
+    await screen.findByText('Saved · revision 1');
+    await user.click(screen.getByRole('button', { name: 'Find and replace' }));
+    await user.type(screen.getByRole('textbox', { name: 'Find in this topic' }), 'pump');
+    await user.click(screen.getByRole('button', { name: 'Next match' }));
+    expect(calls.filter((call) => call.patch || call.insert)).toHaveLength(0);
+    errors.set('write:topic_drafts', { code: 'network_down' });
+    await user.type(screen.getByRole('textbox', { name: 'Replace with' }), 'Valve');
+    await user.click(screen.getByRole('button', { name: 'Replace all' }));
+    expect(readRecovery(scope)[0].copy.content).toMatchObject({ metadata: { locale: 'en' } });
+    expect(JSON.stringify(readRecovery(scope)[0].copy.content)).toContain('"id":"callout-id"');
+    await screen.findByText('Body not saved', {}, { timeout: 4000 });
+    errors.clear();
+    await user.click(screen.getByRole('button', { name: 'Retry body save' }));
+    await screen.findByText('Saved · revision 2');
+    expect(contentText(db.topic_drafts[0].content as TopicContent).trim()).toBe('Valve Valve');
+    expect(readRecovery(scope)).toHaveLength(0);
+    view.unmount();
+    render(<App services={createSupabaseServices(client)} />);
+    await waitFor(() => expect(screen.getByTestId('input-topic-body')).toHaveTextContent('Valve Valve'));
+    expect(screen.queryByRole('region', { name: 'Find and replace in this topic' })).toBeNull();
+    expect(calls.filter((call) => call.patch || call.insert).every((call) => call.table === 'topic_drafts')).toBe(true);
+  });
+  it('does not let replace-all overwrite a newer revision; preserves replaced JSON for explicit recovery', async () => {
+    const { user, db, scope } = setup('author', undefined, searchContent);
+    await screen.findByText('Saved · revision 1');
+    await user.click(screen.getByRole('button', { name: 'Find and replace' }));
+    await user.type(screen.getByRole('textbox', { name: 'Find in this topic' }), 'pump');
+    await user.type(screen.getByRole('textbox', { name: 'Replace with' }), 'Valve');
+    await user.click(screen.getByRole('button', { name: 'Replace all' }));
+    const local = readRecovery(scope)[0].copy.content;
+    const remote = withText(emptyContent(), 'Newer remote content');
+    Object.assign(db.topic_drafts[0], { content: remote, revision: 2 });
+    await screen.findByText('Concurrent-edit conflict', {}, { timeout: 4000 });
+    await user.click(screen.getByRole('button', { name: 'Retry body save' }));
+    expect(db.topic_drafts[0].content).toEqual(remote);
+    await user.click(screen.getByRole('button', { name: 'Reload saved draft' }));
+    await screen.findByRole('region', { name: 'Recover topic body' });
+    await user.click(screen.getByRole('button', { name: 'Restore recovery' }));
+    await screen.findByText('Saved · revision 3', {}, { timeout: 4000 });
+    expect(db.topic_drafts[0].content).toEqual(local);
+    expect(readRecovery(scope)).toHaveLength(0);
+  });
+  it.each(['reviewer', 'viewer'])('lets backend %s search persisted callouts without replacement or writes', async (role) => {
+    const { user, calls } = setup(role, undefined, searchContent);
+    await screen.findByText(/Saved · revision 1 · Read-only/);
+    await user.click(screen.getByRole('button', { name: 'Find and replace' }));
+    await user.type(screen.getByRole('textbox', { name: 'Find in this topic' }), 'pump');
+    await user.click(screen.getByRole('button', { name: 'Next match' }));
+    expect(screen.getByRole('button', { name: 'Replace all' })).toBeDisabled();
+    expect(screen.getByRole('textbox', { name: 'Replace with' })).toBeDisabled();
+    expect(calls.filter((call) => call.patch || call.insert)).toHaveLength(0);
+  });
   it('persists semantic callouts through the existing draft adapter and reload without F2 writes', async () => {
     const { user, db, calls, view, client } = setup();
     await screen.findByText('No saved body yet');

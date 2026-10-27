@@ -110,14 +110,16 @@ describe('structured authoring toolbar', () => {
     await user.keyboard('{ArrowRight}');
     expect(screen.getByRole('button', { name: 'Heading 2' })).toHaveFocus();
     await user.keyboard('{Home}');
-    expect(first).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Find and replace' })).toHaveFocus();
   });
   it('does not emit on mount, read-only selection, or loading and disables mutation commands', async () => {
     const { changed } = setup(withText(emptyContent(), 'Readable'), false);
     const area = await screen.findByRole('textbox', { name: 'Topic body' });
     expect(area).toHaveAttribute('aria-readonly', 'true');
     expect(area).toHaveAttribute('contenteditable', 'false');
-    within(screen.getByRole('toolbar')).getAllByRole('button').forEach((button) => expect(button).toBeDisabled());
+    within(screen.getByRole('toolbar')).getAllByRole('button').filter((button) => button.getAttribute('aria-label') !== 'Find and replace')
+      .forEach((button) => expect(button).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'Find and replace' })).toBeEnabled();
     expect(changed).not.toHaveBeenCalled();
   });
   it('shows unsupported JSON verbatim, emits no normalized replacement, and can load a supported replacement', async () => {
