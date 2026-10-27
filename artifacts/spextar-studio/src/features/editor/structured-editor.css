@@ -1,0 +1,54 @@
+.se-fallback:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+.se-root { min-width: 0; max-width: 100%; }
+.se-toolbar {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  padding: 4px; border: 1px solid hsl(var(--border)); border-radius: var(--radius);
+  background: hsl(var(--background)); position: sticky; top: 52px; z-index: 5;
+}
+.se-group { display: flex; gap: 2px; padding-right: 4px; border-right: 1px solid hsl(var(--border)); }
+.se-group:last-child { border-right: none; }
+.se-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px;
+  padding: 0 6px; border-radius: calc(var(--radius) - 2px); color: hsl(var(--muted-foreground));
+  font-size: 12px; font-weight: 600; background: transparent; border: 1px solid transparent;
+}
+.se-btn:hover:not(:disabled) { background: hsl(var(--surface-raised)); color: hsl(var(--foreground)); }
+.se-btn[aria-pressed='true'] { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); border-color: hsl(var(--primary) / 0.45); }
+.se-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.se-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
+.se-btn svg { width: 15px; height: 15px; }
+.se-surface { margin-top: 12px; min-width: 0; }
+.se-surface .ProseMirror {
+  min-height: 340px; outline: none; font-family: var(--app-font-sans); font-size: 16px; line-height: 1.72;
+  color: hsl(var(--foreground)); overflow-wrap: anywhere; border-radius: var(--radius); padding: 2px;
+}
+.se-surface .ProseMirror:focus-visible { box-shadow: 0 0 0 2px hsl(var(--ring) / 0.6); }
+.se-surface .ProseMirror[contenteditable='false'] { color: hsl(var(--foreground) / 0.88); }
+.se-surface .ProseMirror ::selection { background: hsl(var(--spextar-violet-hsl) / 0.35); }
+.se-surface .ProseMirror > * + * { margin-top: 0.75em; }
+.se-surface h1 { font-size: 1.6em; font-weight: 650; line-height: 1.25; margin-top: 1.2em; }
+.se-surface h2 { font-size: 1.3em; font-weight: 650; line-height: 1.3; margin-top: 1.1em; }
+.se-surface h3 { font-size: 1.1em; font-weight: 650; margin-top: 1em; }
+.se-surface ul { list-style: disc; padding-left: 1.4em; }
+.se-surface ol { list-style: decimal; padding-left: 1.4em; }
+.se-surface blockquote { border-left: 3px solid hsl(var(--primary) / 0.7); padding-left: 1em; color: hsl(var(--muted-foreground)); }
+.se-surface code { font-family: var(--app-font-sans); font-size: 0.9em; background: hsl(var(--surface-raised)); border: 1px solid hsl(var(--border)); border-radius: 4px; padding: 0.05em 0.3em; }
+.se-surface pre { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 12px 14px; overflow-x: auto; max-width: 100%; }
+.se-surface pre code { background: none; border: 0; padding: 0; font-size: 14px; white-space: pre; }
+.se-surface a { color: hsl(var(--accent-foreground)); text-decoration: underline; text-underline-offset: 3px; }
+.se-surface hr { border: 0; border-top: 1px solid hsl(var(--border)); margin: 1.5em 0; }
+.se-surface hr.ProseMirror-selectednode { border-top-color: hsl(var(--primary)); }
+.se-surface .tableWrapper { overflow-x: auto; max-width: 100%; margin: 1em 0; }
+.se-surface table { border-collapse: collapse; table-layout: fixed; min-width: 100%; font-size: 14px; }
+.se-surface td, .se-surface th { border: 1px solid hsl(var(--border)); padding: 6px 10px; vertical-align: top; min-width: 80px; position: relative; }
+.se-surface th { background: hsl(var(--surface-raised)); font-weight: 600; text-align: left; }
+.se-surface .selectedCell::after { content: ''; position: absolute; inset: 0; background: hsl(var(--spextar-violet-hsl) / 0.22); pointer-events: none; }
+.se-surface .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 3px; background: hsl(var(--primary)); pointer-events: none; }
+.se-surface p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: hsl(var(--muted-foreground)); float: left; height: 0; pointer-events: none; }
+.se-fallback { margin-top: 12px; max-height: 420px; overflow: auto; font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 12px; }
+.se-skeleton { margin-top: 12px; display: grid; gap: 10px; }
+.se-skeleton span { height: 14px; border-radius: 4px; background: hsl(var(--surface-raised)); }
+@media (max-width: 640px) {
+  .se-toolbar { flex-wrap: nowrap; overflow-x: auto; top: 0; }
+  .se-group { flex-shrink: 0; }
+}

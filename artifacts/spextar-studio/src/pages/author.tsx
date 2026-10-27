@@ -6,7 +6,8 @@ import { EmptyState, ErrorState, ListSkeleton, NotFoundPanel, ScopeMarker } from
 import { StatusPill } from '@/components/status-pill';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { StructuredEditor } from '@/features/editor/structured-editor';
+import { contentText, emptyContent, withText, type TopicContent } from '@/domain/topic-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,6 +52,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   const initFor = useRef(doc.id);
   const outlineRef = useRef<HTMLOListElement>(null);
   const bodies = useRef(new Map<string, string[]>());
+  const demoDocuments = useRef(new Map<string, TopicContent>());
   const metadataControls = useRef<TopicMetadataControls | null>(null);
 
   useEffect(() => {
@@ -78,7 +80,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   const nums = useMemo(() => numbering(topics), [topics]);
   const index = topics.findIndex((t) => t.id === selectedId);
   const selected = index >= 0 ? topics[index] : null;
-  const dirty = !backend && JSON.stringify(topics) !== JSON.stringify(doc.topics);
+  const dirty = !backend && (demoDocuments.current.size > 0 || JSON.stringify(topics) !== JSON.stringify(doc.topics));
 
   const siblings = selected ? topics.filter((t) => (t.parentTopicId ?? null) === (selected.parentTopicId ?? null)) : [];
   const siblingIndex = siblings.findIndex((t) => t.id === selected?.id);
@@ -192,6 +194,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
           {dirty && (
             <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => {
               bodies.current.clear();
+              demoDocuments.current.clear();
               setTopics(backend ? topics.map((topic) => ({ ...topic, body: doc.topics.find((t) => t.id === topic.id)?.body ?? [] })) : doc.topics);
             }} data-testid="button-discard-edits">
               <RotateCcw className="mr-1 h-3 w-3" /> {backend ? 'Discard body edits' : 'Discard changes'}
@@ -216,21 +219,17 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
             {backend ? <TopicBodyEditor key={selected.id} doc={doc} topic={selected} onBody={(id, body) => {
               bodies.current.set(id, body);
               patch(id, { body });
-            }} /> : <><label htmlFor="topic-body" className="sr-only">Topic body</label>
-            <Textarea
-              id="topic-body"
-              value={selected.body.join('\n\n')}
-              readOnly={!canEdit}
-              onChange={(e) => {
-                const body = e.target.value.split(/\n{2,}/);
+            }} /> : <StructuredEditor
+              content={demoDocuments.current.get(selected.id) ?? withText(emptyContent(), selected.body.join('\n\n'))}
+              editable={canEdit}
+              onChange={(content) => {
+                demoDocuments.current.set(selected.id, content);
+                const text = contentText(content);
+                const body = text ? text.split(/\n{2,}/) : [];
                 bodies.current.set(selected.id, body);
                 patch(selected.id, { body });
               }}
-              placeholder="Write the topic body. Separate paragraphs with a blank line."
-              className="prose-doc mt-4 min-h-[340px] resize-none border-none bg-transparent px-0 shadow-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0"
-              data-testid="input-topic-body"
-            />
-            </>}
+            />}
           </article></div>
         ) : (
           <div className="p-10"><EmptyState icon={FileText} title="No topic selected" body="Choose a topic from the outline." /></div>

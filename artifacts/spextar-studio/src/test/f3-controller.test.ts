@@ -193,4 +193,57 @@ describe('F3 autosave and recovery controller', () => {
     controller.refreshIfClean();
     expect(controller.getSnapshot()).toMatchObject({ text: 'dirty', revision: 1 });
   });
+  it('recovers and conditionally saves structured JSON, including marks, IDs and root metadata', async () => {
+    const { controller, service } = setup();
+    await boot(controller);
+    const content = { type: 'doc', version: 1, metadata: { locale: 'en' }, content: [
+      { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Technical heading', marks: [{ type: 'bold' }] }] },
+    ] };
+    controller.changeDocument(content);
+    const recovery = readRecovery(scope)[0].copy.content;
+    expect(recovery).toMatchObject({ metadata: { locale: 'en' } });
+    expect(JSON.stringify(recovery)).toContain('"id"');
+    await vi.advanceTimersByTimeAsync(700);
+    expect(service.save).toHaveBeenCalledWith(scope, recovery, null);
+    expect(controller.getSnapshot().content).toEqual(recovery);
+    expect(readRecovery(scope)).toHaveLength(0);
+  });
+  it('never lets an older recovery copy replace an unsupported saved format', async () => {
+    const { controller, service, setServer } = setup();
+    const content = { type: 'doc', version: 2, content: [{ type: 'futureReuse', attrs: { id: 'preserve' } }] };
+    setServer({ topicId: scope.topicId, content, revision: 1, updatedAt: new Date().toISOString(), updatedBy: 'other' });
+    rememberRecovery(scope, body('older plain body'), null);
+    await boot(controller);
+    expect(controller.editable()).toBe(false);
+    controller.restore();
+    await vi.advanceTimersByTimeAsync(900);
+    expect(service.save).not.toHaveBeenCalled();
+    expect(controller.getSnapshot().content).toEqual(content);
+    expect(readRecovery(scope)).toHaveLength(1);
+  });
+  it('keeps structured recovery and IDs intact through a conflict, retry, reload and explicit restore', async () => {
+    const { controller, getServer, setServer } = setup();
+    setServer({ topicId: scope.topicId, content: body('original'), revision: 1, updatedAt: new Date().toISOString(), updatedBy: scope.userId });
+    await boot(controller);
+    controller.changeDocument({ type: 'doc', version: 1, metadata: { source: 'local' }, content: [
+      { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Local heading', marks: [{ type: 'italic' }] }] },
+    ] });
+    const local = controller.getSnapshot().content;
+    const remote = { type: 'doc', version: 1, metadata: { source: 'remote' }, content: [
+      { type: 'paragraph', attrs: { id: 'remote-block' }, content: [{ type: 'text', text: 'Newer remote' }] },
+    ] };
+    setServer({ topicId: scope.topicId, content: remote, revision: 2, updatedAt: new Date().toISOString(), updatedBy: 'other' });
+    await vi.advanceTimersByTimeAsync(700);
+    expect(controller.getSnapshot().status).toBe('conflict');
+    expect(readRecovery(scope)[0].copy.content).toEqual(local);
+    await controller.retry();
+    expect(getServer()?.content).toEqual(remote);
+    await controller.reload();
+    expect(controller.getSnapshot().content).toEqual(remote);
+    controller.restore();
+    await vi.advanceTimersByTimeAsync(700);
+    expect(getServer()).toMatchObject({ content: local, revision: 3 });
+    expect(controller.getSnapshot().content).toEqual(local);
+    expect(readRecovery(scope)).toHaveLength(0);
+  });
 });

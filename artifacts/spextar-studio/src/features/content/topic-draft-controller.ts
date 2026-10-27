@@ -1,6 +1,7 @@
-import { contentKey, contentText, emptyContent, supportsTextEditing, withText, type DraftScope, type TopicContent, type TopicDraft } from '@/domain/topic-content';
+import { contentKey, contentText, emptyContent, withText, type DraftScope, type TopicContent, type TopicDraft } from '@/domain/topic-content';
 import { ServiceError, type TopicDraftService } from '@/services/contracts';
 import { clearMatchingRecovery, readRecovery, rememberRecovery, removeRecovery, type StoredRecovery } from '@/services/topic-draft-recovery';
+import { ensureNodeIds, supportsStructuredEditing } from '@/domain/structured-content';
 
 export interface DraftState {
   status: 'loading' | 'saved' | 'unsaved' | 'saving' | 'error' | 'conflict';
@@ -47,7 +48,7 @@ export class TopicDraftController {
   hasUnsaved = () => ['unsaved', 'saving', 'conflict'].includes(this.state.status)
     || (this.state.status === 'error' && this.state.loaded);
   editable = () => this.alive && this.canEdit && this.state.loaded && !this.state.recovery.length
-    && supportsTextEditing(this.state.content) && this.state.status !== 'loading';
+    && supportsStructuredEditing(this.state.content) && this.state.status !== 'loading';
   private recoveryAction(action: () => void) {
     try { action(); this.update({ recoveryWarning: null }); }
     catch (error) { this.update({ recoveryWarning: error instanceof Error ? error.message : 'Browser recovery is unavailable.' }); }
@@ -75,23 +76,32 @@ export class TopicDraftController {
       if (epoch === this.epoch) this.update({ status: 'error', loaded: false, error: error instanceof Error ? error.message : 'Could not load the saved draft.' });
     }
   };
+  /** Legacy plain-paragraph entry point; never used to serialize structured editor output. */
   change = (text: string) => {
     if (!this.editable()) return;
-    const content = withText(this.state.content, text);
+    this.edited(withText(this.state.content, text));
+  };
+  changeDocument = (content: TopicContent) => {
+    if (!this.editable()) return;
+    this.edited(ensureNodeIds(content));
+  };
+  private edited(content: TopicContent) {
+    const text = contentText(content);
     const conflict = this.state.status === 'conflict';
     this.update({ text, content, status: conflict ? 'conflict' : 'unsaved', error: conflict ? this.state.error : null });
     this.remember();
     clearTimeout(this.timer);
     if (!conflict) this.timer = setTimeout(() => void this.flush(), this.debounce);
-  };
+  }
   restore = () => {
     if (!this.canEdit || !this.state.loaded || !this.state.recovery.length) return;
-    const content = this.state.recovery[0].copy.content;
+    if (!supportsStructuredEditing(this.state.content) || !supportsStructuredEditing(this.state.recovery[0].copy.content)) return;
+    const content = ensureNodeIds(this.state.recovery[0].copy.content);
     // Explicit restore adopts ONLY the saved revision currently shown to the user.
     // A concurrent change after this point is still rejected by the database CAS.
     this.update({ content, text: contentText(content), recovery: [], status: 'unsaved', error: null });
     this.remember();
-    if (supportsTextEditing(content)) this.timer = setTimeout(() => void this.flush(), this.debounce);
+    this.timer = setTimeout(() => void this.flush(), this.debounce);
   };
   discard = () => {
     this.recoveryAction(() => removeRecovery(this.state.recovery));

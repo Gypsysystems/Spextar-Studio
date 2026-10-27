@@ -38,6 +38,8 @@ A non-AI structured authoring and technical documentation platform with F0/F1 an
 Workspaces → Projects → Project Home and a document-aware project shell. F0/F1 includes route-ready authoring, review, publishing, reusable content, variables/conditions, style, history, settings, and brand/output views.
 F2 persists document/topic metadata and tree operations. F3 Slice 1 persists backend Topic bodies separately in `topic_drafts` using authenticated table inserts/expected-revision updates, never a save RPC. The database assigns/advances revisions. Demo bodies remain session-only. Only explicit project admin/author memberships enable mutations; inherited workspace administration must not elevate a reviewer/viewer. Preserve extensible structured JSON; never silently flatten unsupported nodes or marks. See `artifacts/spextar-studio/F3.md` for recovery and conflict semantics.
 
+F3 Slice 2A uses open-source Tiptap only as the editing engine. SPEXTAR owns the JSON schema/bridge; preserve root metadata/version, fail closed to verbatim read-only JSON for unsupported structures, and reuse the existing draft controller. Durable node IDs are Topic-scoped because database duplication copies JSON unchanged: future references use `(Topic UUID, node ID)`. Opening legacy content must not trigger writes merely to add IDs. No paid/hosted editor services.
+
 ## User preferences
 
 - No AI generation features.

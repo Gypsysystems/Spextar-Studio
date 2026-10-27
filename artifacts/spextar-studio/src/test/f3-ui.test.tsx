@@ -34,17 +34,17 @@ describe('F3 Author integration', () => {
     expect(calls.filter((call) => call.patch || call.insert).every((call) => call.table === 'topic_drafts')).toBe(true);
     view.unmount();
     render(<App services={createSupabaseServices(client)} />);
-    await waitFor(() => expect(screen.getByTestId('input-topic-body')).toHaveValue('Persisted topic body'));
+    await waitFor(() => expect(screen.getByTestId('input-topic-body')).toHaveTextContent('Persisted topic body'));
   });
   it('offers browser recovery rather than automatically submitting it', async () => {
     const { user, db, scope } = setup('author', 'Recovered after refresh');
     await screen.findByRole('region', { name: 'Recover topic body' });
-    expect(screen.getByTestId('input-topic-body')).toHaveValue('');
-    expect(screen.getByTestId('input-topic-body')).toHaveAttribute('readonly');
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('');
+    expect(screen.getByTestId('input-topic-body')).toHaveAttribute('aria-readonly', 'true');
     expect(db.topic_drafts).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: 'Restore recovery' }));
     await screen.findByText('Saved · revision 1', {}, { timeout: 4000 });
-    expect(screen.getByTestId('input-topic-body')).toHaveValue('Recovered after refresh');
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('Recovered after refresh');
     expect(readRecovery(scope)).toHaveLength(0);
   });
   it('shows conflicts and requires reload/explicit restore before applying over the latest revision', async () => {
@@ -56,10 +56,10 @@ describe('F3 Author integration', () => {
     expect(contentText(db.topic_drafts[0].content as ReturnType<typeof emptyContent>)).toBe('Other browser');
     await user.click(screen.getByRole('button', { name: 'Reload saved draft' }));
     await screen.findByRole('region', { name: 'Recover topic body' });
-    expect(screen.getByTestId('input-topic-body')).toHaveValue('Other browser');
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('Other browser');
     await user.click(screen.getByRole('button', { name: 'Restore recovery' }));
     await screen.findByText('Saved · revision 2', {}, { timeout: 4000 });
-    expect(screen.getByTestId('input-topic-body')).toHaveValue('My body');
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('My body');
   });
   it('retains a failed draft and exposes an actionable explicit retry', async () => {
     const { user, errors } = setup();
@@ -67,7 +67,7 @@ describe('F3 Author integration', () => {
     errors.set('write:topic_drafts', { code: 'network_down' });
     await user.type(screen.getByTestId('input-topic-body'), 'Offline draft');
     await screen.findByText('Body not saved', {}, { timeout: 4000 });
-    expect(screen.getByTestId('input-topic-body')).toHaveValue('Offline draft');
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('Offline draft');
     errors.clear();
     await user.click(screen.getByRole('button', { name: 'Retry body save' }));
     await screen.findByText('Saved · revision 1');
@@ -75,7 +75,7 @@ describe('F3 Author integration', () => {
   it.each(['reviewer', 'viewer'])('keeps %s body read-only and does not offer author recovery', async (role) => {
     const { calls } = setup(role, 'Private old draft');
     await screen.findByText(/No saved body yet · Read-only/);
-    expect(screen.getByTestId('input-topic-body')).toHaveAttribute('readonly');
+    expect(screen.getByTestId('input-topic-body')).toHaveAttribute('aria-readonly', 'true');
     expect(screen.queryByRole('region', { name: 'Recover topic body' })).not.toBeInTheDocument();
     expect(calls.some((call) => call.insert || call.patch)).toBe(false);
   });

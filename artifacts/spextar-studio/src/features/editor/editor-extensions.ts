@@ -1,0 +1,91 @@
+import { Extension, type Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import { TableKit } from '@tiptap/extension-table';
+import { EditorState, Plugin } from '@tiptap/pm/state';
+import { Fragment, Slice, type Node as ProseNode } from '@tiptap/pm/model';
+import { editorDocument, identifiedNodes, validLink } from '@/domain/structured-content';
+import type { TopicContent } from '@/domain/topic-content';
+
+/** SPEXTAR-owned node identity, independent of hosted/proprietary editor extensions. */
+const NodeIdentity = Extension.create({
+  name: 'spextarNodeIdentity',
+  addGlobalAttributes() {
+    return [{ types: [...identifiedNodes], attributes: {
+      id: { default: null, parseHTML: () => null, renderHTML: (attrs) => attrs.id ? { 'data-spextar-id': attrs.id } : {} },
+    } }];
+  },
+  addProseMirrorPlugins() {
+    const editor = this.editor;
+    return [new Plugin({
+      filterTransaction(transaction) {
+        return editor.isEditable || !transaction.docChanged || transaction.getMeta('preventUpdate') === true;
+      },
+      appendTransaction(transactions, old, state) {
+        if (!transactions.some((transaction) => transaction.docChanged)) return null;
+        const seen = new Set<string>();
+        const transaction = state.tr;
+        const previousIds = new Map<number, string>();
+        const owners = new Map<string, number>();
+        old.doc.descendants((node, pos) => {
+          if (!(identifiedNodes as readonly string[]).includes(node.type.name) || !node.attrs.id) return;
+          let deleted = false;
+          for (const change of transactions) {
+            const mapped = change.mapping.mapResult(pos);
+            pos = mapped.pos; deleted ||= mapped.deletedAcross;
+          }
+          const next = state.doc.nodeAt(pos);
+          if (!deleted && next?.attrs.id === node.attrs.id) owners.set(node.attrs.id as string, pos);
+          if (!deleted && next && !next.attrs.id && (node.content.eq(next.content)
+            || (node.isTextblock && next.isTextblock && node.type !== next.type))) previousIds.set(pos, node.attrs.id as string);
+        });
+        state.doc.descendants((node, pos) => {
+          if (!(identifiedNodes as readonly string[]).includes(node.type.name)) return;
+          let id = node.attrs.id as string | null;
+          if (!id || seen.has(id) || (owners.has(id) && owners.get(id) !== pos)) {
+            id = previousIds.get(pos) ?? crypto.randomUUID();
+            if (seen.has(id)) id = crypto.randomUUID();
+            transaction.setNodeMarkup(pos, undefined, { ...node.attrs, id }, node.marks);
+          }
+          seen.add(id);
+        });
+        // Appended transactions share their originating undo event: redo restores the same IDs.
+        return transaction.docChanged ? transaction : null;
+      },
+      props: {
+        transformPasted(slice, view) {
+          if (view.dragging?.move) return slice;
+          const strip = (fragment: Fragment): Fragment => {
+            const nodes: ProseNode[] = [];
+            fragment.forEach((node) => nodes.push(node.isText ? node : node.type.create(
+              { ...node.attrs, ...((identifiedNodes as readonly string[]).includes(node.type.name) ? { id: null } : {}) },
+              strip(node.content), node.marks,
+            )));
+            return Fragment.from(nodes);
+          };
+          return new Slice(strip(slice.content), slice.openStart, slice.openEnd);
+        },
+      },
+    })];
+  },
+});
+
+export function studioExtensions() {
+  return [
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3] },
+      link: { openOnClick: false, autolink: false, linkOnPaste: false,
+        isAllowedUri: (href) => validLink(href), HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } },
+    }),
+    TableKit.configure({ table: { resizable: false, renderWrapper: true } }),
+    NodeIdentity,
+  ];
+}
+
+/** Reload/restore/discard is a new editing baseline, not an undoable user edit.
+ * Ordinary autosave echoes never call this helper. */
+export function replaceEditorDocument(editor: Editor, content: TopicContent) {
+  editor.commands.setContent(editorDocument(content), { emitUpdate: false, errorOnInvalidContent: true });
+  const state = EditorState.create({ schema: editor.schema, doc: editor.state.doc, plugins: editor.state.plugins });
+  editor.view.updateState(state);
+  editor.view.dispatch(state.tr.setMeta('addToHistory', false));
+}

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { DocumentRecord, Topic } from '@/domain/types';
-import { supportsTextEditing } from '@/domain/topic-content';
+import { supportsStructuredEditing } from '@/domain/structured-content';
 import { useServices } from '@/providers/services-provider';
 import { useStudioSession } from '@/providers/session-provider';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { StructuredEditor } from '@/features/editor/structured-editor';
 import { invalidateContent } from '@/hooks/use-content-mutation';
 import { metadataDeletionState } from '@/hooks/use-content-deletion';
 import { TopicDraftController } from './topic-draft-controller';
@@ -52,7 +52,7 @@ export function TopicBodyEditor({ doc, topic, onBody }: {
         <p className="font-medium">A browser recovery copy is available</p>
         <p className="mt-1 text-xs text-muted-foreground">The saved body is shown below. Restore replaces it with the local copy and autosaves against {state.revision === null ? 'the empty draft' : `revision ${state.revision}`}. A newer server revision will still block the save.</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" disabled={!supportsTextEditing(state.recovery[0].copy.content)} onClick={controller.restore}>Restore recovery</Button>
+          <Button size="sm" disabled={!supportsStructuredEditing(state.content) || !supportsStructuredEditing(state.recovery[0].copy.content)} onClick={controller.restore}>Restore recovery</Button>
           <Button size="sm" variant="outline" onClick={controller.discard}>Discard recovery</Button>
         </div>
       </div>}
@@ -64,14 +64,8 @@ export function TopicBodyEditor({ doc, topic, onBody }: {
           {state.loaded && <Button size="sm" variant="outline" onClick={() => void controller.reload()}>Reload saved draft</Button>}
         </div>
       </div>}
-      {state.loaded && !supportsTextEditing(state.content) && <p role="note" className="text-xs text-muted-foreground">
-        This draft contains structured elements unsupported by this plain-text editor. Its original JSON is preserved; editing requires a later structured editor.
-      </p>}
-      <label htmlFor="topic-body" className="sr-only">Topic body</label>
-      <Textarea id="topic-body" data-testid="input-topic-body" value={state.text} readOnly={!controller.editable()}
-        aria-busy={state.status === 'loading'} onChange={(event) => controller.change(event.target.value)}
-        placeholder="Write the topic body. Separate paragraphs with a blank line."
-        className="prose-doc min-h-[340px] resize-none border-none bg-transparent px-0 shadow-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0" />
+      <StructuredEditor content={state.content} editable={controller.editable()} loading={!state.loaded || state.status === 'loading'}
+        onChange={controller.changeDocument} />
     </div>
   );
 }

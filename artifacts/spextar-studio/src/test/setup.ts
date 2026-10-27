@@ -25,3 +25,8 @@ HTMLElement.prototype.scrollIntoView = vi.fn();
 HTMLElement.prototype.hasPointerCapture = () => false;
 HTMLElement.prototype.setPointerCapture = () => {};
 HTMLElement.prototype.releasePointerCapture = () => {};
+// JSDOM has no layout engine; these shims support ProseMirror selection geometry,
+// not visual assertions (those run separately in Chromium).
+Range.prototype.getBoundingClientRect = () => new DOMRect();
+Range.prototype.getClientRects = () => Object.assign([], { item: () => null });
+document.elementFromPoint ??= () => document.activeElement;

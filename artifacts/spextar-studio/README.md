@@ -21,7 +21,7 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `/workspaces/:workspaceId/projects` | Projects: search, status filter, Create project; document Import project remains demo-only | Supabase or isolated demo |
 | `…/projects/:projectId` | Project Home: lifecycle counts, recent documents, activity, project areas | Functional |
 | `…/documents` | Live document list, expandable topic outlines, create/duplicate, metadata and confirmed empty-document deletion | Supabase or isolated demo |
-| `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector. Backend metadata/tree and structured body drafts persist; demo bodies stay session-only | F2 + F3 Slice 1 |
+| `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector with open-source Tiptap. Backend metadata/tree and structured JSON drafts persist; demo bodies stay session-only | F2 + F3 Slices 1/2A |
 | `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
 | `…/reusable-content`, `…/variables-conditions`, `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
 | anything else | Not found. Unknown workspace, project and document IDs also show not-found inside the shell | — |
@@ -67,6 +67,7 @@ src/pages/                     Routed views
 - These authenticated RPC signatures and live multi-account RLS behavior must be verified against an authorized account; automated contract doubles do not prove live database transaction behavior.
 - The database uses `projects.slug` for the UI's short project key. Product metadata and document import are not in the F0/F1 foundation, so the backend form/control does not pretend to save them.
 - F2 document/topic reads, metadata updates, create/move/promote/demote/duplicate operations use Supabase behind the existing service abstraction. F3 Slice 1 adds separate `topicDrafts.get/save` service methods for structured body JSON, debounced autosave, revision conflicts and browser recovery. Publishing execution and activity persistence remain outside this integration. Backend queries do not use fixtures. See `F2.md` and `F3.md`.
+- F3 Slice 2A uses MIT-licensed Tiptap as an editor only, not the persisted-model authority. The SPEXTAR JSON bridge retains version/root metadata and Topic-scoped node IDs, rejects unsupported structures without flattening, and feeds the existing Slice 1 controller. Demo editing uses the same surface without backend body persistence. See `F3.md` for the supported schema and identity contract.
 - All methods return Promises. `get*` methods resolve `null` for not-found. Conflicts and validation errors throw `ServiceError` (`code`, `issues`).
 
 ### Test-readiness

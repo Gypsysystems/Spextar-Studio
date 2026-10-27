@@ -16,7 +16,7 @@ export function checkedContent(value: unknown): TopicContent {
     v === null || typeof v === 'string' || typeof v === 'boolean'
     || (typeof v === 'number' && Number.isFinite(v))
     || (Array.isArray(v) && v.every((item) => valid(item, depth + 1)))
-    || (typeof v === 'object' && v !== null && Object.getPrototypeOf(v) === Object.prototype
+    || (typeof v === 'object' && v !== null && [Object.prototype, null].includes(Object.getPrototypeOf(v))
       && Object.values(v).every((item) => valid(item, depth + 1)))
   );
   if (!value || Array.isArray(value) || typeof value !== 'object' || !valid(value)) {
@@ -52,7 +52,9 @@ export function contentText(content: TopicContent): string {
     if (!value || typeof value !== 'object') return '';
     if (Array.isArray(value)) return value.map(text).join('');
     if (typeof value.text === 'string') return value.text;
-    return Array.isArray(value.content) ? value.content.map(text).join('') : '';
+    if (value.type === 'hardBreak') return '\n';
+    const separator = ['paragraph', 'heading', 'codeBlock'].includes(String(value.type)) ? '' : '\n\n';
+    return Array.isArray(value.content) ? value.content.map(text).join(separator) : '';
   };
   return Array.isArray(content.content) ? content.content.map(text).join('\n\n') : '';
 }

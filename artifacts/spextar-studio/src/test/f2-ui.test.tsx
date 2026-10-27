@@ -38,7 +38,7 @@ describe('F2 UI persistence and read-only states', () => {
     const { user, db, calls, raw } = setup();
     const body = await screen.findByTestId('input-topic-body');
     expect(screen.getByText('Draft body · autosave')).toBeVisible();
-    await waitFor(() => expect(body).not.toHaveAttribute('readonly'));
+    await waitFor(() => expect(body).toHaveAttribute('contenteditable', 'true'));
     await user.type(body, 'UNSAVED BODY');
     const title = screen.getByTestId('input-topic-title');
     await user.clear(title);
@@ -47,7 +47,7 @@ describe('F2 UI persistence and read-only states', () => {
     await waitFor(() => expect(db.topics[0].title).toBe('Updated installation'), { timeout: 4000 });
     await waitFor(() => expect(db.topics[0].status).toBe('in_review'), { timeout: 4000 });
     await waitFor(() => expect(screen.getByText('Metadata saved')).toBeVisible());
-    expect(screen.getByTestId('input-topic-body')).toHaveValue('UNSAVED BODY');
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('UNSAVED BODY');
     expect(calls.filter((call) => call.patch && call.table !== 'topic_drafts').every((call) => !JSON.stringify(call.patch).includes('UNSAVED BODY'))).toBe(true);
     await waitFor(() => expect(db.topic_drafts).toHaveLength(1));
     expect(JSON.stringify(db.topic_drafts[0].content)).toContain('UNSAVED BODY');
@@ -57,7 +57,7 @@ describe('F2 UI persistence and read-only states', () => {
   });
   it.each(['reviewer', 'viewer'])('keeps %s metadata, body and hierarchy controls read-only', async (role) => {
     setup(role);
-    expect(await screen.findByTestId('input-topic-body')).toHaveAttribute('readonly');
+    expect(await screen.findByTestId('input-topic-body')).toHaveAttribute('aria-readonly', 'true');
     expect(screen.getByTestId('input-topic-title')).toHaveAttribute('readonly');
     expect(screen.getByTestId('button-promote')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Create topic' })).not.toBeInTheDocument();
@@ -160,10 +160,10 @@ describe('F2 destructive confirmation and navigation', () => {
     db.topics.push({ ...db.topics[0], id: 'topic-b', title: 'Next step', slug: 'next', sort_order: 1 });
     await screen.findByTestId('input-topic-body');
     await user.click(screen.getByTestId('outline-topic-topic-b'));
-    await waitFor(() => expect(screen.getByTestId('input-topic-body')).not.toHaveAttribute('readonly'));
+    await waitFor(() => expect(screen.getByTestId('input-topic-body')).toHaveAttribute('contenteditable', 'true'));
     await user.type(screen.getByTestId('input-topic-body'), 'KEEP LOCAL DRAFT');
     await user.click(screen.getByTestId('outline-topic-topic-a'));
-    await waitFor(() => expect(screen.getByTestId('input-topic-body')).not.toHaveAttribute('readonly'));
+    await waitFor(() => expect(screen.getByTestId('input-topic-body')).toHaveAttribute('contenteditable', 'true'));
     await user.type(screen.getByTestId('input-topic-body'), 'DISCARD DELETED DRAFT');
     await user.click(screen.getByRole('button', { name: 'Delete topic' }));
     const dialog = await screen.findByRole('dialog');
@@ -171,7 +171,7 @@ describe('F2 destructive confirmation and navigation', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Delete topic' }));
     await waitFor(() => expect(screen.queryByTestId('outline-topic-topic-a')).not.toBeInTheDocument());
     expect(screen.getByTestId('input-topic-title')).toHaveValue('Next step');
-    expect(screen.getByTestId('input-topic-body')).toHaveValue('KEEP LOCAL DRAFT');
+    expect(screen.getByTestId('input-topic-body')).toHaveTextContent('KEEP LOCAL DRAFT');
     expect(window.location.search).toBe('');
     expect(db.topics.map((topic) => topic.id)).toEqual(['topic-b']);
     expect(calls.filter((call) => call.patch)).toHaveLength(0);
