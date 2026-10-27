@@ -23,7 +23,9 @@ editor with SPEXTAR-owned JSON, durable Topic-scoped node IDs and safe read-only
 handling for unsupported content. Slice 2B adds semantic Note, Tip, Caution and
 Warning blocks using the same draft persistence, without schema changes.
 Slice 2C adds Topic-local Find and Replace with formatting-safe text replacement,
-match navigation and read-only-role search.
+match navigation and read-only-role search. Subsequent authoring hardening adds
+atomic structured-paste validation, explicit text-only fallback, and non-editing
+heading navigation for long Topics.
 Advanced table tools add safe merge/split, header controls and keyboard/range
 selection through the same revision-safe topic-draft JSON path.
 Demo body edits remain session-only.

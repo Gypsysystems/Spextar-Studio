@@ -14,6 +14,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import './structured-editor.css';
 import { TopicSearchPanel } from './topic-search-panel';
 import { TableToolbar } from './table-toolbar';
+import { pasteNoticeEvent, type PasteNotice, applySafePaste, focusBody } from './paste-safety';
+import { DocumentNavigation } from './document-navigation';
+import { Fragment, Slice } from '@tiptap/pm/model';
 
 type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean };
 
@@ -30,6 +33,7 @@ export function StructuredEditor({ content, editable, onChange, loading = false 
     catch (error) { return { doc: null, error: error instanceof Error ? error.message : 'The document could not be opened safely.' }; }
   });
   const [engineError, setEngineError] = useState<string | null>(initial.error);
+  const [pasteNotice, setPasteNotice] = useState<PasteNotice | null>(null);
   const blocked = !!issue || !!engineError;
   const canEdit = editable && !loading && !blocked;
   const canEditRef = useRef(canEdit);
@@ -64,10 +68,21 @@ export function StructuredEditor({ content, editable, onChange, loading = false 
     editorProps: {
       attributes: {
         role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Topic body', 'data-testid': 'input-topic-body',
-        'data-placeholder': 'Write the topic body.',
+        'data-placeholder': 'Write the topic body.', tabindex: '0',
       },
     },
   }, []);
+
+  useEffect(() => {
+    if (!editor) return;
+    const onNotice = (event: Event) => setPasteNotice((event as CustomEvent<PasteNotice>).detail);
+    const dom = editor.view.dom;
+    dom.addEventListener(pasteNoticeEvent, onNotice);
+    return () => dom.removeEventListener(pasteNoticeEvent, onNotice);
+  }, [editor]);
+
+  // Clipboard text stays only in this mounted Topic and is never recovery data.
+  useEffect(() => { if (!canEdit) setPasteNotice(null); }, [canEdit]);
 
   // Genuine external load / reload / restore only; own echoes match lastKey.
   useEffect(() => {
@@ -116,6 +131,19 @@ export function StructuredEditor({ content, editable, onChange, loading = false 
   return (
     <div className="se-root mt-4">
       {editor && <Toolbar editor={editor} enabled={canEdit} />}
+      {editor && <DocumentNavigation editor={editor} />}
+      {pasteNotice && <div className="se-paste-notice" role="alert">
+        <p>{pasteNotice.message}</p>
+        {pasteNotice.text && canEdit && <button type="button" className="se-btn" onClick={() => {
+          if (!editor?.isEditable) return;
+          const nodes = pasteNotice.text.split(/\r\n?|\n/).map((line) => editor.schema.nodes.paragraph.create(null,
+            line ? editor.schema.text(line) : undefined));
+          if (applySafePaste(editor.view, new Slice(Fragment.from(nodes), 0, 0))) {
+            setPasteNotice(null); editor.view.focus();
+          } else setPasteNotice({ message: 'Text-only paste could not fit this selection. Dismiss, choose another insertion point, and paste again.', text: '' });
+        }}>Paste text only (formatting will be removed)</button>}
+        <button type="button" className="se-btn" onClick={() => { setPasteNotice(null); editor?.view.focus(); }}>Dismiss paste</button>
+      </div>}
       {loading && !editor?.getText() ? (
         <div className="se-skeleton" aria-hidden><span style={{ width: '82%' }} /><span style={{ width: '64%' }} /><span style={{ width: '71%' }} /></div>
       ) : null}
@@ -170,6 +198,7 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
   );
 
   const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') { e.preventDefault(); focusBody(editor.view); return; }
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
     const items = Array.from(bar.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? []);
     const i = items.indexOf(document.activeElement as HTMLButtonElement);

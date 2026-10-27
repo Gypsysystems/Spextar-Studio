@@ -28,6 +28,38 @@ function setup(role = 'author', recovery?: string, initialContent?: TopicContent
 }
 
 describe('F3 Author integration', () => {
+  it('persists a safe rich paste through recovery and revision checks, but rejects unsupported HTML without writes', async () => {
+    const initial: TopicContent = { type: 'doc', version: 1, metadata: { locale: 'en' }, content: [
+      { type: 'paragraph', attrs: { id: 'original' }, content: [{ type: 'text', text: 'Original' }] },
+    ] };
+    const { db, scope, calls, user } = setup('author', undefined, initial);
+    await screen.findByText('Saved · revision 1');
+    const body = screen.getByTestId('input-topic-body');
+    const paste = (html: string, text: string) => {
+      const event = new Event('paste', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'clipboardData', { value: { files: [],
+        getData: (type: string) => type === 'text/html' ? html : text } });
+      act(() => body.dispatchEvent(event));
+    };
+    paste('<p>Unsupported<img src="x"></p>', 'Unsupported');
+    expect(screen.getByRole('alert')).toHaveTextContent('Nothing was inserted');
+    expect(readRecovery(scope)).toHaveLength(0);
+    expect(calls.filter((call) => call.patch || call.insert)).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Dismiss paste' }));
+    paste('<h2>Setup</h2><blockquote><p><b>Technical paste</b></p></blockquote>', 'Setup Technical paste');
+    const recovery = readRecovery(scope)[0].copy.content;
+    expect(JSON.stringify(recovery)).toContain('"blockquote"');
+    expect(recovery.metadata).toEqual({ locale: 'en' });
+    await screen.findByText('Saved · revision 2', {}, { timeout: 4000 });
+    expect(db.topic_drafts[0].content).toEqual(recovery);
+    expect(readRecovery(scope)).toHaveLength(0);
+    // A later paste must not silently replace a newer server revision.
+    Object.assign(db.topic_drafts[0], { content: withText(emptyContent(), 'Newer remote'), revision: 3 });
+    paste('<p>Local paste</p>', 'Local paste');
+    await screen.findByText('Concurrent-edit conflict', {}, { timeout: 4000 });
+    expect(contentText(db.topic_drafts[0].content as TopicContent)).toBe('Newer remote');
+    expect(readRecovery(scope)).toHaveLength(1);
+  });
   const selectFirstCell = () => {
     const editor = (screen.getByTestId('input-topic-body') as HTMLElement & { editor: Editor }).editor;
     act(() => editor.view.dispatch(editor.state.tr.setMeta('skipTrailingNode', true)

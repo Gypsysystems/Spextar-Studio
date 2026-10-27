@@ -9,6 +9,7 @@ import type { TopicContent } from '@/domain/topic-content';
 import { Callout } from './callout-extension';
 import { TopicSearch } from './topic-search';
 import { TechnicalTable, TechnicalTableTools } from './table-tools';
+import { SafePaste } from './paste-safety';
 
 /** SPEXTAR-owned node identity, independent of hosted/proprietary editor extensions. */
 const NodeIdentity = Extension.create({
@@ -95,6 +96,7 @@ const ExactHistoryCommands = Extension.create({
 
 export function studioExtensions() {
   return [
+    SafePaste,
     TopicSearch,
     Callout,
     StarterKit.configure({

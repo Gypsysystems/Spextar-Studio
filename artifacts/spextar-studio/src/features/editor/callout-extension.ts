@@ -25,7 +25,8 @@ export const Callout = Node.create({
   },
   parseHTML() {
     return [{ tag: 'aside[data-callout-kind]', contentElement: '.se-callout-content',
-      getAttrs: (element) => (calloutKinds as readonly string[]).includes(element.getAttribute('data-callout-kind') ?? '') ? {} : false }];
+      getAttrs: (element) => (calloutKinds as readonly string[]).includes(element.getAttribute('data-callout-kind') ?? '')
+        && element.querySelector('.se-callout-content') ? {} : false }];
   },
   renderHTML({ node, HTMLAttributes }) {
     const label = calloutLabels[node.attrs.kind as CalloutKind];
