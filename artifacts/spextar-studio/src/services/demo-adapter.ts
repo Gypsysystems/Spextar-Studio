@@ -34,7 +34,7 @@ import { slugify, suggestKey } from '@/domain/project-identifiers';
 const LATENCY_MS = 260;
 const now = () => new Date().toISOString();
 const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-const backendOnly = async (): Promise<never> => { throw new ServiceError('F2 backend mutations are available in backend mode only. Demo body and metadata edits remain local previews.', 'unavailable'); };
+const backendOnly = async (): Promise<never> => { throw new ServiceError('Persistent content services are available in backend mode only. Demo body and metadata edits remain local previews.', 'unavailable'); };
 
 function persist(key: string, value: unknown) {
   if (!writeJSON(key, value)) {
@@ -285,5 +285,6 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
         return allDocuments().find((d) => d.projectId === projectId && d.id === documentId) ?? null;
       },
     },
+    topicDrafts: { get: backendOnly, save: backendOnly },
   };
 }

@@ -8,6 +8,7 @@ import { atomicOperations } from './supabase-atomic';
 import { contentCounts, supabaseDocuments } from './supabase-documents';
 import { projectInputSchema, workspaceInputSchema } from './validation';
 import { SUPABASE_STORAGE_KEY } from './supabase-client';
+import { supabaseTopicDrafts } from './supabase-topic-drafts';
 
 const orgRole = z.enum(['owner', 'admin', 'member']);
 const workspaceRole = z.enum(['admin', 'member', 'viewer']);
@@ -83,13 +84,20 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       startedAt: new Date((session.expires_at ? session.expires_at - (session.expires_in ?? 3600) : Date.now() / 1000) * 1000).toISOString(),
     } };
   }
-  async function restore() {
+  async function restore(attempt = 0): Promise<BackendSession | null> {
     if (signedOut) return null;
     const version = generation;
     const { data, error } = await client.auth.getSession();
     check(error);
     const next = data.session ? await hydrate(data.session) : null;
-    if (version !== generation) return identity;
+    // SDK initialization can emit SIGNED_IN while a persisted session is being
+    // restored, before its deferred hydration finishes. Never turn that
+    // superseded read into a transient unauthenticated route redirect.
+    if (version !== generation) {
+      if (identity || signedOut) return identity;
+      if (attempt >= 2) throw new ServiceError('The session kept changing during restoration. Please retry sign-in.', 'unauthorized');
+      return restore(attempt + 1);
+    }
     identity = next?.session ?? null;
     organizations = next?.organizations ?? [];
     return identity;
@@ -161,6 +169,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
 
   return {
     mode: 'backend',
+    topicDrafts: supabaseTopicDrafts(client, () => context(false), requireProject),
     auth: {
       getSession: restore,
       async signInWithPassword(email, password) {
@@ -203,6 +212,10 @@ export function createSupabaseServices(client: SupabaseClient): Services {
           const version = ++generation;
           if (!session) {
             identity = null; organizations = []; emit(); return;
+          }
+          if (identity && identity.userId !== session.user.id) {
+            // Stop old-identity draft work immediately, not after profile hydration.
+            identity = null; organizations = []; emit();
           }
           // Never await Supabase operations inside its auth-lock callback.
           setTimeout(() => {

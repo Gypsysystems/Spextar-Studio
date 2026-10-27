@@ -36,7 +36,7 @@ A non-AI structured authoring and technical documentation platform with F0/F1 an
 ## Product
 
 Workspaces → Projects → Project Home and a document-aware project shell. F0/F1 includes route-ready authoring, review, publishing, reusable content, variables/conditions, style, history, settings, and brand/output views.
-F2 persists document/topic metadata and tree operations, not topic body/content. Body editing is explicitly session-only until F3. Only explicit project admin/author memberships enable F2 mutations; inherited workspace administration must not elevate a reviewer/viewer.
+F2 persists document/topic metadata and tree operations. F3 Slice 1 persists backend Topic bodies separately in `topic_drafts` using authenticated table inserts/expected-revision updates, never a save RPC. The database assigns/advances revisions. Demo bodies remain session-only. Only explicit project admin/author memberships enable mutations; inherited workspace administration must not elevate a reviewer/viewer. Preserve extensible structured JSON; never silently flatten unsupported nodes or marks. See `artifacts/spextar-studio/F3.md` for recovery and conflict semantics.
 
 ## User preferences
 

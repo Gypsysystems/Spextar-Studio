@@ -45,7 +45,7 @@ export function MetadataEditor({ projectId, doc, topic, controls }: { projectId:
           try {
             const value = JSON.parse(json);
             if (!value || Array.isArray(value) || typeof value !== 'object') throw new Error();
-            if ('body' in value || 'content' in value) { setJSONError('Body/content is session-only until F3; it cannot be stored in settings.'); return; }
+            if ('body' in value || 'content' in value) { setJSONError('Body/content belongs in topic drafts, not metadata settings.'); return; }
             update({ settings: value }); setJSONError(''); setJSON(null);
           } catch { setJSONError('Settings must be a valid JSON object.'); }
         }} />

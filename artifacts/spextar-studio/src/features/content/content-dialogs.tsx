@@ -46,7 +46,7 @@ export function ContentDialog({ action, projectId, doc, topic, onTopic }: {
     }
   }}>
     <DialogTrigger asChild><Button size="sm" variant={action === 'document' ? 'default' : 'outline'}>{label}</Button></DialogTrigger>
-    <DialogContent><DialogHeader><DialogTitle>{label}</DialogTitle><DialogDescription>{action === 'move' ? 'The database validates hierarchy and sibling ordering.' : 'Created copies start as drafts. Topic bodies are not persisted in F2.'}</DialogDescription></DialogHeader>
+    <DialogContent><DialogHeader><DialogTitle>{label}</DialogTitle><DialogDescription>{action === 'move' ? 'The database validates hierarchy and sibling ordering.' : action.startsWith('duplicate') ? 'Copies start as drafts and include saved Topic bodies. Unsaved browser edits are not included.' : action === 'document' ? 'Create a document in this project. Topic bodies save separately when authored.' : 'New Topics have no saved body until their first body edit is saved.'}</DialogDescription></DialogHeader>
       <form className="space-y-4" onSubmit={(event) => {
         event.preventDefault();
         mutation.mutate(async () => {

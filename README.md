@@ -17,7 +17,9 @@ There are no AI generation features.
 
 Microsoft and Google sign-in are intentionally inactive. F2 connects document/topic
 metadata, hierarchy, ordering and duplication to the existing Supabase tables/RPCs.
-Topic body authoring remains session-only until F3. Publishing execution and
+F3 Slice 1 persists structured JSON Topic drafts in backend mode with revision-safe
+autosave and identity-scoped browser recovery. Demo body edits remain session-only.
+See [the F3 contract](artifacts/spextar-studio/F3.md). Publishing execution and
 document import are not implemented as backend persistence.
 Authenticated live creation-function contracts and two-account RLS acceptance
 checks still require verification; passing contract tests does not prove those

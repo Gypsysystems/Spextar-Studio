@@ -34,10 +34,11 @@ function setup(role = 'author', route = 'author/doc-a') {
 }
 
 describe('F2 UI persistence and read-only states', () => {
-  it('autosaves topic title/status but never body, retaining the draft through refetch', async () => {
+  it('autosaves F2 metadata separately from F3 body through refetch', async () => {
     const { user, db, calls, raw } = setup();
     const body = await screen.findByTestId('input-topic-body');
-    expect(screen.getByText(/Topic body · session-only · not saved until F3/)).toBeVisible();
+    expect(screen.getByText('Draft body · autosave')).toBeVisible();
+    await waitFor(() => expect(body).not.toHaveAttribute('readonly'));
     await user.type(body, 'UNSAVED BODY');
     const title = screen.getByTestId('input-topic-title');
     await user.clear(title);
@@ -47,10 +48,11 @@ describe('F2 UI persistence and read-only states', () => {
     await waitFor(() => expect(db.topics[0].status).toBe('in_review'), { timeout: 4000 });
     await waitFor(() => expect(screen.getByText('Metadata saved')).toBeVisible());
     expect(screen.getByTestId('input-topic-body')).toHaveValue('UNSAVED BODY');
-    expect(calls.filter((call) => call.patch).every((call) => !JSON.stringify(call.patch).includes('UNSAVED BODY'))).toBe(true);
+    expect(calls.filter((call) => call.patch && call.table !== 'topic_drafts').every((call) => !JSON.stringify(call.patch).includes('UNSAVED BODY'))).toBe(true);
+    await waitFor(() => expect(db.topic_drafts).toHaveLength(1));
+    expect(JSON.stringify(db.topic_drafts[0].content)).toContain('UNSAVED BODY');
     expect(raw.rpc).not.toHaveBeenCalled();
-    await user.click(screen.getByTestId('button-discard-edits'));
-    expect(body).toHaveValue('');
+    expect(screen.queryByTestId('button-discard-edits')).not.toBeInTheDocument();
     expect(db.topics[0].title).toBe('Updated installation');
   });
   it.each(['reviewer', 'viewer'])('keeps %s metadata, body and hierarchy controls read-only', async (role) => {
@@ -153,13 +155,15 @@ describe('F2 destructive confirmation and navigation', () => {
     expect(db.documents).toHaveLength(0);
     expect(window.location.pathname).toBe('/workspaces/ws-a/projects/project-a/documents');
   });
-  it('deletes a selected topic, clears its deep link, and retains unrelated session-only body drafts', async () => {
+  it('deletes a selected topic, clears its deep link, and retains unrelated autosaving body drafts', async () => {
     const { user, db, calls } = setup('author', 'author/doc-a?topic=topic-a');
     db.topics.push({ ...db.topics[0], id: 'topic-b', title: 'Next step', slug: 'next', sort_order: 1 });
     await screen.findByTestId('input-topic-body');
     await user.click(screen.getByTestId('outline-topic-topic-b'));
+    await waitFor(() => expect(screen.getByTestId('input-topic-body')).not.toHaveAttribute('readonly'));
     await user.type(screen.getByTestId('input-topic-body'), 'KEEP LOCAL DRAFT');
     await user.click(screen.getByTestId('outline-topic-topic-a'));
+    await waitFor(() => expect(screen.getByTestId('input-topic-body')).not.toHaveAttribute('readonly'));
     await user.type(screen.getByTestId('input-topic-body'), 'DISCARD DELETED DRAFT');
     await user.click(screen.getByRole('button', { name: 'Delete topic' }));
     const dialog = await screen.findByRole('dialog');

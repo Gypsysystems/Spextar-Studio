@@ -1,0 +1,69 @@
+import type { QueryClient } from '@tanstack/react-query';
+import type { TopicDraftController } from './topic-draft-controller';
+
+interface Entry { controller: TopicDraftController; mounts: number; unsubscribe: () => void }
+interface Registry { entries: Map<string, Entry>; guard: (event: BeforeUnloadEvent) => void }
+const registries = new WeakMap<QueryClient, Registry>();
+
+/** Pending saves survive ordinary topic/route changes, but not an identity-cache teardown.
+ * Clean, unobserved controllers are evicted instead of retaining whole bodies indefinitely.
+ */
+export function draftEntry(client: QueryClient, key: string, create: () => TopicDraftController) {
+  let registry = registries.get(client);
+  if (!registry) {
+    const entries = new Map<string, Entry>();
+    const guard = (event: BeforeUnloadEvent) => {
+      if ([...entries.values()].some((entry) => entry.controller.hasUnsaved())) {
+        event.preventDefault(); event.returnValue = '';
+      }
+    };
+    registry = { entries, guard };
+    registries.set(client, registry);
+    window.addEventListener('beforeunload', guard);
+  }
+  const owner = registry;
+  let entry = owner.entries.get(key);
+  if (!entry) {
+    entry = { controller: create(), mounts: 0, unsubscribe: () => {} };
+    owner.entries.set(key, entry);
+    const captured = entry;
+    entry.unsubscribe = entry.controller.subscribe(() => {
+      if (!captured.mounts && captured.controller.getSnapshot().status === 'saved') evict();
+    });
+  }
+  const captured = entry;
+  function evict() {
+    captured.unsubscribe();
+    captured.controller.stop();
+    if (owner.entries.get(key) === captured) owner.entries.delete(key);
+  }
+  return {
+    controller: captured.controller,
+    mount() {
+      captured.mounts++;
+      captured.controller.start();
+      return () => {
+        captured.mounts--;
+        if (!captured.mounts && captured.controller.getSnapshot().status === 'saved') evict();
+      };
+    },
+  };
+}
+export function disposeTopicDrafts(client: QueryClient) {
+  const registry = registries.get(client);
+  if (!registry) return;
+  registry.entries.forEach((entry) => { entry.unsubscribe(); entry.controller.stop(); });
+  registry.entries.clear();
+  window.removeEventListener('beforeunload', registry.guard);
+  registries.delete(client);
+}
+export function disposeDeletedDrafts(client: QueryClient, projectId: string, documentId: string, topicId?: string) {
+  const registry = registries.get(client);
+  if (!registry) return;
+  for (const [key, entry] of registry.entries) {
+    const [, project, document, topic] = JSON.parse(key) as string[];
+    if (project === projectId && document === documentId && (!topicId || topicId === topic)) {
+      entry.unsubscribe(); entry.controller.stop(); registry.entries.delete(key);
+    }
+  }
+}

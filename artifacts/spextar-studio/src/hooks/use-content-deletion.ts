@@ -1,4 +1,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useStudioSession } from '@/providers/session-provider';
+import { clearDeletedRecovery } from '@/services/topic-draft-recovery';
+import { disposeDeletedDrafts } from '@/features/content/topic-draft-registry';
 import type { DocumentRecord } from '@/domain/types';
 import { useServices } from '@/providers/services-provider';
 import { invalidateContent } from './use-content-mutation';
@@ -37,6 +40,7 @@ export function pruneDeletedContent(client: QueryClient, projectId: string, targ
 
 export function useContentDeletion(projectId: string, onDeleted: (target: DeleteTarget) => void) {
   const { documents } = useServices();
+  const { data: session } = useStudioSession();
   const client = useQueryClient();
   return useMutation({
     mutationKey: ['delete-content', projectId],
@@ -46,6 +50,8 @@ export function useContentDeletion(projectId: string, onDeleted: (target: Delete
       ? documents.deleteTopic(projectId, target.documentId, target.topicId, target.expectedUpdatedAt)
       : documents.deleteDocument(projectId, target.documentId, target.expectedUpdatedAt),
     onSuccess: async (_result, target) => {
+      disposeDeletedDrafts(client, projectId, target.documentId, target.topicId);
+      if (session?.mode === 'backend') clearDeletedRecovery(session.userId, projectId, target.documentId, target.topicId);
       rememberDeleted(client, projectId, target);
       await Promise.all([
         client.cancelQueries({ queryKey: ['documents', projectId] }),

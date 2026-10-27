@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { StudioSession } from '@/domain/types';
 import { ServiceError } from '@/services/contracts';
 import { useServices } from './services-provider';
+import { clearIdentityRecovery } from '@/services/topic-draft-recovery';
+import { disposeTopicDrafts } from '@/features/content/topic-draft-registry';
 
 interface SessionState {
   data: StudioSession | null;
@@ -25,6 +27,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const services = useServices();
   const request = useRef(0);
   const ending = useRef(false);
+  const acceptedIdentity = useRef<StudioSession | null>(null);
+  const dataCache = useRef<QueryClient | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [state, setState] = useState<SessionState>({
     data: null, isLoading: true, isError: false, error: null, revision: 0,
@@ -33,6 +37,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (session && session.mode !== services.mode) {
       throw new ServiceError('Session does not match the application mode.', 'unauthorized');
     }
+    const previous = acceptedIdentity.current;
+    if (previous?.mode === 'backend' && (session?.mode !== 'backend' || session.userId !== previous.userId)) {
+      if (dataCache.current) disposeTopicDrafts(dataCache.current);
+      clearIdentityRecovery(previous.userId);
+    }
+    acceptedIdentity.current = session;
     setState((old) => ({
       data: session, isLoading: false, isError: false, error: null,
       revision: old.data?.mode === session?.mode && old.data?.userId === session?.userId
@@ -101,19 +111,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [services, accept]);
   return (
     <SessionContext.Provider value={{ ...state, isSigningOut, refetch, enterDemo, signIn, signOut }}>
-      <ScopedDataCache key={`${services.mode}:${state.revision}`} >{children}</ScopedDataCache>
+      <ScopedDataCache key={`${services.mode}:${state.revision}`} clientRef={dataCache}>{children}</ScopedDataCache>
     </SessionContext.Provider>
   );
 }
 
-function ScopedDataCache({ children }: { children: ReactNode }) {
+function ScopedDataCache({ children, clientRef }: { children: ReactNode; clientRef: { current: QueryClient | null } }) {
   const [client] = useState(() => new QueryClient({
     defaultOptions: { queries: {
       retry: (count, error) => count < 1 && (!(error instanceof ServiceError) || error.code === 'network'),
       refetchOnWindowFocus: true, staleTime: 15_000,
     } },
   }));
+  clientRef.current = client;
   useEffect(() => () => {
+    disposeTopicDrafts(client);
+    if (clientRef.current === client) clientRef.current = null;
     void client.cancelQueries();
     client.clear(); // Includes mutation cache. Old requests cannot populate the new client.
   }, [client]);

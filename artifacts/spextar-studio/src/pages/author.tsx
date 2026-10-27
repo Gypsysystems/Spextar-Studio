@@ -19,6 +19,7 @@ import { ContentDialog, DocumentMetadataDialog } from '@/features/content/conten
 import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
 import { MetadataEditor, type TopicMetadataControls } from '@/features/content/metadata-editor';
 import { useContentMutation } from '@/hooks/use-content-mutation';
+import { TopicBodyEditor } from '@/features/content/topic-body-editor';
 
 const KIND_STYLE: Record<Topic['kind'], string> = {
   concept: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-400/10 dark:border-sky-400/25',
@@ -68,7 +69,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   }, [initialTopic, doc.id]);
   useEffect(() => {
     const guard = (event: BeforeUnloadEvent) => {
-      if (bodies.current.size) { event.preventDefault(); event.returnValue = ''; }
+      if (!backend && bodies.current.size) { event.preventDefault(); event.returnValue = ''; }
     };
     window.addEventListener('beforeunload', guard);
     return () => window.removeEventListener('beforeunload', guard);
@@ -77,7 +78,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   const nums = useMemo(() => numbering(topics), [topics]);
   const index = topics.findIndex((t) => t.id === selectedId);
   const selected = index >= 0 ? topics[index] : null;
-  const dirty = backend ? bodies.current.size > 0 : JSON.stringify(topics) !== JSON.stringify(doc.topics);
+  const dirty = !backend && JSON.stringify(topics) !== JSON.stringify(doc.topics);
 
   const siblings = selected ? topics.filter((t) => (t.parentTopicId ?? null) === (selected.parentTopicId ?? null)) : [];
   const siblingIndex = siblings.findIndex((t) => t.id === selected?.id);
@@ -187,7 +188,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       {/* Editor canvas */}
       <section aria-label="Topic editor" className="min-h-0 overflow-y-auto bg-[hsl(var(--surface-raised))]">
         <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b bg-card px-6 py-2.5">
-          <ScopeMarker kind="demo">{backend ? 'Topic body · session-only · not saved until F3' : 'Session-only edits · not saved'}</ScopeMarker>
+          <ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? 'Draft body · autosave' : 'Session-only edits · not saved'}</ScopeMarker>
           {dirty && (
             <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => {
               bodies.current.clear();
@@ -212,7 +213,10 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
               className="mt-3 h-auto border-none bg-transparent px-0 py-1 text-[28px] md:text-[28px] font-semibold leading-tight tracking-tight shadow-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0"
               data-testid="input-topic-title"
             />
-            <label htmlFor="topic-body" className="sr-only">Topic body</label>
+            {backend ? <TopicBodyEditor key={selected.id} doc={doc} topic={selected} onBody={(id, body) => {
+              bodies.current.set(id, body);
+              patch(id, { body });
+            }} /> : <><label htmlFor="topic-body" className="sr-only">Topic body</label>
             <Textarea
               id="topic-body"
               value={selected.body.join('\n\n')}
@@ -226,6 +230,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
               className="prose-doc mt-4 min-h-[340px] resize-none border-none bg-transparent px-0 shadow-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0"
               data-testid="input-topic-body"
             />
+            </>}
           </article></div>
         ) : (
           <div className="p-10"><EmptyState icon={FileText} title="No topic selected" body="Choose a topic from the outline." /></div>

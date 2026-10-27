@@ -23,7 +23,7 @@ function validateSettings(value: Record<string, unknown> | undefined) {
     || (typeof item === 'number' && Number.isFinite(item))
     || (Array.isArray(item) && item.every(valid))
     || (typeof item === 'object' && item !== null && Object.values(item).every(valid));
-  if (!valid(value) || 'body' in value || 'content' in value) throw new ServiceError('Settings must contain JSON metadata only. Topic body/content is not saved until F3.', 'validation');
+  if (!valid(value) || 'body' in value || 'content' in value) throw new ServiceError('Settings must contain JSON metadata only. Topic bodies are saved separately as topic drafts.', 'validation');
 }
 
 function validate<T>(schema: z.ZodType<T>, value: unknown, backend = false): T {

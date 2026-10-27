@@ -15,6 +15,7 @@ import type {
   Workspace,
   WorkspaceSummary,
 } from '@/domain/types';
+import type { DraftScope, TopicContent, TopicDraft } from '@/domain/topic-content';
 
 /**
  * Service seams. The UI only talks to these interfaces through `useServices()`.
@@ -85,6 +86,13 @@ export interface Services {
   workspaces: WorkspaceService;
   projects: ProjectService;
   documents: DocumentService;
+  topicDrafts: TopicDraftService;
+}
+
+export interface TopicDraftService {
+  get(scope: DraftScope): Promise<TopicDraft | null>;
+  /** null means first insert, never upsert. Revision advancement belongs to the database. */
+  save(scope: DraftScope, content: TopicContent, expectedRevision: number | null): Promise<TopicDraft>;
 }
 
 export class ServiceError extends Error {
