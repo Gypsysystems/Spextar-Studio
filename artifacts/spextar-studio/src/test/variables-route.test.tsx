@@ -77,7 +77,7 @@ describe('Variables & Conditions project route', () => {
     await user.click(screen.getByRole('tab', { name: 'Conditional tags' }));
     expect(await screen.findByTestId('panel-conditions')).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Output preview' }));
-    expect(screen.getByTestId('panel-preview-coming')).toBeVisible();
+    expect(screen.getByTestId('panel-output-preview')).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Variables' }));
     expect(screen.getByTestId('panel-variable-list')).toBeVisible();
   });

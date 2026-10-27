@@ -10,6 +10,7 @@ import { useProjectVariables, useVariableMutation, useValidateVariables, type Va
 import type { ProjectSummary } from '@/domain/types';
 import type { ProjectVariable, VariableOutputId } from '@/domain/project-variables';
 import { DetailsSkeleton, VariableDetails, VariableList, VariableRail } from '@/features/variables/variable-panels';
+import { VariableOutputPreview } from '@/features/variables/variable-output-preview';
 import { ConditionsTab } from '@/features/conditions/conditions-tab';
 import { IdentityDialog, MutationError, VariableFormDialog } from '@/features/variables/variable-dialogs';
 
@@ -71,7 +72,7 @@ function VariablesBody({ project }: { project: ProjectSummary }) {
       <PageHeader
         eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{onVars ? (backend ? canEdit ? 'Live variables' : 'Live variables · read-only access' : 'Demo · variable edits last for this session only')
           : tab === 'conditions' ? (backend ? canEdit ? 'Live conditional tags' : 'Live conditional tags · read-only access' : 'Demo · condition edits last for this session only')
-          : 'Output preview · coming next'}</ScopeMarker>}
+          : (backend ? 'Live output preview · read-only' : 'Demo output preview · read-only')}</ScopeMarker>}
         title="Variables & Conditions"
         description="Manage reusable values and conditional content for this project."
         actions={onVars ? <>
@@ -107,11 +108,7 @@ function VariablesBody({ project }: { project: ProjectSummary }) {
           <ConditionsTab projectId={project.id} canEdit={canEdit} />
         </TabsContent>
         <TabsContent value="preview" className="mt-6">
-          <div className="rounded-lg border border-dashed p-8 text-center" data-testid="panel-preview-coming">
-            <ScopeMarker kind="placeholder">Coming next</ScopeMarker>
-            <p className="mt-3 text-[14px] font-medium">Output preview is not available yet.</p>
-            <p className="mt-1 text-[13px] text-muted-foreground">This tab will arrive in a later release. Variables and conditional tags are managed here today.</p>
-          </div>
+          <VariableOutputPreview projectId={project.id} />
         </TabsContent>
       </Tabs>
 

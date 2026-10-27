@@ -61,7 +61,7 @@ describe('Conditional tags route and management', () => {
     expect(screen.getByTestId('panel-conditions')).toHaveClass('grid');
     expect(screen.getByTestId('panel-condition-rail')).toHaveClass('min-w-0');
     await user.click(screen.getByRole('tab', { name: 'Output preview' }));
-    expect(screen.getByTestId('panel-preview-coming')).toBeVisible();
+    expect(screen.getByTestId('panel-output-preview')).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Variables' }));
     expect(screen.getByTestId('button-new-variable')).toBeVisible();
     expect(screen.getByTestId('button-validate-project')).toBeVisible();
