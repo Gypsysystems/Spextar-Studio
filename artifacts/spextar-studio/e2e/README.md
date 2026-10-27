@@ -54,6 +54,19 @@ native actionability-checked taps and visible controls, not injected DOM clicks.
   mobile drawers, direct route refreshes, semantic themes and approved vectors.
 - Explicit Admin/Author, Reviewer/Viewer and inherited workspace-admin controls;
   Project Settings remains admin-only.
+- Project Settings administration: explicit metadata saves and validation, scoped
+  expected-timestamp writes, server-owned audit preservation, cache refresh and
+  reload; permission/network failures retain edits; stale reads and read/write
+  races require explicit reload/discard rather than overwriting newer values.
+- Confirmed archive/restore changes status only; dirty details block the action.
+  Existing-workspace-member add, confirmed role changes and confirmed removal
+  refresh membership/candidate lists without removing workspace membership.
+  Self-demotion/removal stays blocked; revoked administration is checked again
+  before a write. Organization ownership/workspace administration do not elevate
+  Author, Reviewer, Viewer or inherited-only project access.
+- Settings read failures retry explicitly and foreign workspace rows fail closed.
+  The Settings wire model is opt-in; independent unit tests protect its allowed
+  tables, fields, scope filters, expected role/timestamp guards and denied writes.
 - Structured Author autosave, first insert, expected-revision updates, preserved
   metadata/node IDs, stale-write rejection, explicit retry/reload, recovery
   restore/discard and read-only body behavior.
@@ -69,6 +82,8 @@ native actionability-checked taps and visible controls, not injected DOM clicks.
 These are controlled browser regressions—not live email-delivery/password
 validation, cross-user RLS certification, real multi-browser database races,
 visual pixel-diff approval, or a supported-browser matrix beyond Chromium.
+In particular, Settings wire responses do not establish an atomic last-admin
+database invariant or exercise real user membership changes.
 
 ## Reports and maintenance
 

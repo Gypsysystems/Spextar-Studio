@@ -1,4 +1,5 @@
 import { test as base, expect, type Page, type Locator, type BrowserContext, type Route } from '@playwright/test';
+import { SettingsWire } from './settings-wire';
 
 export const projectPath = '/workspaces/ws-a/projects/project-a';
 export const authKey = 'spextar.backend.luyyxblmtupmugtazgbr.auth';
@@ -21,6 +22,7 @@ export class Backend {
   offlineLogout = false;
   failDraftWrites = false;
   conflictNextSave = false;
+  readonly settings = new SettingsWire();
   readonly failures = new Set<string>();
   readonly unexpected: string[] = [];
   readonly writes: { table: string; method: string; query: string; body: Row }[] = [];
@@ -111,11 +113,26 @@ export class Backend {
       this.reads.push({ table, query: url.search });
       await this.gates.get(table);
       if (this.failures.has(table)) return send(403, { code: '42501', message: 'Controlled permission error' });
+      if (this.settings.enabled && table === 'projects'
+        && url.searchParams.get('select') === 'id,workspace_id,name,slug,description,status,updated_at') {
+        if (url.searchParams.get('id') !== 'eq.project-a' || url.searchParams.get('workspace_id') !== 'eq.ws-a') {
+          this.unexpected.push('Unscoped Settings read');
+          return send(403, { code: '42501', message: 'Missing Settings scope' });
+        }
+        if (this.settings.failReads) return send(503, { message: 'Controlled Settings read failure' });
+        if (this.settings.foreignRead) return send(200, [{ ...this.db.projects[0], workspace_id: 'ws-foreign' }]);
+      }
     } else {
-      const patch = request.postDataJSON() as Row;
+      const patch = request.postData() ? request.postDataJSON() as Row : {};
       this.writes.push({ table, method: request.method(), query: url.search, body: patch });
+      if (table === 'projects' || table === 'project_members') {
+        const result = this.settings.handle({ table, method: request.method(), url, body: patch, identity: this.identity, db: this.db });
+        if (result.violation) this.unexpected.push(result.violation);
+        const single = request.headers().accept?.includes('application/vnd.pgrst.object+json');
+        return send(result.status, single && Array.isArray(result.data) ? result.data[0] ?? null : result.data);
+      }
       const editable = this.role === 'admin' || this.role === 'author';
-      // All writes except the existing revision-safe Topic draft contract fail the test.
+      // Settings writes are opt-in above; all other writes must match the Topic draft contract.
       if (!editable || table !== 'topic_drafts' || !['POST', 'PATCH'].includes(request.method())
         || Object.keys(patch).some(key => !['topic_id', 'content', 'updated_by'].includes(key))
         || patch.updated_by !== this.identity || !patch.content) {

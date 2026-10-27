@@ -48,6 +48,38 @@ The workspace build runs TypeScript plus both Studio and component-preview produ
 
 The permanent [controlled Playwright suite](e2e/README.md) builds a separate local production bundle with synthetic credentials and intercepted backend responses. It is repeatable browser regression coverage, not live Supabase/RLS certification.
 
+## Project administration safety gate
+
+The controlled suite now exercises the existing Project Settings contract end to
+end in all four desktop/mobile dark/light projects: metadata validation and explicit
+saves, cache refresh/deep-link reload, expected-timestamp conflicts, error/retry,
+archive/restore confirmation, existing-workspace-member add/change/remove, expected-role
+conflicts and administration revoked after form load. Read-only cases include
+organization ownership and workspace administration without explicit Project Admin.
+The opt-in Settings wire guard rejects unscoped writes, server-owned payload fields,
+unrelated tables and project deletion. These are contract regressions, not live RLS
+or atomic last-admin certification.
+
+### Why this readiness slice precedes another product placeholder
+
+The current source of truth is the route/service contract inventory in README.md,
+the F2/F3 documents, the supplied frozen visual specifications and existing tests.
+There is no separate authoritative continuation checklist or detailed frozen
+Settings screen in the repository. The following remaining areas cannot safely be
+implemented merely from route labels or planned-feature descriptions:
+
+- Publish needs authoritative output/release execution and snapshot contracts.
+- History needs historical revision storage/read/restore contracts; the current
+  draft revision counter alone is not revision history.
+- Style Guide needs confirmed terminology/rule storage and evaluation semantics.
+- Brand & Outputs needs confirmed brand/template/output configuration contracts;
+  the three existing variable-preview output identifiers are not such a contract.
+- Linked reusable insertion remains parked pending its persisted-reference contract.
+
+Project Settings already has complete typed administration services and documented
+live-shaped table operations, so closing its browser mutation-safety gap requires
+no invented persistence, product workflow, design, live writes or deployment.
+
 ## Remaining external readiness gaps
 
 - Real email/password confirmation/sign-in and authenticated multi-account RLS acceptance require authorized test users and safe test data. Controlled browser checks do not close this gap.
