@@ -1,8 +1,22 @@
 import { contentKey, contentText, emptyContent, withText, type DraftScope, type TopicContent, type TopicDraft } from '@/domain/topic-content';
 import { ServiceError, type TopicDraftService } from '@/services/contracts';
-import { clearMatchingRecovery, readRecovery, rememberRecovery, removeRecovery, type StoredRecovery } from '@/services/topic-draft-recovery';
+import { clearMatchingRecovery, readRecovery, rememberRecovery, removeRecovery } from '@/services/topic-draft-recovery';
 import { ensureNodeIds, supportsStructuredEditing } from '@/domain/structured-content';
 
+export interface DraftRecovery {
+  key: string; raw: string; copy: { content: TopicContent; baseRevision: number | null; editedAt: number };
+}
+export interface DraftRecoveryPort {
+  read(): DraftRecovery[];
+  remember(content: TopicContent, revision: number | null): void;
+  clearMatching(content: TopicContent): void;
+  remove(records: DraftRecovery[]): void;
+}
+type DraftSnapshot = Pick<TopicDraft, 'content' | 'revision' | 'updatedAt' | 'updatedBy'>;
+export interface StructuredDraftTransport {
+  get(): Promise<DraftSnapshot | null>;
+  save(content: TopicContent, revision: number | null): Promise<DraftSnapshot>;
+}
 export interface DraftState {
   status: 'loading' | 'saved' | 'unsaved' | 'saving' | 'error' | 'conflict';
   loaded: boolean;
@@ -11,13 +25,13 @@ export interface DraftState {
   revision: number | null;
   error: string | null;
   recoveryWarning: string | null;
-  recovery: StoredRecovery[];
+  recovery: DraftRecovery[];
 }
 
-/** One controller per identity+topic. No write-on-unmount or blind retry.
+/** One controller per identity+content scope. No write-on-unmount or blind retry.
  * Local edits are synchronously recoverable before a debounce/network request begins.
  */
-export class TopicDraftController {
+export class StructuredDraftController {
   private state: DraftState = {
     status: 'loading', loaded: false, content: emptyContent(), text: '', revision: null,
     error: null, recoveryWarning: null, recovery: [],
@@ -27,12 +41,12 @@ export class TopicDraftController {
   private alive = false;
   private epoch = 0;
   private running = false;
-  private saved: TopicDraft | null = null;
+  private saved: DraftSnapshot | null = null;
   private readonly debounce = 700;
   constructor(
-    private readonly service: TopicDraftService,
-    private readonly scope: DraftScope,
+    private readonly service: StructuredDraftTransport,
     readonly canEdit: boolean,
+    private readonly recovery: DraftRecoveryPort,
     private readonly afterSave: () => void = () => {},
     private readonly deleting: () => 'pending' | 'deleted' | undefined = () => undefined,
   ) {}
@@ -54,7 +68,7 @@ export class TopicDraftController {
     catch (error) { this.update({ recoveryWarning: error instanceof Error ? error.message : 'Browser recovery is unavailable.' }); }
   }
   private remember() {
-    this.recoveryAction(() => rememberRecovery(this.scope, this.state.content, this.state.revision));
+    this.recoveryAction(() => this.recovery.remember(this.state.content, this.state.revision));
   }
   reload = async () => {
     if (!this.alive || this.running) return;
@@ -62,14 +76,14 @@ export class TopicDraftController {
     const epoch = ++this.epoch;
     this.update({ status: 'loading', error: null });
     try {
-      const row = await this.service.get(this.scope);
+      const row = await this.service.get();
       if (!this.alive || epoch !== this.epoch) return;
       this.saved = row;
       const content = row?.content ?? emptyContent();
-      let recovery: StoredRecovery[] = [];
+      let recovery: DraftRecovery[] = [];
       if (this.canEdit) this.recoveryAction(() => {
-        clearMatchingRecovery(this.scope, content);
-        recovery = readRecovery(this.scope);
+        this.recovery.clearMatching(content);
+        recovery = this.recovery.read();
       });
       this.update({ content, text: contentText(content), revision: row?.revision ?? null, loaded: true, status: 'saved', error: null, recovery });
     } catch (error) {
@@ -104,7 +118,7 @@ export class TopicDraftController {
     this.timer = setTimeout(() => void this.flush(), this.debounce);
   };
   discard = () => {
-    this.recoveryAction(() => removeRecovery(this.state.recovery));
+    this.recoveryAction(() => this.recovery.remove(this.state.recovery));
     this.update({ recovery: [] });
   };
   retry = () => this.state.loaded ? this.flush(true) : this.reload();
@@ -118,7 +132,7 @@ export class TopicDraftController {
     if (deletion === 'pending') { this.timer = setTimeout(() => void this.flush(explicit), 100); return; }
     const content = this.state.content;
     if (contentKey(content) === contentKey(this.saved?.content ?? emptyContent())) {
-      this.recoveryAction(() => clearMatchingRecovery(this.scope, content));
+      this.recoveryAction(() => this.recovery.clearMatching(content));
       this.update({ status: 'saved', error: null });
       return;
     }
@@ -127,7 +141,7 @@ export class TopicDraftController {
     this.running = true;
     this.update({ status: 'saving', error: null });
     try {
-      const row = await this.service.save(this.scope, content, expected);
+      const row = await this.service.save(content, expected);
       if (!this.alive || epoch !== this.epoch) return;
       this.saved = row;
       const unchanged = contentKey(this.state.content) === contentKey(content);
@@ -135,7 +149,7 @@ export class TopicDraftController {
         revision: row.revision, status: unchanged ? 'saved' : 'unsaved', error: null,
         ...(unchanged ? { content: row.content, text: contentText(row.content) } : {}),
       });
-      this.recoveryAction(() => clearMatchingRecovery(this.scope, content));
+      this.recoveryAction(() => this.recovery.clearMatching(content));
       if (!unchanged) {
         this.remember();
         this.timer = setTimeout(() => void this.flush(), this.debounce);
@@ -148,4 +162,17 @@ export class TopicDraftController {
       });
     } finally { this.running = false; }
   };
+}
+
+/** Preserve the Topic API while sharing the exact save/conflict/recovery engine. */
+export class TopicDraftController extends StructuredDraftController {
+  constructor(service: TopicDraftService, scope: DraftScope, canEdit: boolean, afterSave: () => void = () => {},
+    deleting: () => 'pending' | 'deleted' | undefined = () => undefined) {
+    super({ get: () => service.get(scope), save: (content, revision) => service.save(scope, content, revision) }, canEdit, {
+      read: () => readRecovery(scope),
+      remember: (content, revision) => rememberRecovery(scope, content, revision),
+      clearMatching: content => clearMatchingRecovery(scope, content),
+      remove: records => removeRecovery(records),
+    }, afterSave, deleting);
+  }
 }

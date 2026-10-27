@@ -4,6 +4,7 @@ import type { StudioSession } from '@/domain/types';
 import { ServiceError } from '@/services/contracts';
 import { useServices } from './services-provider';
 import { clearIdentityRecovery } from '@/services/topic-draft-recovery';
+import { clearReusableIdentityRecovery } from '@/services/reusable-recovery';
 import { disposeTopicDrafts } from '@/features/content/topic-draft-registry';
 
 interface SessionState {
@@ -41,6 +42,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (previous?.mode === 'backend' && (session?.mode !== 'backend' || session.userId !== previous.userId)) {
       if (dataCache.current) disposeTopicDrafts(dataCache.current);
       clearIdentityRecovery(previous.userId);
+      clearReusableIdentityRecovery(previous.userId);
     }
     acceptedIdentity.current = session;
     setState((old) => ({

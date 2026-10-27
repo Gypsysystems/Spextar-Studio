@@ -7,6 +7,7 @@ import { SessionProvider } from '@/providers/session-provider';
 import { SessionGate } from '@/components/session-gate';
 import { createRuntimeServices } from '@/services/runtime';
 import type { Services } from '@/services/contracts';
+import ReusableContentPage from '@/pages/reusable-content';
 import NotFound from '@/pages/not-found';
 import SignInPage from '@/pages/sign-in';
 import WorkspacesPage from '@/pages/workspaces';
@@ -43,7 +44,7 @@ function ApplicationRoutes() {
         <Route path={`${P}/author/:documentId`} component={AuthorRoute} />
         <Route path={`${P}/review`}>{() => <SectionPlaceholderPage section="review" />}</Route>
         <Route path={`${P}/publish`}>{() => <SectionPlaceholderPage section="publish" />}</Route>
-        <Route path={`${P}/reusable-content`}>{() => <SectionPlaceholderPage section="reusable-content" />}</Route>
+        <Route path={`${P}/reusable-content`} component={ReusableContentPage} />
         <Route path={`${P}/variables-conditions`} component={VariablesConditionsPage} />
         <Route path={`${P}/style-guide`}>{() => <SectionPlaceholderPage section="style-guide" />}</Route>
         <Route path={`${P}/history`}>{() => <SectionPlaceholderPage section="history" />}</Route>

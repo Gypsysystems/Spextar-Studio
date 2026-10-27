@@ -26,6 +26,7 @@ import { isDemoSession, isWorkspaceArray, isProjectArray, isDocumentArray, works
 import { slugify, suggestKey } from '@/domain/project-identifiers';
 import { demoVariables } from './demo-variables';
 import { demoConditions } from './demo-conditions';
+import { demoReusable } from './demo-reusable';
 
 /**
  * Local demo adapter. Fixtures are read-only; anything the user creates or imports
@@ -60,6 +61,13 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
   };
   const variables = demoVariables(authorizeManagement);
   const conditions = demoConditions(authorizeManagement);
+  const reusable = demoReusable(async (c) => {
+    await authorizeManagement(c.projectId);
+    const project = allProjects().find(p => p.id === c.projectId);
+    const session = readJSON<DemoSession | null>(STORAGE_KEYS.session, null, isDemoSession);
+    if (!session || project?.workspaceId !== c.workspaceId) throw new ServiceError('Workspace/project scope is not accessible.', 'forbidden');
+    return { userId: session.userId, workspace: true, project: true };
+  });
 
   const summarise = (p: Project, docs: DocumentRecord[]): ProjectSummary => {
     const own = docs.filter((d) => d.projectId === p.id);
@@ -93,6 +101,7 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
     mode: 'demo',
     variables: variables.service,
     conditions: conditions.service,
+    reusable: reusable.service,
     auth: {
       async getSession() {
         await wait(120);
@@ -112,6 +121,7 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
         }
         variables.clear();
         conditions.clear();
+        reusable.clear();
       },
     },
 

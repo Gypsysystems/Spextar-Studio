@@ -50,7 +50,7 @@ export function rememberRecovery(scope: DraftScope, content: TopicContent, baseR
     localStorage.setItem(scopePrefix(scope) + tabId(), JSON.stringify(copy));
   } catch { throw new Error('Browser recovery could not be stored. Keep this tab open until the server save succeeds.'); }
 }
-export function removeRecovery(records: StoredRecovery[]) {
+export function removeRecovery(records: Pick<StoredRecovery, 'key' | 'raw'>[]) {
   for (const record of records) {
     // Never remove an intervening/newer edit from another tab.
     if (localStorage.getItem(record.key) === record.raw) localStorage.removeItem(record.key);

@@ -30,6 +30,8 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     project_variables: [],
     condition_categories: [],
     condition_values: [],
+    reusable_contents: [],
+    reusable_content_drafts: [],
   };
   const calls: { table: string; filters: [string, unknown][]; columns: string; patch?: Row; insert?: Row; deleted?: boolean }[] = [];
   const beforeDelete = vi.fn((_table: string) => {});
@@ -64,6 +66,18 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
         if (db.topic_drafts.some((row) => row.topic_id === this.inserting!.topic_id)) error = { code: '23505' };
         else db.topic_drafts.push({ ...this.inserting, revision: 1, updated_at: new Date().toISOString() });
       }
+      if (this.inserting && !error && this.table === 'reusable_content_drafts') {
+        if (db.reusable_content_drafts.some(row => row.reusable_content_id === this.inserting!.reusable_content_id)) error = { code: '23505' };
+        else db.reusable_content_drafts.push({ ...this.inserting, revision: 1, updated_at: at, updated_by: testUser.id });
+      }
+      if (this.inserting && !error && this.table === 'reusable_contents') {
+        if (db.reusable_contents.some(row => row.workspace_id === this.inserting!.workspace_id && row.project_id === this.inserting!.project_id && row.slug === this.inserting!.slug))
+          error = { code: '23505' };
+        else {
+          this.insertedId = crypto.randomUUID();
+          db.reusable_contents.push({ ...this.inserting, id: this.insertedId, created_by: testUser.id, created_at: at, updated_at: at });
+        }
+      }
       if (this.inserting && !error && this.table === 'project_variables') {
         if (db.project_variables.some((row) => row.project_id === this.inserting!.project_id && row.key === this.inserting!.key)) error = { code: '23505' };
         else {
@@ -83,11 +97,18 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
       }
       let rows = (db[this.table] ?? []).filter((row) => this.filters.every(([column, value]) =>
         Array.isArray(value) ? value.includes(row[column]) : row[column] === value));
-      if (this.inserting) rows = rows.filter((row) => ['project_variables', 'condition_categories', 'condition_values'].includes(this.table)
-        ? row.id === this.insertedId : row.topic_id === this.inserting!.topic_id);
+      if (this.inserting) rows = rows.filter((row) => ['project_variables', 'condition_categories', 'condition_values', 'reusable_contents'].includes(this.table)
+        ? row.id === this.insertedId : this.table === 'reusable_content_drafts'
+          ? row.reusable_content_id === this.inserting!.reusable_content_id : row.topic_id === this.inserting!.topic_id);
       if (this.patch && !error) rows.forEach((row) => Object.assign(row, this.patch));
       if (this.patch && !error && this.table === 'topic_drafts') rows.forEach((row) => {
         row.revision = Number(row.revision) + 1; row.updated_at = new Date().toISOString();
+      });
+      if (this.patch && !error && this.table === 'reusable_content_drafts') rows.forEach(row => {
+        row.revision = Number(row.revision) + 1; row.updated_at = new Date().toISOString(); row.updated_by = testUser.id;
+      });
+      if (this.patch && !error && this.table === 'reusable_contents') rows.forEach(row => {
+        row.updated_at = new Date().toISOString();
       });
       if (this.deleting && !error) db[this.table] = (db[this.table] ?? []).filter((row) => !rows.includes(row));
       if (this.bounds) rows = rows.slice(this.bounds[0], this.bounds[1] + 1);

@@ -11,6 +11,7 @@ import { SUPABASE_STORAGE_KEY } from './supabase-client';
 import { supabaseTopicDrafts } from './supabase-topic-drafts';
 import { supabaseVariables } from './supabase-variables';
 import { supabaseConditions } from './supabase-conditions';
+import { supabaseReusable } from './supabase-reusable';
 
 const orgRole = z.enum(['owner', 'admin', 'member']);
 const workspaceRole = z.enum(['admin', 'member', 'viewer']);
@@ -173,6 +174,15 @@ export function createSupabaseServices(client: SupabaseClient): Services {
     mode: 'backend',
     variables: supabaseVariables(client, requireProject),
     conditions: supabaseConditions(client, requireProject),
+    reusable: supabaseReusable(client, async (c) => {
+      const before = await context(false);
+      const project = await requireProject(c.projectId);
+      if (project.workspaceId !== c.workspaceId) throw new ServiceError('Project is outside this workspace.', 'forbidden');
+      const workspace = await requireWorkspace(c.workspaceId);
+      const after = await context(false);
+      if (before.userId !== after.userId) throw new ServiceError('The signed-in identity changed.', 'unauthorized');
+      return { userId: after.userId, workspace: workspace.role === 'admin', project: project.canEditContent === true };
+    }),
     topicDrafts: supabaseTopicDrafts(client, () => context(false), requireProject),
     auth: {
       getSession: restore,

@@ -18,6 +18,7 @@ import type {
 import type { DraftScope, TopicContent, TopicDraft } from '@/domain/topic-content';
 import type { ProjectVariableService } from '@/domain/project-variables';
 import type { ProjectConditionService } from '@/domain/project-conditions';
+import type { ReusableService } from '@/domain/reusable-content';
 
 /**
  * Service seams. The UI only talks to these interfaces through `useServices()`.
@@ -91,6 +92,7 @@ export interface Services {
   topicDrafts: TopicDraftService;
   variables: ProjectVariableService;
   conditions: ProjectConditionService;
+  reusable: ReusableService;
 }
 
 export interface TopicDraftService {

@@ -1,14 +1,14 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { TopicDraftController } from './topic-draft-controller';
+import type { StructuredDraftController } from './topic-draft-controller';
 
-interface Entry { controller: TopicDraftController; mounts: number; unsubscribe: () => void }
+interface Entry { controller: StructuredDraftController; mounts: number; unsubscribe: () => void; kind: 'topic' | 'reusable' }
 interface Registry { entries: Map<string, Entry>; guard: (event: BeforeUnloadEvent) => void }
 const registries = new WeakMap<QueryClient, Registry>();
 
 /** Pending saves survive ordinary topic/route changes, but not an identity-cache teardown.
  * Clean, unobserved controllers are evicted instead of retaining whole bodies indefinitely.
  */
-export function draftEntry(client: QueryClient, key: string, create: () => TopicDraftController) {
+export function draftEntry(client: QueryClient, key: string, create: () => StructuredDraftController, kind: 'topic' | 'reusable' = 'topic') {
   let registry = registries.get(client);
   if (!registry) {
     const entries = new Map<string, Entry>();
@@ -24,7 +24,7 @@ export function draftEntry(client: QueryClient, key: string, create: () => Topic
   const owner = registry;
   let entry = owner.entries.get(key);
   if (!entry) {
-    entry = { controller: create(), mounts: 0, unsubscribe: () => {} };
+    entry = { controller: create(), mounts: 0, unsubscribe: () => {}, kind };
     owner.entries.set(key, entry);
     const captured = entry;
     entry.unsubscribe = entry.controller.subscribe(() => {
@@ -61,6 +61,7 @@ export function disposeDeletedDrafts(client: QueryClient, projectId: string, doc
   const registry = registries.get(client);
   if (!registry) return;
   for (const [key, entry] of registry.entries) {
+    if (entry.kind !== 'topic') continue;
     const [, project, document, topic] = JSON.parse(key) as string[];
     if (project === projectId && document === documentId && (!topicId || topicId === topic)) {
       entry.unsubscribe(); entry.controller.stop(); registry.entries.delete(key);

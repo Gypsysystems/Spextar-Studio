@@ -1,5 +1,20 @@
 # SPEXTAR Studio
 
+## F3 — Reusable Content Management
+
+The existing project Reusable content route now manages workspace-shared and project-scoped items through `Services.reusable`. It includes searchable/filterable library selection, details, create/edit/rename/duplicate, tags, status, update policy, description/settings, and an on-demand structured draft editor. Scope and slug remain immutable after creation; rename preserves identity and slug. There is no delete or Author insertion.
+
+- Backend uses only authenticated `reusable_contents` and `reusable_content_drafts` table operations. Every request verifies the current workspace/project context; malformed/foreign rows fail closed. Server IDs and audit fields are not assigned or rewritten by the client.
+- Project items require explicit Project Admin/Author membership. Workspace-shared items use the existing workspace-administration authority. Inherited workspace administration does not grant project-content editing. Controls are read-only for other roles and RLS remains authoritative.
+- Draft inserts establish revision 1; updates filter by the last-read revision and the database advances the revision. No save RPC/upsert/schema change is introduced. The returned saved row supplies the revision. Zero-row updates and first-insert races are conflicts, not overwrite permission.
+- Topic and reusable drafts share the same debounced structured save/conflict engine. Backend browser recovery is separately namespaced by identity, workspace, project and item. Restore/discard is explicit; matching confirmed saves clear matching copies, and sign-out disposes both controller types and clears the departing identity's recovery.
+- Demo items/bodies use adapter-owned session memory; no reusable state/recovery is persisted to browser storage and no Supabase client is used. Demo sign-out clears this memory.
+- Duplication snapshots persisted content, settings and tags into a new draft-status item. It is a two-table client operation, **not an atomic database duplication RPC**. If body copying fails or a new copy has already been edited, the created item is selected with a prominent partial-copy warning. The original is unchanged; no destructive rollback or blind duplicate retry occurs.
+- Unknown/future structured content is retained losslessly and read-only. Copying unsupported bodies is blocked rather than flattening them. The editor loads only on Open draft; Author remains a lazy route and its editor engine is absent from initial JavaScript.
+- Where-used/reference tracking is unavailable. Notify/manual/auto record future linked-update intent only; this slice does not propagate changes, publish, approve, insert references, or fabricate usage counts.
+
+Automated/controlled-browser checks validate application behavior and contracts, not live multi-account RLS certification. Exact applied migration SQL source control remains a separate task.
+
 ## F3 Slice 2B1-B — Conditional Tags Management
 
 The existing Variables & Conditions route now includes a functional Conditional tags tab. Categories and values are project-scoped through the same authenticated service boundary as Variables. Backend mode uses `condition_categories` and `condition_values` only; errors never fall back to demo fixtures. No migrations or Auth changes are included.
@@ -40,7 +55,8 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector with open-source Tiptap. Backend metadata/tree and structured JSON drafts persist; demo bodies stay session-only | F2 + F3 Slices 1/2A |
 | `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
 | `…/variables-conditions` | Text variable management, output overrides, scoped validation, category/value management; Output preview tab coming next | Supabase or session-only demo |
-| `…/reusable-content`, `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
+| `…/reusable-content` | Scoped reusable metadata and structured drafts | Supabase / isolated session demo |
+| `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
 | anything else | Not found. Unknown workspace, project and document IDs also show not-found inside the shell | — |
 
 Breadcrumbs: Workspaces → workspace → project → page/document.
