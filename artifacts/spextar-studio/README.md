@@ -23,10 +23,23 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `…/documents` | Live document list, expandable topic outlines, create/duplicate, metadata and confirmed empty-document deletion | Supabase or isolated demo |
 | `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector with open-source Tiptap. Backend metadata/tree and structured JSON drafts persist; demo bodies stay session-only | F2 + F3 Slices 1/2A |
 | `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
-| `…/reusable-content`, `…/variables-conditions`, `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
+| `…/variables-conditions` | Text variable management, output overrides, scoped validation; Conditions/Output preview tabs coming next | Supabase or session-only demo |
+| `…/reusable-content`, `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
 | anything else | Not found. Unknown workspace, project and document IDs also show not-found inside the shell | — |
 
 Breadcrumbs: Workspaces → workspace → project → page/document.
+
+## F3 Variables Management (Slice 2B1-A)
+
+- The supplied written specification extracted from frozen Figma node `37:276` is the visual contract: existing project shell, three text tabs, responsive list/details/reference rail, semantic dark/light cards, and violet selection. The actual Figma file was not fetched.
+- `Services.variables` exposes list/create/update/rename/duplicate and nonmutating validation. Backend mode uses normal authenticated `public.project_variables` table operations only, never fixtures or new RPCs. Every query/write is project-scoped; existing organization/project resolution and explicit `project.canEditContent === true` gate writes. RLS remains the final authority. Reviewer/Viewer and inherited Workspace Admin without explicit Project Admin/Author membership are read-only.
+- The exact selected columns are `id, project_id, name, key, value_type, value, description, required, output_values, created_at, updated_at`. New writes supply only editable fields plus project ID on insert; IDs, ownership and timestamps stay server-controlled. Rename changes name/key only; duplication creates a new server-assigned ID with copied values and overrides.
+- This slice supports `value_type: "text"` and JSONB **string** `value` (not an object and not an additional JSON-encoded string). `output_values` is a JSON object with stable IDs `web-help`, `pdf-manual`, `word-review`, each containing a string override when present. Empty/whitespace-only or missing overrides resolve to the unchanged default string. Unknown output IDs/types, null/non-string values, malformed dates and foreign project records fail explicitly; no unsupported values are silently dropped or coerced.
+- Names are nonblank, single-line and at most 120 characters. Keys use letters, digits and underscores, start with a letter/underscore, and are at most 80 characters. Text values/overrides allow up to 50,000 characters; descriptions allow up to 2,000. The database enforces its own uniqueness and constraints; conflicting keys are reported without retries or fallback. A required default cannot be saved blank. Existing required-empty rows remain readable and are flagged by validation.
+- “Validate project” checks **variable definitions only**, including missing required defaults and malformed/unsupported rows/overrides. It reports all row issues without changing data. It does not claim to validate references, inserted tokens, conditional content, outputs or publishing.
+- Demo variables use the same contract with adapter-owned in-memory sample data. Changes are session-only, never sent to Supabase or stored in browser storage, and are cleared on demo sign-out; reloading recreates the demo samples.
+- No deletion API/UI, semantic insertion, usage counts, document references, conditional tags, reusable content, publishing or schema migration is included. The rail explicitly states that reference tracking depends on future variable insertion. The separate Output preview tab is coming next; the selected variable's resolved-value rail is not an output rendering engine.
+- Saves are explicit form submissions with field/error preservation and cache invalidation, not topic-body autosave. Existing Author/editor loading, structured JSON, topic autosave/concurrency/recovery and F2 behavior are unchanged.
 
 ## Structure
 

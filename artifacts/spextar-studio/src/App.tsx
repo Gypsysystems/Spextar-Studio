@@ -14,6 +14,7 @@ import ProjectsPage from '@/pages/projects';
 import ProjectHomePage from '@/pages/project-home';
 import DocumentsPage from '@/pages/documents';
 import { AuthorRoute } from '@/routes/author-route';
+import VariablesConditionsPage from '@/pages/variables-conditions';
 import { SectionPlaceholderPage } from '@/pages/section-placeholder';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 
@@ -43,7 +44,7 @@ function ApplicationRoutes() {
         <Route path={`${P}/review`}>{() => <SectionPlaceholderPage section="review" />}</Route>
         <Route path={`${P}/publish`}>{() => <SectionPlaceholderPage section="publish" />}</Route>
         <Route path={`${P}/reusable-content`}>{() => <SectionPlaceholderPage section="reusable-content" />}</Route>
-        <Route path={`${P}/variables-conditions`}>{() => <SectionPlaceholderPage section="variables-conditions" />}</Route>
+        <Route path={`${P}/variables-conditions`} component={VariablesConditionsPage} />
         <Route path={`${P}/style-guide`}>{() => <SectionPlaceholderPage section="style-guide" />}</Route>
         <Route path={`${P}/history`}>{() => <SectionPlaceholderPage section="history" />}</Route>
         <Route path={`${P}/settings`}>{() => <SectionPlaceholderPage section="settings" />}</Route>

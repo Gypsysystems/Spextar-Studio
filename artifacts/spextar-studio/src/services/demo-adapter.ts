@@ -24,6 +24,7 @@ import { formatIssues, importSchema } from './import-schema';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from './storage';
 import { isDemoSession, isWorkspaceArray, isProjectArray, isDocumentArray, workspaceInputSchema, projectInputSchema } from './validation';
 import { slugify, suggestKey } from '@/domain/project-identifiers';
+import { demoVariables } from './demo-variables';
 
 /**
  * Local demo adapter. Fixtures are read-only; anything the user creates or imports
@@ -51,10 +52,15 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
   const allWorkspaces = () => [...DEMO_WORKSPACES, ...userWorkspaces()];
   const allProjects = () => [...DEMO_PROJECTS, ...userProjects()];
   const allDocuments = () => [...DEMO_DOCUMENTS, ...userDocuments()];
+  const variables = demoVariables(async (pid) => {
+    if (!readJSON<DemoSession | null>(STORAGE_KEYS.session, null, isDemoSession))
+      throw new ServiceError('Start a demo session first.', 'unauthorized');
+    if (!allProjects().some((project) => project.id === pid)) throw new ServiceError('Project not found.', 'not-found');
+  });
 
   const summarise = (p: Project, docs: DocumentRecord[]): ProjectSummary => {
     const own = docs.filter((d) => d.projectId === p.id);
-    return { ...p, documentCount: own.length, topicCount: own.reduce((n, d) => n + d.topics.length, 0) };
+    return { ...p, documentCount: own.length, topicCount: own.reduce((n, d) => n + d.topics.length, 0), canEditContent: true };
   };
 
   const requireWorkspace = (workspaceId: string) => {
@@ -82,6 +88,7 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
 
   return {
     mode: 'demo',
+    variables: variables.service,
     auth: {
       async getSession() {
         await wait(120);
@@ -99,6 +106,7 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
         if (!removeKey(STORAGE_KEYS.session)) {
           throw new ServiceError('Could not remove the stored demo session. Browser storage is unavailable.', 'storage');
         }
+        variables.clear();
       },
     },
 

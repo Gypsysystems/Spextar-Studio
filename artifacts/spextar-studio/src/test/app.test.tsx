@@ -137,7 +137,7 @@ describe('foundation routes and navigation', () => {
     await mount(path);
     expect(await screen.findByTestId('state-not-found')).toBeVisible();
   });
-  it.each(['review', 'publish', 'reusable-content', 'variables-conditions', 'style-guide', 'history', 'settings', 'brand-outputs'])(
+  it.each(['review', 'publish', 'reusable-content', 'style-guide', 'history', 'settings', 'brand-outputs'])(
     'preserves the %s route as a labelled placeholder', async (section) => {
       await mount(`${base}/${section}`);
       expect(await screen.findByText('Route-ready placeholder')).toBeVisible();

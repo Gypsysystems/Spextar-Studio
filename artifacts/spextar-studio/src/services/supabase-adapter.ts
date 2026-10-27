@@ -9,6 +9,7 @@ import { contentCounts, supabaseDocuments } from './supabase-documents';
 import { projectInputSchema, workspaceInputSchema } from './validation';
 import { SUPABASE_STORAGE_KEY } from './supabase-client';
 import { supabaseTopicDrafts } from './supabase-topic-drafts';
+import { supabaseVariables } from './supabase-variables';
 
 const orgRole = z.enum(['owner', 'admin', 'member']);
 const workspaceRole = z.enum(['admin', 'member', 'viewer']);
@@ -169,6 +170,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
 
   return {
     mode: 'backend',
+    variables: supabaseVariables(client, requireProject),
     topicDrafts: supabaseTopicDrafts(client, () => context(false), requireProject),
     auth: {
       getSession: restore,

@@ -14,6 +14,7 @@ export const qk = {
   activity: (id: string) => ['activity', id] as const,
   documents: (pid: string) => ['documents', pid] as const,
   document: (pid: string, id: string) => ['document', pid, id] as const,
+  variables: (pid: string) => ['variables', pid] as const,
 };
 
 export function useSession() {

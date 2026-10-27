@@ -27,6 +27,7 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     documents: [],
     topics: [],
     topic_drafts: [],
+    project_variables: [],
   };
   const calls: { table: string; filters: [string, unknown][]; columns: string; patch?: Row; insert?: Row; deleted?: boolean }[] = [];
   const beforeDelete = vi.fn((_table: string) => {});
@@ -38,6 +39,7 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     single = false;
     patch?: Row;
     inserting?: Row;
+    insertedId?: string;
     deleting = false;
     bounds?: [number, number];
     constructor(readonly table: string) {}
@@ -60,9 +62,17 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
         if (db.topic_drafts.some((row) => row.topic_id === this.inserting!.topic_id)) error = { code: '23505' };
         else db.topic_drafts.push({ ...this.inserting, revision: 1, updated_at: new Date().toISOString() });
       }
+      if (this.inserting && !error && this.table === 'project_variables') {
+        if (db.project_variables.some((row) => row.project_id === this.inserting!.project_id && row.key === this.inserting!.key)) error = { code: '23505' };
+        else {
+          this.insertedId = crypto.randomUUID();
+          db.project_variables.push({ ...this.inserting, id: this.insertedId, created_at: at, updated_at: at });
+        }
+      }
       let rows = (db[this.table] ?? []).filter((row) => this.filters.every(([column, value]) =>
         Array.isArray(value) ? value.includes(row[column]) : row[column] === value));
-      if (this.inserting) rows = rows.filter((row) => row.topic_id === this.inserting!.topic_id);
+      if (this.inserting) rows = rows.filter((row) => this.table === 'project_variables'
+        ? row.id === this.insertedId : row.topic_id === this.inserting!.topic_id);
       if (this.patch && !error) rows.forEach((row) => Object.assign(row, this.patch));
       if (this.patch && !error && this.table === 'topic_drafts') rows.forEach((row) => {
         row.revision = Number(row.revision) + 1; row.updated_at = new Date().toISOString();

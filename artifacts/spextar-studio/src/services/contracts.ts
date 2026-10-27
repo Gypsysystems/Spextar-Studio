@@ -16,6 +16,7 @@ import type {
   WorkspaceSummary,
 } from '@/domain/types';
 import type { DraftScope, TopicContent, TopicDraft } from '@/domain/topic-content';
+import type { ProjectVariableService } from '@/domain/project-variables';
 
 /**
  * Service seams. The UI only talks to these interfaces through `useServices()`.
@@ -87,6 +88,7 @@ export interface Services {
   projects: ProjectService;
   documents: DocumentService;
   topicDrafts: TopicDraftService;
+  variables: ProjectVariableService;
 }
 
 export interface TopicDraftService {
