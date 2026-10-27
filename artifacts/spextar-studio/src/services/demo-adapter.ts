@@ -25,6 +25,7 @@ import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from './storage';
 import { isDemoSession, isWorkspaceArray, isProjectArray, isDocumentArray, workspaceInputSchema, projectInputSchema } from './validation';
 import { slugify, suggestKey } from '@/domain/project-identifiers';
 import { demoVariables } from './demo-variables';
+import { demoConditions } from './demo-conditions';
 
 /**
  * Local demo adapter. Fixtures are read-only; anything the user creates or imports
@@ -52,11 +53,13 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
   const allWorkspaces = () => [...DEMO_WORKSPACES, ...userWorkspaces()];
   const allProjects = () => [...DEMO_PROJECTS, ...userProjects()];
   const allDocuments = () => [...DEMO_DOCUMENTS, ...userDocuments()];
-  const variables = demoVariables(async (pid) => {
+  const authorizeManagement = async (pid: string) => {
     if (!readJSON<DemoSession | null>(STORAGE_KEYS.session, null, isDemoSession))
       throw new ServiceError('Start a demo session first.', 'unauthorized');
     if (!allProjects().some((project) => project.id === pid)) throw new ServiceError('Project not found.', 'not-found');
-  });
+  };
+  const variables = demoVariables(authorizeManagement);
+  const conditions = demoConditions(authorizeManagement);
 
   const summarise = (p: Project, docs: DocumentRecord[]): ProjectSummary => {
     const own = docs.filter((d) => d.projectId === p.id);
@@ -89,6 +92,7 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
   return {
     mode: 'demo',
     variables: variables.service,
+    conditions: conditions.service,
     auth: {
       async getSession() {
         await wait(120);
@@ -107,6 +111,7 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
           throw new ServiceError('Could not remove the stored demo session. Browser storage is unavailable.', 'storage');
         }
         variables.clear();
+        conditions.clear();
       },
     },
 

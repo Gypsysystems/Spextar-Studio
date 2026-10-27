@@ -75,7 +75,7 @@ describe('Variables & Conditions project route', () => {
     expect(screen.getByText('No variables match')).toBeVisible();
     await user.click(screen.getByTestId('button-clear-variable-search'));
     await user.click(screen.getByRole('tab', { name: 'Conditional tags' }));
-    expect(screen.getByTestId('panel-conditions-coming')).toBeVisible();
+    expect(await screen.findByTestId('panel-conditions')).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Output preview' }));
     expect(screen.getByTestId('panel-preview-coming')).toBeVisible();
     await user.click(screen.getByRole('tab', { name: 'Variables' }));

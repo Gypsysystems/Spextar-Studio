@@ -10,6 +10,7 @@ import { useProjectVariables, useVariableMutation, useValidateVariables, type Va
 import type { ProjectSummary } from '@/domain/types';
 import type { ProjectVariable, VariableOutputId } from '@/domain/project-variables';
 import { DetailsSkeleton, VariableDetails, VariableList, VariableRail } from '@/features/variables/variable-panels';
+import { ConditionsTab } from '@/features/conditions/conditions-tab';
 import { IdentityDialog, MutationError, VariableFormDialog } from '@/features/variables/variable-dialogs';
 
 type DialogState = null | 'create' | 'edit' | 'rename' | 'duplicate';
@@ -39,6 +40,8 @@ function VariablesBody({ project }: { project: ProjectSummary }) {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [dialogTarget, setDialogTarget] = useState<ProjectVariable | null>(null);
   const [output, setOutput] = useState<VariableOutputId>('web-help');
+  const [tab, setTab] = useState('variables');
+  const onVars = tab === 'variables';
 
   const all = useMemo(() => vars.data ?? [], [vars.data]);
   const list = useMemo(() => {
@@ -66,20 +69,22 @@ function VariablesBody({ project }: { project: ProjectSummary }) {
   return (
     <div className="mx-auto w-full max-w-[1440px] px-5 py-8 md:px-10 md:py-10">
       <PageHeader
-        eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? canEdit ? 'Live variables' : 'Live variables · read-only access' : 'Demo · variable edits last for this session only'}</ScopeMarker>}
+        eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{onVars ? (backend ? canEdit ? 'Live variables' : 'Live variables · read-only access' : 'Demo · variable edits last for this session only')
+          : tab === 'conditions' ? (backend ? canEdit ? 'Live conditional tags' : 'Live conditional tags · read-only access' : 'Demo · condition edits last for this session only')
+          : 'Output preview · coming next'}</ScopeMarker>}
         title="Variables & Conditions"
         description="Manage reusable values and conditional content for this project."
-        actions={<>
+        actions={onVars ? <>
           <Button variant="outline" onClick={() => validate.mutate()} disabled={pending} data-testid="button-validate-project">
             <ShieldCheck className="mr-1.5 h-4 w-4" />{validate.isPending ? 'Validating…' : 'Validate project'}
           </Button>
           <Button onClick={() => open('create')} disabled={!canEdit || pending} data-testid="button-new-variable"><Plus className="mr-1.5 h-4 w-4" />New variable</Button>
-        </>}
+        </> : undefined}
       />
-      {!canEdit && <p className="mt-3 text-[12.5px] text-muted-foreground" data-testid="text-readonly-note">Read-only. Only explicit project Admins and Authors can change variables.</p>}
-      <ValidationSummary validate={validate} />
+      {!canEdit && tab !== 'preview' && <p className="mt-3 text-[12.5px] text-muted-foreground" data-testid="text-readonly-note">Read-only. Only explicit project Admins and Authors can change {onVars ? 'variables' : 'conditional tags'}.</p>}
+      {onVars && <ValidationSummary validate={validate} />}
 
-      <Tabs defaultValue="variables" className="mt-6">
+      <Tabs value={tab} onValueChange={setTab} className="mt-6">
         <TabsList className="h-auto w-full justify-start gap-6 overflow-x-auto rounded-none border-b bg-transparent p-0">
           {[['variables', 'Variables'], ['conditions', 'Conditional tags'], ['preview', 'Output preview']].map(([v, l]) => (
             <TabsTrigger key={v} value={v} data-testid={`tab-${v}`}
@@ -98,15 +103,16 @@ function VariablesBody({ project }: { project: ProjectSummary }) {
             </> : null}
           </div>
         </TabsContent>
-        {[['conditions', 'Conditional tags'], ['preview', 'Output preview']].map(([v, l]) => (
-          <TabsContent key={v} value={v} className="mt-6">
-            <div className="rounded-lg border border-dashed p-8 text-center" data-testid={`panel-${v}-coming`}>
-              <ScopeMarker kind="placeholder">Coming next</ScopeMarker>
-              <p className="mt-3 text-[14px] font-medium">{l} are not available yet.</p>
-              <p className="mt-1 text-[13px] text-muted-foreground">This tab will arrive in a later release. Only Variables are managed here today.</p>
-            </div>
-          </TabsContent>
-        ))}
+        <TabsContent value="conditions" className="mt-6">
+          <ConditionsTab projectId={project.id} canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="preview" className="mt-6">
+          <div className="rounded-lg border border-dashed p-8 text-center" data-testid="panel-preview-coming">
+            <ScopeMarker kind="placeholder">Coming next</ScopeMarker>
+            <p className="mt-3 text-[14px] font-medium">Output preview is not available yet.</p>
+            <p className="mt-1 text-[13px] text-muted-foreground">This tab will arrive in a later release. Variables and conditional tags are managed here today.</p>
+          </div>
+        </TabsContent>
       </Tabs>
 
       <VariableFormDialog open={dialog === 'create' || dialog === 'edit'} mode={dialog === 'edit' ? 'edit' : 'create'}

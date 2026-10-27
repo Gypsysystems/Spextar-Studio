@@ -28,6 +28,8 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     topics: [],
     topic_drafts: [],
     project_variables: [],
+    condition_categories: [],
+    condition_values: [],
   };
   const calls: { table: string; filters: [string, unknown][]; columns: string; patch?: Row; insert?: Row; deleted?: boolean }[] = [];
   const beforeDelete = vi.fn((_table: string) => {});
@@ -69,9 +71,19 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
           db.project_variables.push({ ...this.inserting, id: this.insertedId, created_at: at, updated_at: at });
         }
       }
+      if (this.inserting && !error && ['condition_categories', 'condition_values'].includes(this.table)) {
+        const scope = this.table === 'condition_categories' ? 'project_id' : 'category_id';
+        if (db[this.table].some((row) => row[scope] === this.inserting![scope] && row.key === this.inserting!.key))
+          error = { code: '23505' };
+        else {
+          this.insertedId = crypto.randomUUID();
+          db[this.table].push({ ...(this.table === 'condition_categories' ? { settings: {} } : {}),
+            ...this.inserting, id: this.insertedId, created_at: at, updated_at: at });
+        }
+      }
       let rows = (db[this.table] ?? []).filter((row) => this.filters.every(([column, value]) =>
         Array.isArray(value) ? value.includes(row[column]) : row[column] === value));
-      if (this.inserting) rows = rows.filter((row) => this.table === 'project_variables'
+      if (this.inserting) rows = rows.filter((row) => ['project_variables', 'condition_categories', 'condition_values'].includes(this.table)
         ? row.id === this.insertedId : row.topic_id === this.inserting!.topic_id);
       if (this.patch && !error) rows.forEach((row) => Object.assign(row, this.patch));
       if (this.patch && !error && this.table === 'topic_drafts') rows.forEach((row) => {

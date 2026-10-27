@@ -15,6 +15,8 @@ export const qk = {
   documents: (pid: string) => ['documents', pid] as const,
   document: (pid: string, id: string) => ['document', pid, id] as const,
   variables: (pid: string) => ['variables', pid] as const,
+  conditionCategories: (pid: string) => ['condition-categories', pid] as const,
+  conditionValues: (pid: string, cid: string) => ['condition-values', pid, cid] as const,
 };
 
 export function useSession() {

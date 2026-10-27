@@ -1,4 +1,20 @@
-# SPEXTAR Studio — F0/F1 foundation and F2 metadata integration
+# SPEXTAR Studio
+
+## F3 Slice 2B1-B — Conditional Tags Management
+
+The existing Variables & Conditions route now includes a functional Conditional tags tab. Categories and values are project-scoped through the same authenticated service boundary as Variables. Backend mode uses `condition_categories` and `condition_values` only; errors never fall back to demo fixtures. No migrations or Auth changes are included.
+
+The table adapter projects category columns `id, project_id, name, key, description, settings, unassigned_behavior, value_match_mode, created_at, updated_at` and value columns `id, category_id, name, key, sort_order, created_at, updated_at`. Reads are paginated and strictly validated; malformed JSON/settings, unsupported behavior modes, invalid keys/orders, foreign parents and duplicate identities fail closed. Settings can be a JSON object or null and are preserved, not edited or overwritten by metadata changes. Server IDs, ownership and timestamps are never sent as writable input.
+
+Project Admin/Author membership is required for category/value creation, metadata edits and renames. Inherited Workspace Admin access alone is read-only, as are Project Reviewer/Viewer roles. UI and services check `canEditContent === true`; authenticated database RLS remains the final authority on every request. A value read/write first resolves its category under the requested project. No category/value deletion is exposed.
+
+Keys follow the same lowercase, letter-first, 80-character rule as Variables. Display names are nonblank and at most 120 characters. Existing keys and IDs are intentionally immutable in this management UI; rename changes only the display name so future semantic assignments retain stable identities. New values suggest the highest current sort order plus 10 (bounded by the SQL integer limit). Editing Order changes just that value in one update; there is no non-atomic multi-row swapping or renumbering. Values sort by `sort_order`, then stable ID for ties, subject to database uniqueness constraints.
+
+Default guidance is no tag → Include, same-category values → any/OR, different categories → AND. Existing include/exclude and any/all category settings are displayed accurately and editable through finite choices, not Boolean expressions. These settings are stored definitions only: Author assignment, actual output filtering/resolution, reference tracking, usage counts and affected-document claims are not implemented. The separate Output preview tab remains a labelled later-state placeholder.
+
+Demo samples belong to one adapter in memory, are cloned across the service boundary, never write to Supabase/browser storage, and are discarded on sign-out or app reload. The surrounding demo session/project infrastructure is unchanged. Automated adapter tests use contract doubles, not a live RLS simulator; controlled-browser acceptance likewise does not certify live two-account RLS.
+
+## F0/F1 foundation and F2 metadata integration
 
 SPEXTAR Studio is a structured authoring and content management workspace for technical writers. It has no AI features. Backend mode uses Supabase Auth and the existing F0/F1 organization/workspace/project database. Isolated demo mode uses browser-local fixture data. The brand uses the exact supplied Figma vectors; full-screen UI fidelity still requires comparison with the complete frozen design file.
 
@@ -23,7 +39,7 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `…/documents` | Live document list, expandable topic outlines, create/duplicate, metadata and confirmed empty-document deletion | Supabase or isolated demo |
 | `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector with open-source Tiptap. Backend metadata/tree and structured JSON drafts persist; demo bodies stay session-only | F2 + F3 Slices 1/2A |
 | `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
-| `…/variables-conditions` | Text variable management, output overrides, scoped validation; Conditions/Output preview tabs coming next | Supabase or session-only demo |
+| `…/variables-conditions` | Text variable management, output overrides, scoped validation, category/value management; Output preview tab coming next | Supabase or session-only demo |
 | `…/reusable-content`, `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
 | anything else | Not found. Unknown workspace, project and document IDs also show not-found inside the shell | — |
 
