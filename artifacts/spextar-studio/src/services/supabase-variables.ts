@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ProjectSummary } from '@/domain/types';
-import { parseVariableRow, validateVariableIdentity, validateVariableInput, validateVariableRows, variableWrite,
+import { VARIABLE_KEY_RULE, parseVariableRow, validateVariableIdentity, validateVariableInput, validateVariableRows, variableWrite,
   type ProjectVariableService } from '@/domain/project-variables';
 import { ServiceError } from './contracts';
 import { backendError } from './supabase-errors';
@@ -13,6 +13,7 @@ export function supabaseVariables(client: SupabaseClient, requireProject: (id: s
   }
   function check(error: unknown) {
     if ((error as { code?: string } | null)?.code === '23505') throw new ServiceError('This variable key is already in use in this project. Choose another key.', 'conflict');
+    if ((error as { code?: string } | null)?.code === '23514') throw new ServiceError('The database rejected these variable values. Check the fields and key rule.', 'validation', [VARIABLE_KEY_RULE]);
     if (error) throw backendError(error);
   }
   async function rows(projectId: string) {

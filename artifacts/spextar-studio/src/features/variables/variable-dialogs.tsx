@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { variableOutputs, type ProjectVariable, type VariableIdentity, type VariableInput, type VariableOutputId } from '@/domain/project-variables';
+import { VARIABLE_KEY_RULE, variableKeySchema, suggestVariableKey, suggestDuplicateVariableKey, variableOutputs, type ProjectVariable, type VariableIdentity, type VariableInput, type VariableOutputId } from '@/domain/project-variables';
 import { ServiceError } from '@/services/contracts';
 
 export function MutationError({ error }: { error: unknown }) {
@@ -18,11 +18,6 @@ export function MutationError({ error }: { error: unknown }) {
       {issues.length > 0 && <ul className="mt-1 list-disc pl-4">{issues.map((i) => <li key={i}>{i}</li>)}</ul>}
     </div>
   );
-}
-
-function toKey(name: string) {
-  const k = name.trim().replace(/[^A-Za-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
-  return /^[0-9]/.test(k) ? `_${k}` : k;
 }
 
 const emptyInput: VariableInput = { name: '', key: '', value: '', description: null, required: false, outputValues: {} };
@@ -45,7 +40,7 @@ export function VariableFormDialog({ open, mode, variable, pending, error, onClo
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return setLocalError('Name is required.');
-    if (!form.key.trim()) return setLocalError('Key is required.');
+    if (!variableKeySchema.safeParse(form.key).success) return setLocalError(VARIABLE_KEY_RULE);
     if (form.required && !form.value.trim()) return setLocalError('A required variable needs a default value.');
     setLocalError(null);
     const outputValues: VariableInput['outputValues'] = {};
@@ -67,12 +62,13 @@ export function VariableFormDialog({ open, mode, variable, pending, error, onClo
               <div className="space-y-1.5">
                 <Label htmlFor="var-name">Name</Label>
                 <Input id="var-name" value={form.name} data-testid="input-variable-name"
-                  onChange={(e) => { const name = e.target.value; setForm((f) => ({ ...f, name, key: keyTouched ? f.key : toKey(name) })); }} />
+                  onChange={(e) => { const name = e.target.value; setForm((f) => ({ ...f, name, key: keyTouched ? f.key : suggestVariableKey(name) })); }} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="var-key">Key</Label>
                 <Input id="var-key" className="font-mono" value={form.key} data-testid="input-variable-key"
-                  onChange={(e) => { setKeyTouched(true); setForm((f) => ({ ...f, key: e.target.value })); }} />
+                  aria-describedby="var-key-help" onChange={(e) => { setKeyTouched(true); setForm((f) => ({ ...f, key: e.target.value })); }} />
+                <p id="var-key-help" className="text-xs text-muted-foreground">Lowercase letter first; then lowercase letters, digits or underscores. Maximum 80 characters.</p>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -124,19 +120,19 @@ export function IdentityDialog({ open, mode, variable, existingKeys, pending, er
     if (!open || !variable) return;
     if (mode === 'rename') setForm({ name: variable.name, key: variable.key });
     else {
-      const keys = new Set(keysSig.split('|'));
-      let n = 1; let key = `${variable.key}_copy`;
-      while (keys.has(key)) { n += 1; key = `${variable.key}_copy_${n}`; }
-      setForm({ name: n === 1 ? `${variable.name} Copy` : `${variable.name} Copy ${n}`, key });
+      const key = suggestDuplicateVariableKey(variable.key, keysSig.split('|'));
+      const ordinal = key.match(/_copy_(\d+)$/)?.[1];
+      setForm({ name: ordinal ? `${variable.name} Copy ${ordinal}` : `${variable.name} Copy`, key });
     }
     setLocalError(null);
   }, [open, mode, variable, keysSig]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.key.trim()) return setLocalError('Name and key are required.');
+    if (!form.name.trim()) return setLocalError('Name is required.');
+    if (!variableKeySchema.safeParse(form.key).success) return setLocalError(VARIABLE_KEY_RULE);
     setLocalError(null);
-    onSubmit({ name: form.name.trim(), key: form.key.trim() });
+    onSubmit({ name: form.name.trim(), key: form.key });
   };
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && !pending) onClose(); }}>
@@ -153,7 +149,8 @@ export function IdentityDialog({ open, mode, variable, existingKeys, pending, er
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="id-key">Key</Label>
-              <Input id="id-key" className="font-mono" value={form.key} onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))} data-testid="input-identity-key" />
+              <Input id="id-key" className="font-mono" value={form.key} onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))} data-testid="input-identity-key" aria-describedby="identity-key-help" />
+              <p id="identity-key-help" className="text-xs text-muted-foreground">Lowercase letter first; then lowercase letters, digits or underscores. Maximum 80 characters.</p>
             </div>
           </fieldset>
           {localError && <p role="alert" className="text-[13px] text-destructive">{localError}</p>}

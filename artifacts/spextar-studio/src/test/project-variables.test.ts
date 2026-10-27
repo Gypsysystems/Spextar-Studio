@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseVariableRow, resolveVariable, validateVariableInput, validateVariableRows } from '@/domain/project-variables';
+import { VARIABLE_KEY_RULE, variableKeySchema, suggestVariableKey, suggestDuplicateVariableKey, parseVariableRow, resolveVariable, validateVariableInput, validateVariableIdentity, validateVariableRows } from '@/domain/project-variables';
 import { createSupabaseServices } from '@/services/supabase-adapter';
 import { createDemoServices } from '@/services/demo-adapter';
 import { ServiceError } from '@/services/contracts';
@@ -7,12 +7,88 @@ import { supabaseDouble } from './supabase-double';
 
 const at = '2026-10-27T10:00:00Z';
 export const variableRow = (patch: Record<string, unknown> = {}) => ({
-  id: 'variable-a', project_id: 'project-a', name: 'ProductName', key: 'ProductName', value_type: 'text',
+  id: 'variable-a', project_id: 'project-a', name: 'ProductName', key: 'productname', value_type: 'text',
   value: 'Meridian X4', description: null, required: false, output_values: {},
   created_at: at, updated_at: at, ...patch,
 });
-export const variableInput = { name: 'ProductName', key: 'ProductName', value: 'Meridian X4', description: null,
+export const variableInput = { name: 'ProductName', key: 'productname', value: 'Meridian X4', description: null,
   required: false, outputValues: {} };
+
+describe('live lowercase variable key constraint', () => {
+  const invalid = ['', 'ProductName', 'productName', '_product', '2product', ' product', 'product ', 'product-name',
+    'café', 'product\n', 'product\r', 'product\u2028', 'a'.repeat(81)];
+  it.each(invalid)('rejects %j consistently without normalization', (key) => {
+    expect(variableKeySchema.safeParse(key).success).toBe(false);
+    for (const validate of [
+      () => validateVariableInput({ ...variableInput, key }),
+      () => validateVariableIdentity({ name: 'ProductName', key }),
+      () => parseVariableRow(variableRow({ key }), 'project-a'),
+    ]) {
+      try { validate(); throw new Error('Invalid key accepted'); }
+      catch (error) {
+        expect(error).toBeInstanceOf(ServiceError);
+        expect((error as ServiceError).issues.join(' ')).toContain(VARIABLE_KEY_RULE);
+      }
+    }
+    const raw = variableRow({ key });
+    const report = validateVariableRows([raw], 'project-a');
+    expect(report.issues).toHaveLength(1);
+    expect(report.issues[0].message).toContain(VARIABLE_KEY_RULE);
+    expect(raw.key).toBe(key);
+  });
+  it.each(['a', 'productname', 'product_name', 'version_2_', 'a'.repeat(80)])('accepts database-compatible %j with unchanged human name', (key) => {
+    const result = validateVariableInput({ ...variableInput, key });
+    expect(result.name).toBe('ProductName'); expect(result.key).toBe(key);
+    expect(parseVariableRow(variableRow({ key }), 'project-a').key).toBe(key);
+  });
+  it.each(['ProductName', '2026 Release', '__2026Release', '_ProductName', '!!!', '日本語', 'A'.repeat(120)])(
+    'suggests a lowercase database-compatible key from %j', (name) => {
+      const key = suggestVariableKey(name);
+      expect(variableKeySchema.safeParse(key).success).toBe(true);
+      expect(key.length).toBeLessThanOrEqual(80);
+    },
+  );
+  it('preserves familiar suggestions and leaves an empty name empty', () => {
+    expect(suggestVariableKey('ProductName')).toBe('productname');
+    expect(suggestVariableKey('2026 Release')).toBe('var_2026_release');
+    expect(suggestVariableKey('   ')).toBe('');
+  });
+  it('reserves suffix space for 80-character keys and collision-safe duplicates', () => {
+    const source = 'a'.repeat(80);
+    const copy = suggestDuplicateVariableKey(source, [source]);
+    const second = suggestDuplicateVariableKey(source, [source, copy]);
+    const third = suggestDuplicateVariableKey(source, [copy, second]);
+    expect(copy).toHaveLength(80); expect(copy).toMatch(/_copy$/);
+    expect(second).toHaveLength(80); expect(second).toMatch(/_copy_2$/);
+    expect(third).toHaveLength(80); expect(third).toMatch(/_copy_3$/);
+    for (const key of [copy, second, third]) expect(variableKeySchema.safeParse(key).success).toBe(true);
+  });
+  it.each(['backend', 'demo'])('blocks invalid keys in every %s mutation before any writes', async (mode) => {
+    const fake = supabaseDouble();
+    fake.db.project_variables.push(variableRow());
+    const services = mode === 'backend' ? createSupabaseServices(fake.client) : createDemoServices({ latencyMs: 0 });
+    if (mode === 'demo') await services.auth.enterDemo();
+    const pid = mode === 'backend' ? 'project-a' : 'meridian-x4-user-guide';
+    const original = (await services.variables.list(pid))[0];
+    for (const key of invalid) {
+      for (const run of [
+        () => services.variables.create(pid, { ...variableInput, key }),
+        () => services.variables.update(pid, original.id, { ...variableInput, key }),
+        () => services.variables.rename(pid, original.id, { name: 'ProductName', key }),
+        () => services.variables.duplicate(pid, original.id, { name: 'ProductName Copy', key }),
+      ]) await expect(run()).rejects.toMatchObject({ code: 'validation', issues: expect.arrayContaining([expect.stringContaining(VARIABLE_KEY_RULE)]) });
+    }
+    expect(fake.calls.filter((call) => call.insert || call.patch)).toHaveLength(0);
+    expect((await services.variables.list(pid))[0]).toEqual(original);
+    expect((await services.variables.validate(pid)).issues).toEqual([]);
+  });
+  it('explains live database constraint rejection using the same key rule', async () => {
+    const fake = supabaseDouble();
+    fake.errors.set('write:project_variables', { code: '23514' });
+    await expect(createSupabaseServices(fake.client).variables.create('project-a', variableInput))
+      .rejects.toMatchObject({ code: 'validation', issues: [VARIABLE_KEY_RULE] });
+  });
+});
 
 describe('owned Text variable contract', () => {
   it('preserves literal JSON strings, metadata and supported overrides', () => {
@@ -66,7 +142,7 @@ describe('Supabase Variables service boundary', () => {
   }
   it('reads tenant-scoped real rows only, without demo keys or fixtures', async () => {
     const { services, calls, db } = setup('viewer');
-    db.project_variables.push(variableRow({ id: 'other', project_id: 'project-b', key: 'Other' }));
+    db.project_variables.push(variableRow({ id: 'other', project_id: 'project-b', key: 'other' }));
     const result = await services.variables.list('project-a');
     expect(result).toHaveLength(1); expect(result[0].id).toBe('variable-a');
     expect(calls.filter((call) => call.table === 'project_variables').every((call) => call.filters.some(([key, value]) => key === 'project_id' && value === 'project-a'))).toBe(true);
@@ -74,17 +150,17 @@ describe('Supabase Variables service boundary', () => {
   });
   it.each(['admin', 'author'])('supports %s create/edit/rename/duplicate with server-controlled fields', async (role) => {
     const { services, db, calls, client } = setup(role);
-    const created = await services.variables.create('project-a', { ...variableInput, key: 'NewName', outputValues: { 'pdf-manual': 'Manual edition' } });
+    const created = await services.variables.create('project-a', { ...variableInput, key: 'new_name', outputValues: { 'pdf-manual': 'Manual edition' } });
     expect(created.projectId).toBe('project-a'); expect(created.id).not.toBe('variable-a');
     const insert = calls.find((call) => call.table === 'project_variables' && call.insert)!.insert!;
-    expect(insert).toEqual({ project_id: 'project-a', name: 'ProductName', key: 'NewName', value_type: 'text',
+    expect(insert).toEqual({ project_id: 'project-a', name: 'ProductName', key: 'new_name', value_type: 'text',
       value: 'Meridian X4', description: null, required: false, output_values: { 'pdf-manual': 'Manual edition' } });
     for (const key of ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']) expect(insert).not.toHaveProperty(key);
-    const updated = await services.variables.update('project-a', created.id, { ...variableInput, key: 'NewName', value: 'X5', required: true, description: 'Product label' });
+    const updated = await services.variables.update('project-a', created.id, { ...variableInput, key: 'new_name', value: 'X5', required: true, description: 'Product label' });
     expect(updated.value).toBe('X5');
-    const renamed = await services.variables.rename('project-a', created.id, { name: 'New display name', key: 'Renamed' });
-    expect(renamed.value).toBe('X5'); expect(renamed.key).toBe('Renamed');
-    const copy = await services.variables.duplicate('project-a', created.id, { name: 'Copy', key: 'RenamedCopy' });
+    const renamed = await services.variables.rename('project-a', created.id, { name: 'New display name', key: 'renamed' });
+    expect(renamed.value).toBe('X5'); expect(renamed.key).toBe('renamed');
+    const copy = await services.variables.duplicate('project-a', created.id, { name: 'Copy', key: 'renamed_copy' });
     expect(copy.id).not.toBe(created.id); expect(copy.value).toBe('X5'); expect(copy.required).toBe(true);
     expect(db.project_variables).toHaveLength(3);
     expect(client.rpc).not.toHaveBeenCalled();
@@ -92,12 +168,12 @@ describe('Supabase Variables service boundary', () => {
   });
   it.each(['reviewer', 'viewer', null])('fails closed on %s mutations including inherited Workspace Admin without explicit membership', async (role) => {
     const { services, calls } = setup(role);
-    expect((await services.variables.list('project-a'))[0].key).toBe('ProductName');
+    expect((await services.variables.list('project-a'))[0].key).toBe('productname');
     for (const run of [
       () => services.variables.create('project-a', variableInput),
       () => services.variables.update('project-a', 'variable-a', variableInput),
-      () => services.variables.rename('project-a', 'variable-a', { name: 'Other', key: 'Other' }),
-      () => services.variables.duplicate('project-a', 'variable-a', { name: 'Copy', key: 'Copy' }),
+      () => services.variables.rename('project-a', 'variable-a', { name: 'Other', key: 'other' }),
+      () => services.variables.duplicate('project-a', 'variable-a', { name: 'Copy', key: 'copy' }),
     ]) await expect(run()).rejects.toMatchObject({ code: 'forbidden' });
     expect(calls.filter((call) => call.patch || call.insert || call.deleted)).toHaveLength(0);
   });
@@ -110,7 +186,7 @@ describe('Supabase Variables service boundary', () => {
     const report = await services.variables.validate('project-a');
     expect(report.issues).toHaveLength(1);
     await expect(services.variables.update('project-a', 'variable-a', variableInput)).rejects.toMatchObject({ code: 'unavailable' });
-    await expect(services.variables.rename('project-a', 'missing', { name: 'Other', key: 'Other' })).rejects.toMatchObject({ code: 'not-found' });
+    await expect(services.variables.rename('project-a', 'missing', { name: 'Other', key: 'other' })).rejects.toMatchObject({ code: 'not-found' });
     errors.set('write:project_variables', { code: '23505' });
     await expect(services.variables.create('project-a', variableInput)).rejects.toMatchObject({ code: 'conflict' });
     expect(calls.some((call) => call.deleted)).toBe(false);
@@ -118,7 +194,7 @@ describe('Supabase Variables service boundary', () => {
   });
   it('reads every page and validates required defaults without writes', async () => {
     const { services, db, calls } = setup();
-    db.project_variables = Array.from({ length: 1002 }, (_, i) => variableRow({ id: `v-${i}`, key: `V${i}`, required: i === 1001, value: i === 1001 ? '' : 'Text' }));
+    db.project_variables = Array.from({ length: 1002 }, (_, i) => variableRow({ id: `v-${i}`, key: `v${i}`, required: i === 1001, value: i === 1001 ? '' : 'Text' }));
     expect(await services.variables.list('project-a')).toHaveLength(1002);
     expect((await services.variables.validate('project-a')).issues).toHaveLength(1);
     expect(calls.filter((call) => call.patch || call.insert)).toHaveLength(0);
@@ -146,10 +222,10 @@ describe('isolated session-only demo variables', () => {
     await services.auth.enterDemo();
     const storage = { ...localStorage };
     expect(await services.variables.list(project)).toHaveLength(5);
-    const created = await services.variables.create(project, { ...variableInput, key: 'Test' });
-    await services.variables.update(project, created.id, { ...variableInput, key: 'Test', value: 'Edit' });
-    await services.variables.rename(project, created.id, { name: 'Rename', key: 'Rename' });
-    const copy = await services.variables.duplicate(project, created.id, { name: 'Copy', key: 'Copy' });
+    const created = await services.variables.create(project, { ...variableInput, key: 'test' });
+    await services.variables.update(project, created.id, { ...variableInput, key: 'test', value: 'Edit' });
+    await services.variables.rename(project, created.id, { name: 'Rename', key: 'rename' });
+    const copy = await services.variables.duplicate(project, created.id, { name: 'Copy', key: 'copy' });
     expect(copy.value).toBe('Edit');
     expect((await services.variables.validate(project)).issues).toEqual([]);
     expect({ ...localStorage }).toEqual(storage);

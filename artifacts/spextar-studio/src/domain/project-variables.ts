@@ -28,15 +28,32 @@ export interface ProjectVariableService {
 }
 const name = z.string().min(1, 'Name is required.').max(120).refine((value) => !!value.trim(), 'Name is required.')
   .refine((value) => !/[\u0000-\u001f\u007f]/.test(value), 'Name must be a single line.');
-const key = z.string().min(1).max(80).regex(/^[A-Za-z_][A-Za-z0-9_]*$/, 'Key must start with a letter or underscore and contain only letters, numbers and underscores.');
+export const VARIABLE_KEY_RULE = 'Key must start with a lowercase letter, use only lowercase letters, digits and underscores, and be at most 80 characters.';
+/** Mirrors the live constraint exactly; never normalize manually entered or saved keys. */
+// Absolute end assertion: JS `$` also accepts a position before a final newline.
+export const variableKeySchema = z.string().regex(/^[a-z][a-z0-9_]{0,79}(?![\s\S])/, VARIABLE_KEY_RULE);
+export function suggestVariableKey(name: string): string {
+  if (!name.trim()) return '';
+  const base = name.trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+  return (base ? /^[a-z]/.test(base) ? base : `var_${base}` : 'variable').slice(0, 80);
+}
+export function suggestDuplicateVariableKey(key: string, existingKeys: readonly string[]): string {
+  const base = suggestVariableKey(key) || 'variable';
+  const taken = new Set(existingKeys);
+  for (let n = 1; ; n++) {
+    const suffix = n === 1 ? '_copy' : `_copy_${n}`;
+    const candidate = base.slice(0, 80 - suffix.length) + suffix;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
 const text = z.string().max(50000);
 const outputs = z.object({ 'web-help': text.optional(), 'pdf-manual': text.optional(), 'word-review': text.optional() }).strict();
-export const variableIdentitySchema = z.object({ name: name.transform((value) => value.trim()), key }).strict();
+export const variableIdentitySchema = z.object({ name: name.transform((value) => value.trim()), key: variableKeySchema }).strict();
 const inputSchema = variableIdentitySchema.extend({
   value: text, description: z.string().max(2000).nullable(), required: z.boolean(), outputValues: outputs,
 }).strict();
 const rowSchema = z.object({
-  id: z.string().min(1), project_id: z.string().min(1), name, key, value_type: z.literal('text'),
+  id: z.string().min(1), project_id: z.string().min(1), name, key: variableKeySchema, value_type: z.literal('text'),
   value: text, description: z.string().max(2000).nullable(), required: z.boolean(), output_values: outputs,
   created_at: z.string().datetime({ offset: true }), updated_at: z.string().datetime({ offset: true }),
 }).strict();
@@ -76,7 +93,7 @@ export function validateVariableRows(rows: unknown[], projectId: string): Variab
       if (variable.required && !variable.value.trim()) issues.push({ variableId: id, message: `${variable.name}: missing required default value.` });
     } catch (error) {
       if (error instanceof ServiceError && error.code === 'forbidden') throw error;
-      issues.push({ variableId: id, message: `${id ?? 'Variable'}: malformed or unsupported value/overrides. ${error instanceof ServiceError ? error.issues.join(' ') : ''}` });
+      issues.push({ variableId: id, message: `${id ?? 'Variable'}: invalid or unsupported variable definition. ${error instanceof ServiceError ? error.issues.join(' ') : ''}` });
     }
   }
   return { variableCount: rows.length, issues };

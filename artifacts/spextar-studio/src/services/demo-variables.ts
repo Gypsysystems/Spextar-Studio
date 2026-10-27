@@ -1,5 +1,5 @@
 import type { ProjectVariable, ProjectVariableService } from '@/domain/project-variables';
-import { validateVariableInput, validateVariableIdentity, validateVariableRows, variableWrite } from '@/domain/project-variables';
+import { suggestVariableKey, validateVariableInput, validateVariableIdentity, validateVariableRows, variableWrite } from '@/domain/project-variables';
 import { ServiceError } from './contracts';
 
 /** Memory owned by one demo adapter. No backend client or browser storage. */
@@ -9,7 +9,7 @@ export function demoVariables(authorize: (projectId: string, mutate: boolean) =>
     if (!projects.has(projectId)) projects.set(projectId, [
       ['ProductName', 'Meridian X4'], ['ProductVersion', '1.0'], ['CompanyName', 'SPEXTAR'],
       ['SupportEmail', 'support@example.test'], ['DocsBaseUrl', 'https://docs.example.test'],
-    ].map(([name, value]) => ({ id: crypto.randomUUID(), projectId, name, key: name, valueType: 'text',
+    ].map(([name, value]) => ({ id: crypto.randomUUID(), projectId, name, key: suggestVariableKey(name), valueType: 'text',
       value, required: false, description: null, outputValues: {}, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })));
     return projects.get(projectId)!;
   }
