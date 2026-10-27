@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["playwright.config.ts", "e2e/**/*.ts"],
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["node"],
+    "moduleResolution": "bundler",
+    "tsBuildInfoFile": "../../generated-artifacts/browser-regression/types.tsbuildinfo"
+  }
+}

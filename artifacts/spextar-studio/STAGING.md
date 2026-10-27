@@ -41,9 +41,12 @@ pnpm test
 pnpm typecheck
 PORT=4174 BASE_PATH=/ pnpm build
 pnpm --filter @workspace/spextar-studio check:bundle
+pnpm test:browser
 ```
 
 The workspace build runs TypeScript plus both Studio and component-preview production builds. The bundle guard verifies that Author and Review viewer/editor code remain absent from initial JavaScript. A pre-existing large-entry warning is non-failing; it is not evidence of editor leakage.
+
+The permanent [controlled Playwright suite](e2e/README.md) builds a separate local production bundle with synthetic credentials and intercepted backend responses. It is repeatable browser regression coverage, not live Supabase/RLS certification.
 
 ## Remaining external readiness gaps
 
