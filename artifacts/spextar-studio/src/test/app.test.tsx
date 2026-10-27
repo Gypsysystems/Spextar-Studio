@@ -65,7 +65,8 @@ describe('foundation routes and navigation', () => {
     expect(screen.getByTestId('input-email')).toBeDisabled();
     expect(screen.getByTestId('input-password')).toBeDisabled();
     await userEvent.click(await screen.findByTestId('button-enter-demo'));
-    expect(await screen.findByTestId('card-workspace-product-docs')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Documents' })).toBeVisible();
+    expect(window.location.pathname).toBe(base + '/documents');
   });
   it('navigates workspace → project → documents → Author with contextual breadcrumbs', async () => {
     const { user } = await mount();

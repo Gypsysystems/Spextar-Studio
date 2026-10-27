@@ -133,8 +133,8 @@ export default function ProjectsPage() {
           ) : projects.isError ? (
             <ErrorState error={projects.error} onRetry={() => projects.refetch()} />
           ) : (projects.data?.length ?? 0) === 0 ? (
-            <EmptyState icon={FolderPlus} title="No projects in this workspace" body="Create a project from scratch or import an existing structure from a SPEXTAR JSON file.">
-              <Button variant="outline" onClick={() => setImportOpen(true)}>Import project</Button>
+            <EmptyState icon={FolderPlus} title="No projects in this workspace" body={mode === 'backend' ? 'Create a project from scratch. Import is not available in backend mode yet.' : 'Create a project from scratch or import an existing structure from a SPEXTAR JSON file.'}>
+              <Button variant="outline" disabled={mode === 'backend'} title={mode === 'backend' ? 'Project import is not available in backend mode yet' : undefined} onClick={() => setImportOpen(true)}>Import project</Button>
               <Button onClick={() => setCreateOpen(true)}>Create project</Button>
             </EmptyState>
           ) : list.length === 0 ? (

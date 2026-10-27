@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
+import { safeReturnPath } from '@/lib/return-path';
 import { ArrowRight, Loader2, Lock } from 'lucide-react';
 import { Wordmark } from '@/components/brand/logo';
 import { ScopeMarker } from '@/components/states';
@@ -28,6 +29,8 @@ export default function SignInPage() {
   const { mode } = useServices();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const search = useSearch();
+  const returnPath = safeReturnPath(new URLSearchParams(search).get('returnTo'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [signingIn, setSigningIn] = useState(false);
@@ -46,18 +49,18 @@ export default function SignInPage() {
     }
   };
   useEffect(() => {
-    if (session) navigate('/workspaces', { replace: true });
-  }, [session, navigate]);
+    if (session) navigate(returnPath, { replace: true });
+  }, [session, navigate, returnPath]);
 
   const onEnter = () =>
     enter.mutate(undefined, {
-      onSuccess: () => navigate('/workspaces'),
+      onSuccess: () => navigate(returnPath, { replace: true }),
       onError: () => toast({ title: 'Could not start demo session', variant: 'destructive' }),
     });
 
   return (
     <div className="grid min-h-[100dvh] bg-background lg:grid-cols-[1.05fr_1fr]">
-      <section className="relative hidden overflow-hidden border-r border-border bg-card p-12 text-white lg:flex lg:flex-col">
+      <section className="relative hidden overflow-hidden border-r border-border bg-[hsl(var(--sidebar))] p-12 text-white dark:bg-card lg:flex lg:flex-col">
         <div className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#6236FF]/20 blur-[120px]" aria-hidden />
         <Wordmark tone="light" />
         <div className="relative mt-auto max-w-md">

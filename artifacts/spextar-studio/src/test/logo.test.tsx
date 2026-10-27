@@ -51,6 +51,7 @@ describe('approved vector lockup', () => {
     render(<App services={createDemoServices({ latencyMs: 0 })} />);
     await screen.findByRole('heading', { name: 'Sign in to SPEXTAR' });
     const logos = screen.getAllByTestId('spextar-vector-wordmark');
+    expect(logos[0].closest('section')).toHaveClass('bg-[hsl(var(--sidebar))]', 'dark:bg-card', 'text-white');
     expect(logos.map((logo) => logo.getAttribute('src'))).toEqual([
       '/brand/spextar-wordmark-reversed.svg', '/brand/spextar-wordmark-primary.svg',
     ]);

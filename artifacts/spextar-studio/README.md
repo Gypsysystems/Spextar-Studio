@@ -1,5 +1,7 @@
 # SPEXTAR Studio
 
+For manual testing preparation, configuration requirements, smoke checks and remaining external readiness gaps, see [STAGING.md](STAGING.md). No staging deployment or live-data mutation is performed by the local readiness checks.
+
 ## Project Settings
 
 The existing Project settings route now supports explicit saves of project name, slug and nullable description; confirmed active/archived status changes; and administration of existing project memberships. Only an **explicit Project Admin** can mutate these resources. Author content permission, inherited workspace administration and organization ownership do not grant project administration in the client. Authenticated Supabase RLS is the final authority.
