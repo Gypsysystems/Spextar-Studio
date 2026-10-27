@@ -18,9 +18,9 @@ import { pasteNoticeEvent, type PasteNotice, applySafePaste, focusBody } from '.
 import { DocumentNavigation } from './document-navigation';
 import { Fragment, Slice } from '@tiptap/pm/model';
 
-type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean };
+type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean; deferRender?: boolean };
 
-export function StructuredEditor({ content, editable, onChange, loading = false }: Props) {
+export function StructuredEditor({ content, editable, onChange, loading = false, deferRender = false }: Props) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const baseRef = useRef(content);
@@ -40,6 +40,9 @@ export function StructuredEditor({ content, editable, onChange, loading = false 
   canEditRef.current = canEdit;
 
   const editor = useEditor({
+    // Lazy read-only viewers may be rendered speculatively under Suspense.
+    // Construct their engine after commit, not in an abandoned render.
+    immediatelyRender: !deferRender,
     extensions: studioExtensions(),
     content: initial.doc,
     editable: false,

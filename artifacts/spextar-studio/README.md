@@ -66,7 +66,8 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `…/projects/:projectId` | Project Home: lifecycle counts, recent documents, activity, project areas | Functional |
 | `…/documents` | Live document list, expandable topic outlines, create/duplicate, metadata and confirmed empty-document deletion | Supabase or isolated demo |
 | `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector with open-source Tiptap. Backend metadata/tree and structured JSON drafts persist; demo bodies stay session-only | F2 + F3 Slices 1/2A |
-| `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
+| `…/review` | In-review document/topic selection and read-only current saved structured draft inspection | Supabase / labelled demo samples |
+| `…/publish` | Placeholder that lists approved documents (read-only). Actions are disabled | Placeholder |
 | `…/variables-conditions` | Text variable management, output overrides, scoped validation, category/value management, read-only project-wide variable output preview | Supabase or session-only demo |
 | `…/reusable-content` | Scoped reusable metadata and structured drafts | Supabase / isolated session demo |
 | `…/settings` | Project metadata, existing member roles, confirmed archive/restore; explicit Project Admin only | Supabase or session-only demo |
@@ -199,6 +200,6 @@ The import dialog also has an **Example file** download.
 6. Use the sidebar workspace switcher to move between workspaces.
 7. Project Home → Documents → expand an outline → open a topic in Author. Promote and Demote work via buttons and Alt+Arrow keys. Discard changes resets the edits.
 8. Author at 1280px shows three panes. On mobile the panes stack and the nav opens as a sheet.
-9. Review and Publish list documents in that state, and their actions are disabled and marked not connected.
+9. Review inspects saved drafts of In-review documents with no workflow writes. Publish remains a placeholder listing approved documents with disabled actions.
 10. `/workspaces/nope/projects`, an unknown project, `…/author/unknown` and `/random` all show not-found.
 11. `/sign-in` → Enter demo → account menu → Sign out returns you to `/sign-in`.

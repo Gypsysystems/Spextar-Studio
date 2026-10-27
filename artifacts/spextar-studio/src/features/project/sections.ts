@@ -43,7 +43,7 @@ export const PROJECT_SECTIONS: ProjectSection[] = [
   { id: 'author', label: 'Author', path: '/author', icon: PenLine, group: 'Content', description: 'Write and structure topics.', planned: [] },
   {
     id: 'review', label: 'Review', path: '/review', icon: SquareCheckBig, group: 'Workflow',
-    description: 'Route documents to subject-matter experts and track sign-off.',
+    description: 'Inspect current saved drafts of documents marked In review, read-only.',
     planned: ['Reviewer assignment per document', 'Inline comments anchored to topics', 'Approval with audit record'],
   },
   {
