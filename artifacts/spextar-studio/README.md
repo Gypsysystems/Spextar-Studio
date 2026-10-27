@@ -20,7 +20,7 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `/workspaces` | Organization selection/creation, workspace search/creation | Supabase or isolated demo |
 | `/workspaces/:workspaceId/projects` | Projects: search, status filter, Create project; document Import project remains demo-only | Supabase or isolated demo |
 | `…/projects/:projectId` | Project Home: lifecycle counts, recent documents, activity, project areas | Functional |
-| `…/documents` | Live document list, expandable topic outlines, create/duplicate and metadata controls | Supabase or isolated demo |
+| `…/documents` | Live document list, expandable topic outlines, create/duplicate, metadata and confirmed empty-document deletion | Supabase or isolated demo |
 | `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector. Backend metadata/tree persists; body drafts remain session-only | F2 metadata; F3 body pending |
 | `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
 | `…/reusable-content`, `…/variables-conditions`, `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |

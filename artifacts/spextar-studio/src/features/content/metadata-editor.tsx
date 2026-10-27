@@ -15,7 +15,7 @@ export function MetadataEditor({ projectId, doc, topic, controls }: { projectId:
     : { title: doc.title, slug: doc.slug ?? '', status: doc.status, settings: doc.settings ?? {}, description: doc.summary };
   const save = useMetadataAutosave(initial, (value) => topic
     ? documents.updateTopic(projectId, doc.id, topic.id, value)
-    : documents.updateDocument(projectId, doc.id, { ...value, description: ('description' in value ? value.description : '') || null }), projectId);
+    : documents.updateDocument(projectId, doc.id, { ...value, description: ('description' in value ? value.description : '') || null }), projectId, { documentId: doc.id, topicId: topic?.id });
   const [json, setJSON] = useState<string | null>(null);
   const [jsonError, setJSONError] = useState('');
   const disabled = !doc.canEdit;

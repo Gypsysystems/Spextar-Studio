@@ -27,13 +27,15 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     documents: [],
     topics: [],
   };
-  const calls: { table: string; filters: [string, unknown][]; columns: string; patch?: Row }[] = [];
+  const calls: { table: string; filters: [string, unknown][]; columns: string; patch?: Row; deleted?: boolean }[] = [];
+  const beforeDelete = vi.fn((_table: string) => {});
   const errors = new Map<string, { code: string; message?: string }>();
   class Query {
     filters: [string, unknown][] = [];
     columns = '';
     single = false;
     patch?: Row;
+    deleting = false;
     bounds?: [number, number];
     constructor(readonly table: string) {}
     select(columns: string) { this.columns = columns; return this; }
@@ -42,13 +44,16 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     order() { return this; }
     range(from: number, to: number) { this.bounds = [from, to]; return this; }
     update(patch: Row) { this.patch = patch; return this; }
+    delete() { this.deleting = true; return this; }
     maybeSingle() { this.single = true; return this; }
     then(resolve: (value: { data: Row | Row[] | null; error: unknown }) => unknown) {
-      calls.push({ table: this.table, filters: this.filters, columns: this.columns, ...(this.patch ? { patch: this.patch } : {}) });
-      const error = errors.get(this.table) ?? null;
+      calls.push({ table: this.table, filters: this.filters, columns: this.columns, ...(this.patch ? { patch: this.patch } : {}), ...(this.deleting ? { deleted: true } : {}) });
+      if (this.deleting) beforeDelete(this.table);
+      const error = (this.deleting ? errors.get(`delete:${this.table}`) : null) ?? errors.get(this.table) ?? null;
       let rows = (db[this.table] ?? []).filter((row) => this.filters.every(([column, value]) =>
         Array.isArray(value) ? value.includes(row[column]) : row[column] === value));
       if (this.patch && !error) rows.forEach((row) => Object.assign(row, this.patch));
+      if (this.deleting && !error) db[this.table] = (db[this.table] ?? []).filter((row) => !rows.includes(row));
       if (this.bounds) rows = rows.slice(this.bounds[0], this.bounds[1] + 1);
       return Promise.resolve({ data: error ? null : this.single ? rows[0] ?? null : rows, error }).then(resolve);
     }
@@ -91,5 +96,5 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     return { data: id, error: null };
   });
   const raw = { auth, from: vi.fn((table: string) => new Query(table)), rpc };
-  return { client: raw as unknown as SupabaseClient, raw, db, calls, errors, emit };
+  return { client: raw as unknown as SupabaseClient, raw, db, calls, errors, emit, beforeDelete };
 }

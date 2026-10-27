@@ -13,6 +13,7 @@ import type { ProjectSummary } from '@/domain/types';
 import { cn } from '@/lib/utils';
 import { useServices } from '@/providers/services-provider';
 import { ContentDialog, DocumentMetadataDialog } from '@/features/content/content-dialogs';
+import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
 
 function DocumentsBody({ project, base }: { project: ProjectSummary; base: string }) {
   const backend = useServices().mode === 'backend';
@@ -101,7 +102,7 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
                       </p>
                     </div>
                     <StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} className="hidden sm:inline-flex" />
-                    {backend && <div className="hidden lg:flex gap-2"><DocumentMetadataDialog doc={d} />{d.canEdit && <ContentDialog action="duplicate-document" projectId={project.id} doc={d} />}</div>}
+                    {backend && <div className="hidden lg:flex gap-2"><DocumentMetadataDialog doc={d} />{d.canEdit && <><ContentDialog action="duplicate-document" projectId={project.id} doc={d} /><DeleteContentDialog doc={d} /></>}</div>}
                     <Button variant="ghost" size="sm" asChild data-testid={`link-author-${d.id}`}>
                       <Link href={`${base}/author/${d.id}`}>Author</Link>
                     </Button>

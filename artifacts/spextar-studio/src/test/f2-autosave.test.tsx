@@ -25,3 +25,25 @@ it('serializes autosave and coalesces edits made while a prior write is pending'
   expect(result.current.state).toBe('saved');
   expect(result.current.draft.title).toBe('Latest');
 });
+
+it.each(['success', 'failure'])('pauses queued metadata while deleting and handles deletion %s without resurrecting a deleted item', async (outcome) => {
+  vi.useFakeTimers();
+  const save = vi.fn().mockResolvedValue(undefined);
+  const client = new QueryClient();
+  let resolve!: () => void;
+  let reject!: (error: Error) => void;
+  const response = new Promise<void>((yes, no) => { resolve = yes; reject = no; });
+  const mutation = client.getMutationCache().build(client, { mutationKey: ['delete-content', 'project-a'], mutationFn: () => response });
+  const { result, unmount } = renderHook(() => useMetadataAutosave({ title: 'Original' }, save, 'project-a', { documentId: 'doc-a', topicId: 'topic-a' }), {
+    wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+  });
+  act(() => result.current.change({ title: 'Queued draft' }));
+  const operation = mutation.execute({ documentId: 'doc-a', topicId: 'topic-a', expectedUpdatedAt: 'now' }).catch(() => undefined);
+  await act(() => vi.advanceTimersByTimeAsync(1000));
+  expect(save).not.toHaveBeenCalled();
+  await act(async () => { if (outcome === 'success') resolve(); else reject(new Error('Delete denied')); await operation; });
+  await act(() => vi.advanceTimersByTimeAsync(300));
+  if (outcome === 'success') expect(save).not.toHaveBeenCalled();
+  else { expect(save).toHaveBeenCalledWith({ title: 'Queued draft' }); expect(result.current.state).toBe('saved'); }
+  unmount();
+});

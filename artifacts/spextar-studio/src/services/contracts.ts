@@ -68,6 +68,9 @@ export interface DocumentService {
   demoteTopic(projectId: ID, documentId: ID, topicId: ID): Promise<void>;
   duplicateDocument(projectId: ID, documentId: ID, input: { title: string; slug: string }): Promise<ID>;
   duplicateTopicSubtree(projectId: ID, documentId: ID, topicId: ID, input: { title: string; slug: string }): Promise<ID>;
+  /** Conservative deletes: empty documents and leaf topics only; never assume a cascade. */
+  deleteDocument(projectId: ID, documentId: ID, expectedUpdatedAt: string): Promise<void>;
+  deleteTopic(projectId: ID, documentId: ID, topicId: ID, expectedUpdatedAt: string): Promise<void>;
 }
 
 export interface NewDocument { title: string; slug: string; description: string | null }

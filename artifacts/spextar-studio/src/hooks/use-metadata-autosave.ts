@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { invalidateContent } from './use-content-mutation';
 import { toast } from './use-toast';
+import { metadataDeletionState, type DeleteTarget } from './use-content-deletion';
 
 /** Debounced and serialized per mounted entity. A failed write is never labelled saved. */
-export function useMetadataAutosave<T extends object>(server: T, save: (value: T) => Promise<void>, projectId: string) {
+export function useMetadataAutosave<T extends object>(server: T, save: (value: T) => Promise<void>, projectId: string, target?: Pick<DeleteTarget, 'documentId' | 'topicId'>) {
   const [draft, setDraft] = useState(server);
   const [state, setState] = useState<'saved' | 'pending' | 'saving' | 'error'>('saved');
   const [error, setError] = useState<Error | null>(null);
@@ -22,12 +23,19 @@ export function useMetadataAutosave<T extends object>(server: T, save: (value: T
     if (!pending.current && !running.current && !failed.current) setDraft(JSON.parse(serverJSON));
   }, [serverJSON]);
 
+  function suspendForDeletion() {
+    const deleting = target && metadataDeletionState(client, projectId, target);
+    if (deleting === 'deleted') { pending.current = null; failed.current = null; return true; }
+    if (deleting === 'pending') { timer.current = setTimeout(() => void flush(), 100); return true; }
+    return false;
+  }
   async function flush() {
     clearTimeout(timer.current);
-    if (running.current) return;
+    if (running.current || suspendForDeletion()) return;
     running.current = true;
     try {
       while (pending.current) {
+        if (suspendForDeletion()) return;
         const value = pending.current;
         pending.current = null;
         if (mounted.current) { setState('saving'); setError(null); }
@@ -36,6 +44,11 @@ export function useMetadataAutosave<T extends object>(server: T, save: (value: T
           failed.current = null;
           await invalidateContent(client, projectId);
         } catch (e) {
+          if (target && metadataDeletionState(client, projectId, target)) {
+            pending.current ??= value;
+            timer.current = setTimeout(() => void flush(), 100);
+            return;
+          }
           failed.current = pending.current ?? value;
           pending.current = null;
           if (mounted.current) { setError(e instanceof Error ? e : new Error('Metadata could not be saved.')); setState('error'); }

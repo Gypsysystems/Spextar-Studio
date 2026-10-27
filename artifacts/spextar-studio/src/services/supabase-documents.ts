@@ -109,6 +109,7 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
     await writable(projectId);
     const doc = (await records(projectId, documentId))[0];
     if (!doc) throw new ServiceError('Document not found in this project.', 'not-found');
+    if (!doc.canEdit) throw new ServiceError('Your project editing permissions have changed. Refresh before trying again.', 'forbidden');
     if (topicId && !doc.topics.some((t) => t.id === topicId)) throw new ServiceError('Topic not found in this document.', 'not-found');
     return doc;
   }
@@ -153,6 +154,14 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
   }
   const docArgs = (id: string) => ({ document: id, document_id: id });
   const topicArgs = (id: string) => ({ topic: id, topic_id: id });
+  function unchanged(actual: string | undefined, expected: string) {
+    if (!expected || actual !== expected) throw new ServiceError('This item changed after confirmation opened. Close the dialog, refresh, and confirm the current item again.', 'conflict');
+  }
+  function deleted(result: { data: unknown; error: unknown }, id: string) {
+    if ((result.error as { code?: string } | null)?.code === '23503') throw new ServiceError('Related records prevent deletion. Move or delete dependent topics, refresh, and try again.', 'conflict');
+    checked(result.error);
+    if (!result.data || (result.data as { id?: string }).id !== id) throw new ServiceError('Deletion was not confirmed. The item may have changed or your permissions may have been revoked. Refresh and try again.', 'conflict');
+  }
   return {
     listDocuments: (projectId) => records(projectId),
     async getDocument(projectId, documentId) { return documentId ? (await records(projectId, documentId))[0] ?? null : null; },
@@ -202,6 +211,20 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
       await scoped(projectId, documentId, topicId);
       const data = validate(z.object({ title: text, slug }).strict(), input);
       return rpc('duplicate_topic_subtree', { ...topicArgs(topicId), new_title: data.title, new_slug: data.slug }, true);
+    },
+    async deleteDocument(projectId, documentId, expectedUpdatedAt) {
+      const doc = await scoped(projectId, documentId);
+      unchanged(doc.updatedAt, expectedUpdatedAt);
+      if (doc.topics.length) throw new ServiceError('Delete all topics in this document first, starting with leaf topics. No cascading document deletion was attempted.', 'conflict');
+      deleted(await client.from('documents').delete().eq('project_id', projectId).eq('id', documentId)
+        .eq('updated_at', expectedUpdatedAt).select('id').maybeSingle(), documentId);
+    },
+    async deleteTopic(projectId, documentId, topicId, expectedUpdatedAt) {
+      const doc = await scoped(projectId, documentId, topicId);
+      unchanged(doc.topics.find((topic) => topic.id === topicId)!.updatedAt, expectedUpdatedAt);
+      if (doc.topics.some((topic) => topic.parentTopicId === topicId)) throw new ServiceError('Move or delete this topic’s children first. No cascading subtree deletion was attempted.', 'conflict');
+      deleted(await client.from('topics').delete().eq('document_id', documentId).eq('id', topicId)
+        .eq('updated_at', expectedUpdatedAt).select('id').maybeSingle(), topicId);
     },
   };
 }

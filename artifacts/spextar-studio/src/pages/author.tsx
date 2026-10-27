@@ -16,6 +16,7 @@ import type { DocumentRecord, ProjectSummary, Topic } from '@/domain/types';
 import { cn } from '@/lib/utils';
 import { useServices } from '@/providers/services-provider';
 import { ContentDialog, DocumentMetadataDialog } from '@/features/content/content-dialogs';
+import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
 import { MetadataEditor, type TopicMetadataControls } from '@/features/content/metadata-editor';
 import { useContentMutation } from '@/hooks/use-content-mutation';
 
@@ -36,6 +37,7 @@ function numbering(topics: Topic[]): string[] {
 
 function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   const services = useServices();
+  const [, navigate] = useLocation();
   const backend = services.mode === 'backend';
   const canEdit = !backend || doc.canEdit === true;
   const mutation = useContentMutation(doc.projectId);
@@ -132,6 +134,11 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
             {selected && <>
               <ContentDialog action="move" projectId={doc.projectId} doc={doc} topic={selected} />
               <ContentDialog action="duplicate-topic" projectId={doc.projectId} doc={doc} topic={selected} onTopic={setSelectedId} />
+              <DeleteContentDialog doc={doc} topic={selected} onTopicDeleted={(id) => {
+                bodies.current.delete(id);
+                setSelectedId(topics.find((topic) => topic.id !== id)?.id ?? null);
+                navigate(`${base}/author/${doc.id}`, { replace: true });
+              }} />
               <Button size="sm" variant="outline" disabled={mutation.isPending || siblingIndex <= 0} onClick={() => mutation.mutate(() => services.documents.moveTopic(doc.projectId, doc.id, selected.id, selected.parentTopicId ?? null, siblings[siblingIndex - 1].sortOrder!))}>Move up</Button>
               <Button size="sm" variant="outline" disabled={mutation.isPending || siblingIndex < 0 || siblingIndex >= siblings.length - 1} onClick={() => mutation.mutate(() => services.documents.moveTopic(doc.projectId, doc.id, selected.id, selected.parentTopicId ?? null, siblings[siblingIndex + 1].sortOrder!))}>Move down</Button>
             </>}
@@ -229,7 +236,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       <aside aria-label="Document properties" className="min-h-0 overflow-y-auto border-t bg-card px-5 py-5 lg:col-start-2 xl:col-start-auto xl:border-l xl:border-t-0">
         <h2 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">Document</h2>
         <p className="mt-2 font-medium leading-snug">{doc.title}</p>
-        {backend && <div className="mt-3 space-y-2"><DocumentMetadataDialog doc={doc} />{canEdit && <ContentDialog action="duplicate-document" projectId={doc.projectId} doc={doc} />}</div>}
+        {backend && <div className="mt-3 space-y-2"><DocumentMetadataDialog doc={doc} />{canEdit && <><ContentDialog action="duplicate-document" projectId={doc.projectId} doc={doc} /><DeleteContentDialog doc={doc} /></>}</div>}
         <dl className="mt-4 grid grid-cols-[88px_1fr] gap-y-2.5 text-[13px]">
           <dt className="text-muted-foreground">Status</dt><dd><StatusPill status={doc.status} label={DOC_STATUS_LABEL[doc.status]} /></dd>
           <dt className="text-muted-foreground">Type</dt><dd>{DOC_TYPE_LABEL[doc.type]}</dd>
