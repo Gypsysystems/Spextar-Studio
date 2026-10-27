@@ -13,7 +13,7 @@ import WorkspacesPage from '@/pages/workspaces';
 import ProjectsPage from '@/pages/projects';
 import ProjectHomePage from '@/pages/project-home';
 import DocumentsPage from '@/pages/documents';
-import AuthorPage from '@/pages/author';
+import { AuthorRoute } from '@/routes/author-route';
 import { SectionPlaceholderPage } from '@/pages/section-placeholder';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 
@@ -38,8 +38,8 @@ function ApplicationRoutes() {
         <Route path="/workspaces/:workspaceId/projects" component={ProjectsPage} />
         <Route path={P} component={ProjectHomePage} />
         <Route path={`${P}/documents`} component={DocumentsPage} />
-        <Route path={`${P}/author`} component={AuthorPage} />
-        <Route path={`${P}/author/:documentId`} component={AuthorPage} />
+        <Route path={`${P}/author`} component={AuthorRoute} />
+        <Route path={`${P}/author/:documentId`} component={AuthorRoute} />
         <Route path={`${P}/review`}>{() => <SectionPlaceholderPage section="review" />}</Route>
         <Route path={`${P}/publish`}>{() => <SectionPlaceholderPage section="publish" />}</Route>
         <Route path={`${P}/reusable-content`}>{() => <SectionPlaceholderPage section="reusable-content" />}</Route>
