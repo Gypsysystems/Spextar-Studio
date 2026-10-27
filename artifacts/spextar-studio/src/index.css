@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500&family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap');
+@import './fonts.css';
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -82,9 +82,11 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
+  color-scheme: light;
   --background: 250 22% 98%;
 
   --foreground: 250 28% 12%;
+  --surface-raised: 250 24% 96%;
 
   --border: 250 16% 89%;
 
@@ -144,9 +146,10 @@
   --chart-4: 152 50% 40%;
   --chart-5: 320 60% 52%;
 
-  --app-font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
-  --app-font-serif: 'Newsreader', Georgia, serif;
-  --app-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Inter only, served locally via fonts.css. serif/mono aliases intentionally resolve to Inter. */
+  --app-font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --app-font-serif: var(--app-font-sans);
+  --app-font-mono: var(--app-font-sans);
   --radius: 0.375rem; /* 6px */
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
@@ -222,77 +225,65 @@
 }
 
 .dark {
-  --button-outline: rgba(255, 255, 255, 0.1);
+  /* Approved dark handoff values (hex) with exact HSL conversions. */
+  --spextar-page: #111114;          /* hsl 240 8.11% 7.25% */
+  --spextar-surface: #1C1C21;       /* hsl 240 8.20% 11.96% */
+  --spextar-surface-raised: #27272D;/* hsl 240 7.14% 16.47% */
+  --spextar-text: #F7F8FA;          /* hsl 220 23.08% 97.45% */
+  --spextar-text-secondary: #A7A7B0;/* hsl 240 5.39% 67.25% */
+  --page-hsl: 240 8.108% 7.255%;
+  --surface-hsl: 240 8.197% 11.961%;
+  --surface-raised-hsl: 240 7.143% 16.471%;
+  --text-hsl: 220 23.077% 97.451%;
+  --text-secondary-hsl: 240 5.389% 67.255%;
+
+  color-scheme: dark;
+  --button-outline: rgba(255, 255, 255, 0.08);
   --badge-outline: rgba(255, 255, 255, 0.05);
-
-  --opaque-button-border-intensity: 9; /* In terms of percentages */
-
-  /* Backgrounds applied on top of other backgrounds when hovered/active */
+  --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255, 255, 255, 0.04);
-  --elevate-2: rgba(255, 255, 255, 0.09);
+  --elevate-2: rgba(255, 255, 255, 0.08);
 
-  --background: 252 26% 8%;
+  --background: var(--page-hsl);
+  --foreground: var(--text-hsl);
+  --border: 240 6% 20%;
+  --card: var(--surface-hsl);
+  --card-foreground: var(--text-hsl);
+  --card-border: 240 6% 20%;
+  --surface-raised: var(--surface-raised-hsl);
 
-  --foreground: 250 20% 94%;
-
-  --border: 252 18% 18%;
-
-  --card: 252 24% 11%;
-
-  --card-foreground: 250 20% 94%;
-
-  --card-border: 252 18% 18%;
-
-  --sidebar: 252 30% 9%;
-
-  --sidebar-foreground: 250 18% 86%;
-
-  --sidebar-border: 252 22% 16%;
-
+  --sidebar: var(--page-hsl);
+  --sidebar-foreground: var(--text-hsl);
+  --sidebar-border: 240 6% 17%;
   --sidebar-primary: var(--spextar-violet-hsl);
+  --sidebar-primary-foreground: var(--text-hsl);
+  --sidebar-accent: var(--surface-raised-hsl);
+  --sidebar-accent-foreground: var(--text-hsl);
+  --sidebar-ring: 253 100% 72%;
 
-  --sidebar-primary-foreground: 250 100% 99%;
-
-  --sidebar-accent: 252 24% 15%;
-
-  --sidebar-accent-foreground: 250 30% 96%;
-
-  --sidebar-ring: 253 100% 70%;
-
-  --popover: 252 24% 11%;
-
-  --popover-foreground: 250 20% 94%;
-
-  --popover-border: 252 18% 20%;
+  --popover: var(--surface-raised-hsl);
+  --popover-foreground: var(--text-hsl);
+  --popover-border: 240 6% 24%;
 
   --primary: var(--spextar-violet-hsl);
+  --primary-foreground: var(--text-hsl);
+  --secondary: var(--surface-raised-hsl);
+  --secondary-foreground: var(--text-hsl);
+  --muted: var(--surface-raised-hsl);
+  --muted-foreground: var(--text-secondary-hsl);
+  --accent: 253 40% 22%;
+  --accent-foreground: 253 100% 88%;
+  --destructive: 356 72% 56%;
+  --destructive-foreground: var(--text-hsl);
 
-  --primary-foreground: 250 100% 99%;
-
-  --secondary: 252 18% 17%;
-
-  --secondary-foreground: 250 20% 92%;
-
-  --muted: 252 18% 15%;
-
-  --muted-foreground: 250 10% 64%;
-
-  --accent: 253 40% 20%;
-
-  --accent-foreground: 253 100% 85%;
-
-  --destructive: 356 72% 50%;
-
-  --destructive-foreground: 0 0% 99%;
-
-  /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
-  --input: 252 18% 24%;
-  --ring: var(--spextar-violet-hsl);
+  /* Stronger than --border for input affordance on surface backgrounds */
+  --input: 240 5% 32%;
+  --ring: 253 100% 70%;
   --chart-1: var(--spextar-violet-hsl);
-  --chart-2: 190 70% 40%;
-  --chart-3: 36 90% 52%;
-  --chart-4: 152 50% 40%;
-  --chart-5: 320 60% 52%;
+  --chart-2: 190 70% 50%;
+  --chart-3: 36 90% 58%;
+  --chart-4: 152 50% 50%;
+  --chart-5: 320 60% 62%;
 
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0);
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0);
@@ -438,6 +429,7 @@
 
 @layer base {
   ::selection { background: hsl(var(--spextar-violet-hsl) / 0.18); }
+  html.dark, html.dark body { background-color: hsl(var(--background)); }
   :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
   h1, h2, h3 { letter-spacing: -0.012em; }
 }
@@ -445,5 +437,6 @@
 .fade-up-2 { animation-delay: 60ms; } .fade-up-3 { animation-delay: 120ms; } .fade-up-4 { animation-delay: 180ms; }
 @keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .grid-paper { background-image: linear-gradient(hsl(253 60% 70% / 0.08) 1px, transparent 1px), linear-gradient(90deg, hsl(253 60% 70% / 0.08) 1px, transparent 1px); background-size: 24px 24px; }
-.prose-doc { font-family: var(--app-font-serif); font-size: 17px; line-height: 1.7; }
+.prose-doc { font-family: var(--app-font-sans); font-size: 16px; line-height: 1.72; }
+.surface-raised { background-color: hsl(var(--surface-raised)); }
 @media (prefers-reduced-motion: reduce) { .fade-up { animation: none; } * { transition-duration: 0ms !important; } }

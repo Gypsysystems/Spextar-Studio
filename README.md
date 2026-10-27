@@ -48,6 +48,28 @@ private key, or server credential in a `VITE_*` setting. Vite settings are
 included in browser bundles. Existing public browser settings in `.replit` are
 not server secrets.
 
+## Presentation and local fonts
+
+Studio defaults to the semantic dark theme on every route, independently of the
+operating system's appearance preference. The existing light tokens remain
+available, but this foundation does not add a theme-preference control.
+
+The approved dark palette is page/sidebar `#111114`, surface `#1C1C21`, raised
+surface `#27272D`, primary text `#F7F8FA`, secondary text `#A7A7B0`, and SPEXTAR
+Violet `#6236FF`. The Author canvas is raised, with a darker topic sheet and
+context panels. Navigation remains 240px expanded and 72px collapsed.
+
+Inter is the only product and authoring typeface. Upright and italic variable
+WOFF2 files are bundled locally; see
+`artifacts/spextar-studio/src/assets/fonts/README.md` for provenance. The full
+SIL Open Font License ships at `fonts/OFL.txt` in production. No Google Fonts
+request is needed. Approved SPEXTAR SVGs are unchanged: reversed on dark
+backgrounds, primary on light backgrounds, and Signature X for compact contexts.
+
+The supplied dark handoff defines the palette and hierarchy. Exact frame-by-frame
+Figma fidelity requires the corresponding source frames; this alignment does
+not claim a pixel-perfect comparison against unavailable frames.
+
 ## Validation
 
 ```sh

@@ -21,9 +21,9 @@ import { MetadataEditor, type TopicMetadataControls } from '@/features/content/m
 import { useContentMutation } from '@/hooks/use-content-mutation';
 
 const KIND_STYLE: Record<Topic['kind'], string> = {
-  concept: 'text-sky-700 bg-sky-50 border-sky-200',
-  task: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-  reference: 'text-amber-800 bg-amber-50 border-amber-200',
+  concept: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-400/10 dark:border-sky-400/25',
+  task: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-400/10 dark:border-emerald-400/25',
+  reference: 'text-amber-800 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-400/10 dark:border-amber-400/25',
 };
 
 function numbering(topics: Topic[]): string[] {
@@ -111,7 +111,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   const toolButton = (label: string, hint: string, onClick: () => void, enabled: boolean, Icon: typeof ArrowLeftToLine, id: string) => (
     <Tooltip delayDuration={200}>
       <TooltipTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 flex-1 px-2 text-[12.5px]" onClick={onClick} disabled={!enabled} data-testid={`button-${id}`}>
+        <Button variant="ghost" size="sm" className="h-7 flex-1 px-2 text-[12.5px]" onClick={onClick} disabled={!enabled} data-testid={`button-${id}`}>
           <Icon className="mr-1 h-3.5 w-3.5" /> {label}
         </Button>
       </TooltipTrigger>
@@ -125,7 +125,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       <section aria-label="Topic outline" className="flex min-h-0 flex-col border-b bg-card lg:border-b-0 lg:border-r">
         <div className="border-b px-4 py-3">
           <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">Topics · {topics.length}</p>
-          <div className="mt-2.5 flex gap-1.5">
+          <div className="mt-2.5 flex gap-1.5 rounded-md border border-border bg-background p-1">
             {toolButton('Promote', 'Promote topic (Alt + Left)', promote, canPromote, ArrowLeftToLine, 'promote')}
             {toolButton('Demote', 'Demote topic (Alt + Right)', demote, canDemote, ArrowRightToLine, 'demote')}
           </div>
@@ -170,12 +170,12 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
                 onClick={() => setSelectedId(t.id)}
                 className={cn(
                   'relative mx-2 flex cursor-pointer items-baseline gap-2 rounded px-2 py-1.5 text-[13px] outline-none transition-colors',
-                  t.id === selectedId ? 'bg-accent text-accent-foreground' : 'hover:bg-muted',
+                  t.id === selectedId ? 'bg-primary text-primary-foreground [&_.topic-num]:text-primary-foreground/75' : 'text-foreground/85 hover:bg-[hsl(var(--surface-raised))]',
                   'focus-visible:ring-2 focus-visible:ring-ring',
                 )}
                 style={{ paddingLeft: 8 + (t.level - 1) * 14 }}
               >
-                <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground">{nums[i]}</span>
+                <span className="topic-num shrink-0 font-mono text-[10.5px] tabular-nums text-muted-foreground">{nums[i]}</span>
                 <span className={cn('truncate', t.level === 1 && 'font-medium')}>{t.title || 'Untitled topic'}</span>
               </li>
             ))}
@@ -185,8 +185,8 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       </section>
 
       {/* Editor canvas */}
-      <section aria-label="Topic editor" className="min-h-0 overflow-y-auto bg-background">
-        <div className="flex flex-wrap items-center gap-2 border-b bg-card/60 px-6 py-2.5">
+      <section aria-label="Topic editor" className="min-h-0 overflow-y-auto bg-[hsl(var(--surface-raised))]">
+        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b bg-card px-6 py-2.5">
           <ScopeMarker kind="demo">{backend ? 'Topic body · session-only · not saved until F3' : 'Session-only edits · not saved'}</ScopeMarker>
           {dirty && (
             <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => {
@@ -198,7 +198,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
           )}
         </div>
         {selected ? (
-          <article className="mx-auto max-w-[680px] px-6 py-10 fade-up" key={selected.id}>
+          <div className="px-4 py-6 md:px-8 md:py-8"><article className="mx-auto max-w-[720px] rounded-xl border border-border bg-card px-6 py-8 shadow-[0_18px_48px_-30px_rgba(0,0,0,0.7)] md:px-10 md:py-10 fade-up" key={selected.id}>
             <div className="flex items-center gap-2">
               <span className={cn('rounded border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider', KIND_STYLE[selected.kind])}>{selected.kind}</span>
               <span className="font-mono text-xs text-muted-foreground">{nums[index]} · Level {selected.level}</span>
@@ -209,7 +209,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
               value={selected.title}
               readOnly={!canEdit}
               onChange={(e) => { patch(selected.id, { title: e.target.value }); if (backend) metadataControls.current?.changeTitle(e.target.value); }}
-              className="mt-3 h-auto border-none bg-transparent px-0 py-1 font-serif text-[30px] font-medium leading-tight shadow-none focus-visible:ring-0"
+              className="mt-3 h-auto border-none bg-transparent px-0 py-1 text-[28px] md:text-[28px] font-semibold leading-tight tracking-tight shadow-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0"
               data-testid="input-topic-title"
             />
             <label htmlFor="topic-body" className="sr-only">Topic body</label>
@@ -223,10 +223,10 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
                 patch(selected.id, { body });
               }}
               placeholder="Write the topic body. Separate paragraphs with a blank line."
-              className="prose-doc mt-4 min-h-[340px] resize-none border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
+              className="prose-doc mt-4 min-h-[340px] resize-none border-none bg-transparent px-0 shadow-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0"
               data-testid="input-topic-body"
             />
-          </article>
+          </article></div>
         ) : (
           <div className="p-10"><EmptyState icon={FileText} title="No topic selected" body="Choose a topic from the outline." /></div>
         )}

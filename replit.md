@@ -43,6 +43,7 @@ F2 persists document/topic metadata and tree operations, not topic body/content.
 - No AI generation features.
 - Follow the frozen SPEXTAR Studio Authoring Core V1 design; obtain the actual Figma source before claiming exact visual fidelity.
 - SPEXTAR Violet is #6236FF. Dark left navigation is 240px expanded and 72px collapsed, with a remembered preference.
+- Studio defaults to semantic dark mode; retain the light semantic theme for future preference support. Use local, licensed Inter for all product and authoring UI, never a serif editor or external font requests.
 - Use Create project, Import project, Documents, Topics, Promote, Demote, Author, Review, Publish.
 - Do not publish until the user asks.
 - “SPEXTAR is finalized.” Preserve the frozen Figma IA and route structure; do not redesign or invent product areas.

@@ -83,8 +83,8 @@ function NavItem({
         'relative flex h-9 items-center gap-3 rounded-md text-[13px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[hsl(var(--sidebar-ring))]',
         collapsed ? 'mx-auto w-10 justify-center' : 'px-3',
         active
-          ? 'bg-[hsl(var(--sidebar-accent))] font-medium text-white'
-          : 'text-[hsl(var(--sidebar-foreground))]/65 hover:bg-white/[0.045] hover:text-white',
+          ? 'bg-[hsl(var(--sidebar-accent))] font-medium text-[hsl(var(--sidebar-foreground))]'
+          : 'text-[hsl(var(--muted-foreground))] hover:bg-white/[0.045] hover:text-white',
       )}
     >
       {active && <span className="absolute -left-3 top-2 bottom-2 w-[3px] rounded-r bg-primary" aria-hidden />}
@@ -106,7 +106,7 @@ function NavItem({
 function GroupLabel({ children, collapsed }: { children: string; collapsed: boolean }) {
   if (collapsed) return <div className="mx-auto my-2 h-px w-6 bg-white/10" aria-hidden />;
   return (
-    <div className="px-3 pb-1.5 pt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-white/35">{children}</div>
+    <div className="px-3 pb-1.5 pt-4 text-[10.5px] font-medium uppercase tracking-[0.14em] text-[hsl(var(--muted-foreground))]/70">{children}</div>
   );
 }
 
@@ -269,7 +269,7 @@ function SidebarBody({
     <div className="flex h-full flex-col">
       <div className={cn('flex h-14 items-center', collapsed ? 'justify-center' : 'px-4')}>
         <Link href="/workspaces" onClick={onNavigate} aria-label="SPEXTAR Studio home" data-testid="link-logo">
-          {collapsed ? <LogoMark className="bg-white" /> : <Wordmark tone="light" />}
+          {collapsed ? <LogoMark /> : <Wordmark tone="light" />}
         </Link>
       </div>
 
@@ -410,7 +410,7 @@ export function AppShell({
         data-testid="sidebar"
         data-collapsed={collapsed}
         style={{ width }}
-        className="sticky top-0 hidden h-[100dvh] shrink-0 overflow-hidden bg-[hsl(var(--sidebar))] transition-[width] duration-200 ease-out md:block"
+        className="sticky top-0 hidden h-[100dvh] shrink-0 overflow-hidden border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] transition-[width] duration-200 ease-out md:block"
       >
         <SidebarBody ctx={ctx} collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       </aside>
@@ -424,7 +424,7 @@ export function AppShell({
       </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur md:px-6">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-6">
           <button
             type="button"
             className="-ml-1 flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted md:hidden"

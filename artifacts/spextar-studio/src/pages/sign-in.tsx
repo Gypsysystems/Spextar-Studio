@@ -57,11 +57,11 @@ export default function SignInPage() {
 
   return (
     <div className="grid min-h-[100dvh] bg-background lg:grid-cols-[1.05fr_1fr]">
-      <section className="relative hidden overflow-hidden bg-[hsl(var(--sidebar))] p-12 text-white lg:flex lg:flex-col">
-        <div className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#6236FF]/25 blur-[120px]" aria-hidden />
+      <section className="relative hidden overflow-hidden border-r border-border bg-card p-12 text-white lg:flex lg:flex-col">
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#6236FF]/20 blur-[120px]" aria-hidden />
         <Wordmark tone="light" />
         <div className="relative mt-auto max-w-md">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[hsl(253_100%_80%)]">Structured authoring</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[hsl(253_100%_80%)]">Structured authoring</p>
           <h2 className="mt-4 text-[40px] font-semibold leading-[1.08] tracking-tight">
             Structure first.
             <br />
@@ -80,18 +80,18 @@ export default function SignInPage() {
       </section>
 
       <section className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[380px] fade-up">
-          <Wordmark tone="dark" />
+        <div className="w-full max-w-[380px] rounded-xl border border-border bg-card p-7 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.6)] fade-up sm:p-8">
+          <Wordmark />
           <div className="mt-6 flex items-center gap-2">
             {mode === 'demo' ? <ScopeMarker kind="demo">Demo environment</ScopeMarker>
               : <span className="text-xs text-muted-foreground" data-testid="backend-environment">Secure workspace · Supabase</span>}
           </div>
-          <h1 className="mt-4 text-[28px] font-semibold">Sign in to SPEXTAR</h1>
+          <h1 className="mt-4 text-[24px] font-semibold tracking-tight">Sign in to SPEXTAR</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === 'demo' ? 'Isolated local demo workspace' : 'Secure organization workspace'}
           </p>
 
-          <form onSubmit={onSignIn} className="mt-8" aria-label="Email and password sign-in">
+          <form onSubmit={onSignIn} className="mt-6" aria-label="Email and password sign-in">
           <fieldset disabled={mode === 'demo' || signingIn || sessionState.isLoading || sessionState.isSigningOut} className="space-y-4" aria-describedby="credential-note">
             <legend className="sr-only">Email and password</legend>
             <div className="space-y-1.5">
@@ -103,7 +103,7 @@ export default function SignInPage() {
               <Input id="password" type="password" required={mode === 'backend'} placeholder={mode === 'backend' ? 'Enter your password' : 'Demo mode — no credentials'} autoComplete={mode === 'backend' ? 'current-password' : 'off'} value={password} onChange={(e) => setPassword(e.target.value)} data-testid="input-password" />
             </div>
           </fieldset>
-          <p id="credential-note" className="mt-3 flex items-start gap-2 rounded-md bg-muted px-3 py-2 text-[12.5px] text-muted-foreground">
+          <p id="credential-note" className="mt-3 flex items-start gap-2 rounded-md border border-border bg-[hsl(var(--surface-raised))] px-3 py-2 text-[12.5px] text-muted-foreground">
             <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
             {mode === 'demo' ? 'Credential sign-in is disabled in demo mode. No passwords are accepted or stored.'
               : 'Sign in with your existing account. Credentials are sent securely to Supabase, not stored by Studio.'}
@@ -124,7 +124,7 @@ export default function SignInPage() {
 
           {sessionState.isError && <div className="mt-4"><ErrorState error={sessionState.error} onRetry={() => void sessionState.refetch()} /></div>}
           {mode === 'demo' ? <>
-          <div className="my-7 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             <span className="h-px flex-1 bg-border" /> Demo access <span className="h-px flex-1 bg-border" />
           </div>
 

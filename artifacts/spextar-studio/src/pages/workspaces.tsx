@@ -82,15 +82,15 @@ export default function WorkspacesPage() {
               )}
             </EmptyState>
           ) : (
-            <ul className="divide-y overflow-hidden rounded-lg border bg-card">
+            <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-[0_20px_50px_-32px_rgba(0,0,0,0.65)]">
               {filtered.map((w, i) => (
                 <li key={w.id}>
                   <Link
                     href={`/workspaces/${w.id}/projects`}
                     data-testid={`card-workspace-${w.id}`}
-                    className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-5 transition-colors hover:bg-accent/50 md:gap-6"
+                    className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-5 transition-colors hover:bg-[hsl(var(--surface-raised))] md:gap-6"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-md bg-[hsl(var(--sidebar))] font-mono text-sm text-white">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-primary/30 bg-primary/15 font-mono text-sm text-accent-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span className="min-w-0">

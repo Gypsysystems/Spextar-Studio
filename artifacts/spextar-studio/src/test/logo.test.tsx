@@ -1,15 +1,16 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
 import { LogoMark, Wordmark } from '@/components/brand/logo';
 import { createDemoServices } from '@/services/demo-adapter';
 import App from '@/App';
 import userEvent from '@testing-library/user-event';
 
 describe('approved vector lockup', () => {
+  afterEach(() => document.documentElement.classList.remove('dark'));
   it.each([
     ['light', 'reversed'],
     ['dark', 'primary'],
-  ] as const)('uses the %s-background treatment without text-rendering SPEXTAR', (tone, asset) => {
+  ] as const)('uses %s ink without text-rendering SPEXTAR', (tone, asset) => {
     const { container } = render(<Wordmark tone={tone} />);
     const lockup = screen.getByRole('img', { name: 'SPEXTAR Studio' });
     const vector = screen.getByTestId('spextar-vector-wordmark');
@@ -18,10 +19,28 @@ describe('approved vector lockup', () => {
     expect(vector).toHaveAttribute('height', '20');
     expect(lockup).toHaveClass('inline-flex', 'items-center', 'gap-[6px]');
     const suffix = screen.getByText('Studio');
-    expect(suffix).toHaveClass('text-[12px]', 'font-medium', 'leading-[16px]', 'text-[#A7A7B0]');
+    expect(suffix).toHaveClass('text-[12px]', 'font-medium', 'leading-[16px]');
+    expect(suffix).toHaveClass(tone === 'light' ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]');
     expect(suffix.style.fontFamily).toContain('Inter');
     expect(container.textContent).toBe('Studio');
     expect(container.querySelector('svg')).toBeNull();
+  });
+  it('renders one reversed vector in dark mode and follows future light-theme changes', async () => {
+    document.documentElement.classList.add('dark');
+    render(<Wordmark />);
+    expect(screen.getAllByTestId('spextar-vector-wordmark')).toHaveLength(1);
+    expect(screen.getByTestId('spextar-vector-wordmark')).toHaveAttribute('src', '/brand/spextar-wordmark-reversed.svg');
+    await act(async () => { document.documentElement.classList.remove('dark'); });
+    expect(screen.getByTestId('spextar-vector-wordmark')).toHaveAttribute('src', '/brand/spextar-wordmark-primary.svg');
+  });
+  it('uses only reversed lockups on the default dark sign-in screen', async () => {
+    document.documentElement.classList.add('dark');
+    window.history.replaceState(null, '', '/sign-in');
+    render(<App services={createDemoServices({ latencyMs: 0 })} />);
+    await screen.findByRole('heading', { name: 'Sign in to SPEXTAR' });
+    for (const vector of screen.getAllByTestId('spextar-vector-wordmark')) {
+      expect(vector).toHaveAttribute('src', '/brand/spextar-wordmark-reversed.svg');
+    }
   });
   it('loads the approved standalone Signature X for compact contexts', () => {
     render(<LogoMark />);

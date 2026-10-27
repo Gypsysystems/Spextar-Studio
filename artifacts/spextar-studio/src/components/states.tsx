@@ -9,7 +9,7 @@ type ScopeKind = 'demo' | 'placeholder' | 'not-connected' | 'connected';
 
 const scopeStyles: Record<ScopeKind, { icon: LucideIcon; label: string; cls: string }> = {
   demo: { icon: FlaskConical, label: 'Demo', cls: 'border-primary/25 bg-accent text-accent-foreground' },
-  placeholder: { icon: Compass, label: 'Placeholder', cls: 'border-amber-500/30 bg-amber-50 text-amber-800' },
+  placeholder: { icon: Compass, label: 'Placeholder', cls: 'border-amber-500/30 bg-amber-50 text-amber-800 dark:bg-amber-400/10 dark:text-amber-300' },
   'not-connected': { icon: Plug, label: 'Not connected', cls: 'border-border bg-muted text-muted-foreground' },
   connected: { icon: Plug, label: 'Connected', cls: 'border-primary/25 bg-accent text-accent-foreground' },
 };
