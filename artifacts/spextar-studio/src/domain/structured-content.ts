@@ -80,7 +80,9 @@ export function structuredContentIssue(input: TopicContent): string | null {
     const children = value.content ?? [];
     if (!Array.isArray(children)) return 'Invalid node children.';
     if (['text', 'hardBreak', 'horizontalRule'].includes(type) && children.length) return 'Unexpected leaf-node children.';
-    if (['callout', 'blockquote', 'bulletList', 'orderedList', 'listItem', 'table', 'tableRow', 'tableCell', 'tableHeader'].includes(type) && !children.length) return 'Empty structural container.';
+    // A row can contain no own cells when preceding rowspans cover its entire
+    // width. The containing table's grid check proves that coverage below.
+    if (['callout', 'blockquote', 'bulletList', 'orderedList', 'listItem', 'table', 'tableCell', 'tableHeader'].includes(type) && !children.length) return 'Empty structural container.';
     if (type === 'listItem' && (!object(children[0]) || children[0].type !== 'paragraph')) return 'List items must start with a paragraph.';
     for (const child of children) { const issue = check(child, type); if (issue) return issue; }
     if (type === 'table' && !validTable(children as ObjectJSON[])) return 'The saved table has an inconsistent grid; its JSON has been preserved.';
@@ -93,7 +95,7 @@ function validTable(rows: ObjectJSON[]): boolean {
   const grid: boolean[][] = rows.map(() => []);
   for (let r = 0; r < rows.length; r++) {
     let col = 0;
-    for (const cell of rows[r].content as ObjectJSON[]) {
+    for (const cell of (rows[r].content ?? []) as ObjectJSON[]) {
       while (grid[r][col]) col++;
       const attrs = cell.attrs as ObjectJSON | undefined;
       const width = (attrs?.colspan ?? 1) as number, height = (attrs?.rowspan ?? 1) as number;

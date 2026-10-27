@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react';
 import {
-  Bold, Code, Columns3, Heading1, Heading2, Heading3, Italic, Link2, List, ListOrdered, Minus, Pilcrow,
-  Quote, Redo2, Rows3, Search, SquareCode, Strikethrough, Table2, Trash2, Underline, Undo2,
+  Bold, Code, Heading1, Heading2, Heading3, Italic, Link2, List, ListOrdered, Minus, Pilcrow,
+  Quote, Redo2, Search, SquareCode, Strikethrough, Table2, Underline, Undo2,
 } from 'lucide-react';
 import type { TopicContent } from '@/domain/topic-content';
 import { contentKey } from '@/domain/topic-content';
@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import './structured-editor.css';
 import { TopicSearchPanel } from './topic-search-panel';
+import { TableToolbar } from './table-toolbar';
 
 type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean };
 
@@ -88,7 +89,12 @@ export function StructuredEditor({ content, editable, onChange, loading = false 
   if (editor && !canEdit && editor.isEditable) editor.setEditable(false, false);
   useEffect(() => {
     if (!editor) return;
-    if (editor.isEditable !== canEdit) editor.setEditable(canEdit, false);
+    if (editor.isEditable !== canEdit) {
+      editor.setEditable(canEdit, false);
+      // Publish command availability after an editability transition without
+      // letting trailing-node normalization turn that UI update into a save.
+      editor.view.dispatch(editor.state.tr.setMeta('skipTrailingNode', true));
+    }
     const dom = editor.view.dom;
     dom.setAttribute('aria-readonly', String(!canEdit));
     dom.setAttribute('aria-busy', String(loading));
@@ -149,9 +155,6 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
         canP: can.setParagraph(), canH: can.toggleHeading({ level: 1 }), canUndo: can.undo(), canRedo: can.redo(),
         canHr: can.setHorizontalRule(), canLink: can.setLink({ href: 'https://example.com' }),
         canTable: can.insertTable({ rows: 3, cols: 3, withHeaderRow: true }),
-        canRowB: can.addRowBefore(), canRowA: can.addRowAfter(), canRowD: can.deleteRow(),
-        canColB: can.addColumnBefore(), canColA: can.addColumnAfter(), canColD: can.deleteColumn(),
-        canHdr: can.toggleHeaderRow(), canTD: can.deleteTable(),
       };
     },
   });
@@ -218,18 +221,9 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
           {s.calloutKind && btn('Remove callout', <span>Unwrap</span>,
             () => run((c) => c.unsetCallout()), s.canUnsetCallout)}
         </div>
-        <div className="se-group" role="group" aria-label="Table">
+        <div className="se-group se-table-tools" role="group" aria-label="Table">
           {btn('Insert table', <Table2 />, () => run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true })), s.canTable && !s.table)}
-          {s.table && <>
-            {btn('Add row above', <span>R+↑</span>, () => run((c) => c.addRowBefore()), s.canRowB, undefined, 'row-before')}
-            {btn('Add row below', <Rows3 />, () => run((c) => c.addRowAfter()), s.canRowA, undefined, 'row-after')}
-            {btn('Delete row', <span>R−</span>, () => run((c) => c.deleteRow()), s.canRowD, undefined, 'row-delete')}
-            {btn('Add column left', <span>C+←</span>, () => run((c) => c.addColumnBefore()), s.canColB, undefined, 'col-before')}
-            {btn('Add column right', <Columns3 />, () => run((c) => c.addColumnAfter()), s.canColA, undefined, 'col-after')}
-            {btn('Delete column', <span>C−</span>, () => run((c) => c.deleteColumn()), s.canColD, undefined, 'col-delete')}
-            {btn('Toggle header row', <span>H</span>, () => run((c) => c.toggleHeaderRow()), s.canHdr, undefined, 'header-row')}
-            {btn('Delete table', <Trash2 />, () => run((c) => c.deleteTable()), s.canTD, undefined, 'table-delete')}
-          </>}
+          {s.table && <TableToolbar editor={editor} enabled={enabled} />}
         </div>
       </div>
       {searchOpen && <TopicSearchPanel editor={editor} editable={enabled} onClose={closeSearch} />}

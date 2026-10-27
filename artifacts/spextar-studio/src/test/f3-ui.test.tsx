@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import type { Editor } from '@tiptap/core';
+import { CellSelection } from '@tiptap/pm/tables';
 import userEvent from '@testing-library/user-event';
 import App from '@/App';
 import { createSupabaseServices } from '@/services/supabase-adapter';
 import { supabaseDouble, testUser } from './supabase-double';
 import { contentText, emptyContent, withText, type TopicContent } from '@/domain/topic-content';
 import { readRecovery, rememberRecovery } from '@/services/topic-draft-recovery';
+import { tableFixture } from './table-fixture';
 
 function setup(role = 'author', recovery?: string, initialContent?: TopicContent) {
   const fake = supabaseDouble();
@@ -25,6 +28,64 @@ function setup(role = 'author', recovery?: string, initialContent?: TopicContent
 }
 
 describe('F3 Author integration', () => {
+  const selectFirstCell = () => {
+    const editor = (screen.getByTestId('input-topic-body') as HTMLElement & { editor: Editor }).editor;
+    act(() => editor.view.dispatch(editor.state.tr.setMeta('skipTrailingNode', true)
+      .setSelection(CellSelection.create(editor.state.doc, 2))));
+  };
+  it.each(['admin', 'author'])('persists %s advanced tables through autosave, retry, recovery and reload without F2 writes', async (role) => {
+    const { user, db, calls, errors, scope, view, client } = setup(role, undefined, tableFixture(2, 2));
+    await screen.findByText('Saved · revision 1');
+    selectFirstCell();
+    await user.click(screen.getByRole('button', { name: 'Select table' }));
+    expect(calls.filter((call) => call.patch || call.insert)).toHaveLength(0);
+    errors.set('write:topic_drafts', { code: 'network_down' });
+    await user.click(screen.getByRole('button', { name: 'Merge selected cells' }));
+    const recovery = readRecovery(scope)[0].copy.content;
+    expect(JSON.stringify(recovery)).toContain('"rowspan":2');
+    await screen.findByText('Body not saved', {}, { timeout: 4000 });
+    errors.clear();
+    await user.click(screen.getByRole('button', { name: 'Retry body save' }));
+    await screen.findByText('Saved · revision 2');
+    expect(db.topic_drafts[0].content).toEqual(recovery);
+    expect(readRecovery(scope)).toHaveLength(0);
+    view.unmount();
+    render(<App services={createSupabaseServices(client)} />);
+    await screen.findByText('Saved · revision 2');
+    expect(screen.getByTestId('input-topic-body').querySelector('td')).toHaveAttribute('rowspan', '2');
+    expect(screen.getByTestId('input-topic-body').querySelector('td')).toHaveAttribute('colspan', '2');
+    expect(calls.filter((call) => call.patch || call.insert).every((call) => call.table === 'topic_drafts')).toBe(true);
+  });
+  it('retains merged table JSON during conflict and explicitly restores it without overwriting a newer revision', async () => {
+    const { user, db, scope } = setup('author', undefined, tableFixture(2, 2));
+    await screen.findByText('Saved · revision 1');
+    selectFirstCell();
+    await user.click(screen.getByRole('button', { name: 'Select row' }));
+    await user.click(screen.getByRole('button', { name: 'Merge selected cells' }));
+    const local = readRecovery(scope)[0].copy.content;
+    const remote = withText(emptyContent(), 'Remote table revision');
+    Object.assign(db.topic_drafts[0], { content: remote, revision: 2 });
+    await screen.findByText('Concurrent-edit conflict', {}, { timeout: 4000 });
+    expect(db.topic_drafts[0].content).toEqual(remote);
+    await user.click(screen.getByRole('button', { name: 'Retry body save' }));
+    expect(db.topic_drafts[0].content).toEqual(remote);
+    await user.click(screen.getByRole('button', { name: 'Reload saved draft' }));
+    await screen.findByRole('region', { name: 'Recover topic body' });
+    await user.click(screen.getByRole('button', { name: 'Restore recovery' }));
+    await screen.findByText('Saved · revision 3', {}, { timeout: 4000 });
+    expect(db.topic_drafts[0].content).toEqual(local);
+    expect(readRecovery(scope)).toHaveLength(0);
+  });
+  it.each(['reviewer', 'viewer'])('keeps backend %s table operations read-only with zero writes', async (role) => {
+    const { user, calls } = setup(role, undefined, tableFixture(2, 2));
+    await screen.findByText(/Saved · revision 1 · Read-only/);
+    selectFirstCell();
+    await user.click(screen.getByRole('button', { name: 'Select table' }));
+    for (const label of ['Merge selected cells', 'Split cell', 'Toggle cell header', 'Toggle header column', 'Delete row', 'Delete table']) {
+      expect(screen.getByRole('button', { name: label })).toBeDisabled();
+    }
+    expect(calls.filter((call) => call.patch || call.insert)).toHaveLength(0);
+  });
   const searchContent: TopicContent = { type: 'doc', version: 1, metadata: { locale: 'en' }, content: [
     { type: 'callout', attrs: { id: 'callout-id', kind: 'warning' }, content: [
       { type: 'paragraph', attrs: { id: 'p-id' }, content: [

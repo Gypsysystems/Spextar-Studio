@@ -3,10 +3,12 @@ import StarterKit from '@tiptap/starter-kit';
 import { TableKit } from '@tiptap/extension-table';
 import { EditorState, Plugin } from '@tiptap/pm/state';
 import { Fragment, Slice, type Node as ProseNode } from '@tiptap/pm/model';
+import { undo, redo } from '@tiptap/pm/history';
 import { editorDocument, identifiedNodes, validLink } from '@/domain/structured-content';
 import type { TopicContent } from '@/domain/topic-content';
 import { Callout } from './callout-extension';
 import { TopicSearch } from './topic-search';
+import { TechnicalTable, TechnicalTableTools } from './table-tools';
 
 /** SPEXTAR-owned node identity, independent of hosted/proprietary editor extensions. */
 const NodeIdentity = Extension.create({
@@ -71,6 +73,26 @@ const NodeIdentity = Extension.create({
   },
 });
 
+// History must restore the exact saved structure, not run trailing-paragraph
+// normalization after undoing a table/callout operation. Keep StarterKit's
+// history plugin and shortcuts; override only the command dispatch boundary.
+const ExactHistoryCommands = Extension.create({
+  name: 'exactHistoryCommands',
+  priority: 50,
+  addCommands() {
+    return {
+      undo: () => ({ editor, state, tr, dispatch }) => {
+        tr.setMeta('skipTrailingNode', true);
+        return editor.isEditable && undo(state, dispatch);
+      },
+      redo: () => ({ editor, state, tr, dispatch }) => {
+        tr.setMeta('skipTrailingNode', true);
+        return editor.isEditable && redo(state, dispatch);
+      },
+    };
+  },
+});
+
 export function studioExtensions() {
   return [
     TopicSearch,
@@ -80,8 +102,11 @@ export function studioExtensions() {
       link: { openOnClick: false, autolink: false, linkOnPaste: false,
         isAllowedUri: (href) => validLink(href), HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } },
     }),
-    TableKit.configure({ table: { resizable: false, renderWrapper: true } }),
+    TableKit.configure({ table: false }),
+    TechnicalTable.configure({ resizable: false, renderWrapper: true }),
+    TechnicalTableTools,
     NodeIdentity,
+    ExactHistoryCommands,
   ];
 }
 

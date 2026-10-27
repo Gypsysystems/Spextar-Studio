@@ -24,6 +24,8 @@ handling for unsupported content. Slice 2B adds semantic Note, Tip, Caution and
 Warning blocks using the same draft persistence, without schema changes.
 Slice 2C adds Topic-local Find and Replace with formatting-safe text replacement,
 match navigation and read-only-role search.
+Advanced table tools add safe merge/split, header controls and keyboard/range
+selection through the same revision-safe topic-draft JSON path.
 Demo body edits remain session-only.
 See [the F3 contract](artifacts/spextar-studio/F3.md). Publishing execution and
 document import are not implemented as backend persistence.

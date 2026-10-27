@@ -17,6 +17,25 @@ async function mount(path = '/workspaces', authenticated = true) {
 }
 
 describe('foundation routes and navigation', () => {
+  it('keeps advanced table editing isolated and session-only in demo', async () => {
+    const { user, services, unmount } = await mount(base + '/author/mx4-getting-started');
+    const save = vi.spyOn(services.topicDrafts, 'save');
+    await screen.findByTestId('input-topic-body');
+    const storageBefore = { ...localStorage };
+    await user.click(screen.getByRole('button', { name: 'Insert table' }));
+    const body = screen.getByTestId('input-topic-body');
+    expect(body.querySelectorAll('tr')).toHaveLength(3);
+    await user.click(screen.getByRole('button', { name: 'Select row' }));
+    await user.click(screen.getByRole('button', { name: 'Merge selected cells' }));
+    expect(body.querySelector('th')).toHaveAttribute('colspan', '3');
+    await user.click(screen.getByRole('button', { name: 'Split cell' }));
+    expect(body.querySelectorAll('th')).toHaveLength(3);
+    expect(save).not.toHaveBeenCalled();
+    expect({ ...localStorage }).toEqual(storageBefore);
+    unmount();
+    await mount(base + '/author/mx4-getting-started');
+    expect((await screen.findByTestId('input-topic-body')).querySelector('table')).toBeNull();
+  });
   it('keeps semantic callout edits session-only in demo without draft persistence or recovery writes', async () => {
     const { user, services, unmount } = await mount(base + '/author/mx4-getting-started');
     const save = vi.spyOn(services.topicDrafts, 'save');
