@@ -1,0 +1,27 @@
+modules = ["nodejs-24", "python-base-3.13"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+VITE_STUDIO_MODE = "backend"
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ClhYwK0XwsvZJurqpNnaNg_DUO3sWhZ"
+VITE_SUPABASE_URL = "https://luyyxblmtupmugtazgbr.supabase.co"

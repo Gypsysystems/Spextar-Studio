@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SPEXTAR Studio"
+description = "A non-AI structured authoring and technical documentation platform foundation with demo workspace and project flows, modular services, and a writer-first project shell."
+version = "1.0.0"
+id = "artifacts/spextar-studio"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26263
+
+[services.development]
+run = "pnpm --filter @workspace/spextar-studio run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/spextar-studio", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/spextar-studio/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26263"
+BASE_PATH = "/"
