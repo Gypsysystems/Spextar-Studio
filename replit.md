@@ -4,25 +4,28 @@ A non-AI structured authoring and technical documentation platform with an F0/F1
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/spextar-studio run dev` — run Studio through its managed workflow, which supplies `PORT` and `BASE_PATH`
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- SPEXTAR Studio connects directly to its approved Supabase project in backend mode; the shared API/database packages are unused starter infrastructure. Demo mode runs without a backend.
+- `pnpm test` — run all workspace test suites
+- SPEXTAR Studio connects directly to its approved Supabase project in backend mode. Demo mode runs without a backend.
+- The optional `artifacts/mockup-sandbox: Component Preview Server` workflow supports Canvas/component previews independently of Studio.
+- Post-merge setup installs frozen-lockfile dependencies only. It never pushes database schema changes.
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Application: React 19, React Query, Wouter
+- Backend: direct Supabase browser client behind Studio service contracts
+- Build: Vite, Tailwind CSS
+- Tests: Vitest, React Testing Library
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/spextar-studio` — application source, tests, environment template and local brand assets.
+- `artifacts/mockup-sandbox` — optional design/component-preview tooling.
+- `scripts` — utility package and dependency-only post-merge hook.
+- `tsconfig.base.json` — shared strict TypeScript defaults; each retained package owns its typecheck configuration.
 
 ## Architecture decisions
 
@@ -54,4 +57,4 @@ _Populate as you build — sharp edges, "always run X before Y" rules._
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See `README.md` and `artifacts/spextar-studio/README.md` for development, validation and service contracts.

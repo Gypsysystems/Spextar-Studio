@@ -48,18 +48,33 @@ not server secrets.
 ## Validation
 
 ```sh
-pnpm --filter @workspace/spextar-studio run typecheck
-pnpm --filter @workspace/spextar-studio test
-PORT=5173 BASE_PATH=/ pnpm --filter @workspace/spextar-studio run build
+pnpm run typecheck
+pnpm test
+PORT=5173 BASE_PATH=/ pnpm run build
 ```
+
+The root typecheck covers Studio, the component-preview sandbox, and utility
+scripts. The root test command runs every workspace test suite. The build checks
+types and builds Studio plus the retained preview tooling. Studio-only commands
+are documented in the application README.
 
 Automated tests exercise demo behavior, routing, branding, session/cache cleanup,
 Supabase SDK browser-session behavior, tenant-scoped service boundaries, creation
 contracts and backend failures. Tests do not need live account credentials.
 
-The additional API, shared libraries and component-preview workspace are
-retained as source configuration; SPEXTAR's backend adapter uses Supabase
-directly and does not use the starter database package.
+## Workspace structure
+
+- `artifacts/spextar-studio` — the application, direct Supabase adapters,
+  isolated demo services, tests, and approved local brand assets.
+- `artifacts/mockup-sandbox` — optional Canvas/component-preview tooling with
+  its own managed development service; not a Studio runtime dependency.
+- `scripts` — utility scripts and post-merge dependency installation.
+- Root configuration — pnpm workspace/lockfile, shared TypeScript defaults,
+  validation commands, and Replit configuration.
+
+Studio uses Supabase directly. There is no separate application API server or
+automatic database schema push. Post-merge setup installs locked dependencies
+only; it does not modify any database.
 
 ## Source-control hygiene
 
