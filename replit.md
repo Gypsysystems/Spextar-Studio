@@ -52,6 +52,7 @@ F3 Slice 2A uses open-source Tiptap only as the editing engine. SPEXTAR owns the
 - Use only the supplied frozen Figma wordmark/Signature X vectors; never recreate SPEXTAR as text or a generic icon. Studio is an inline right-hand suffix, not stacked.
 - Do not connect to or reuse the old AI Content Studio Supabase project.
 - Proceed independently until user input is genuinely needed.
+- Keep only one overlapping Replit code mutation active at a time; independently validate commits, tests, builds, role/RLS behavior, and frozen design contracts before moving forward.
 - Preserve the existing Supabase schema and security policies. Use the database's atomic resource-plus-membership operations; never replace them with separate client inserts or weaker grants.
 - “We will maintain our project on GitHub and update it regularly.” Use https://github.com/Gypsysystems/Spextar-Studio.git for source control; review outgoing changes and exclude private credentials and machine-local/generated files.
 

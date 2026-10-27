@@ -15,6 +15,7 @@ import ProjectsPage from '@/pages/projects';
 import ProjectHomePage from '@/pages/project-home';
 import DocumentsPage from '@/pages/documents';
 import { AuthorRoute } from '@/routes/author-route';
+import ProjectSettingsPage from '@/pages/project-settings';
 import VariablesConditionsPage from '@/pages/variables-conditions';
 import { SectionPlaceholderPage } from '@/pages/section-placeholder';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
@@ -48,7 +49,7 @@ function ApplicationRoutes() {
         <Route path={`${P}/variables-conditions`} component={VariablesConditionsPage} />
         <Route path={`${P}/style-guide`}>{() => <SectionPlaceholderPage section="style-guide" />}</Route>
         <Route path={`${P}/history`}>{() => <SectionPlaceholderPage section="history" />}</Route>
-        <Route path={`${P}/settings`}>{() => <SectionPlaceholderPage section="settings" />}</Route>
+        <Route path={`${P}/settings`} component={ProjectSettingsPage} />
         <Route path={`${P}/brand-outputs`}>{() => <SectionPlaceholderPage section="brand-outputs" />}</Route>
         <Route component={NotFound} />
       </Switch>

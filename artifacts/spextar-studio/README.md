@@ -1,5 +1,18 @@
 # SPEXTAR Studio
 
+## Project Settings
+
+The existing Project settings route now supports explicit saves of project name, slug and nullable description; confirmed active/archived status changes; and administration of existing project memberships. Only an **explicit Project Admin** can mutate these resources. Author content permission, inherited workspace administration and organization ownership do not grant project administration in the client. Authenticated Supabase RLS is the final authority.
+
+- `Services.projectSettings` isolates the typed settings boundary. Backend operations use `projects` and `project_members`, with workspace/project filters and fresh membership checks. Metadata writes match the original `updated_at`; the database controls the next timestamp. Membership changes match the prior role. Atomic project creation is unchanged.
+- Only existing, accessible `workspace_members` are offered for addition. Full user IDs are shown honestly; no directory lookup, invitations, email delivery or invented profile access is implemented.
+- Names are trimmed and limited to 2–160 characters. Slugs use lowercase letters/digits separated by single hyphens; workspace uniqueness is database-authoritative. Only active/archived settings statuses are supported. No project deletion exists.
+- Self-removal/self-demotion is blocked; last-admin changes are defensively blocked after fresh membership reads. **These client checks are not an atomic multi-session last-admin invariant.** No authoritative transaction/RPC for that invariant has been supplied, and this slice does not change schema/RLS.
+- Archive/restore changes the stored status only. It does not implement publishing, deletion, or additional archive locking. Unsaved details must be saved/discarded first. Failed/conflicting writes preserve edits and offer explicit reload/retry; background refreshes never advance an in-progress form's expected revision.
+- This slice's demo settings and memberships live in adapter memory, are reflected in demo project views and are cleared on sign-out. They never write to Supabase or persist settings in browser storage. Existing demo authentication/storage behavior is unchanged.
+- Presentation reuses the approved shell and existing visual language. No separate detailed frozen Settings Figma screen is available in the repository; exact screen-to-Figma fidelity is not claimed.
+- Tests cover admin-only writes, inherited/read-only roles, validation, stale revisions/roles, backend errors, safe membership management and isolated demo state. Controlled desktop/mobile dark/light browser checks are not live multi-account RLS certification.
+
 ## F3 — Reusable Content Management
 
 The existing project Reusable content route now manages workspace-shared and project-scoped items through `Services.reusable`. It includes searchable/filterable library selection, details, create/edit/rename/duplicate, tags, status, update policy, description/settings, and an on-demand structured draft editor. Scope and slug remain immutable after creation; rename preserves identity and slug. There is no delete or Author insertion.
@@ -56,7 +69,8 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
 | `…/variables-conditions` | Text variable management, output overrides, scoped validation, category/value management; Output preview tab coming next | Supabase or session-only demo |
 | `…/reusable-content` | Scoped reusable metadata and structured drafts | Supabase / isolated session demo |
-| `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
+| `…/settings` | Project metadata, existing member roles, confirmed archive/restore; explicit Project Admin only | Supabase or session-only demo |
+| `…/style-guide`, `…/history`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
 | anything else | Not found. Unknown workspace, project and document IDs also show not-found inside the shell | — |
 
 Breadcrumbs: Workspaces → workspace → project → page/document.

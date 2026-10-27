@@ -62,6 +62,13 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
       if (this.patch || this.inserting) beforeWrite(this.table);
       let error = (this.deleting ? errors.get(`delete:${this.table}`) : null)
         ?? ((this.patch || this.inserting) ? errors.get(`write:${this.table}`) : null) ?? errors.get(this.table) ?? null;
+      if (this.inserting && !error && this.table === 'project_members') {
+        if (db.project_members.some(r => r.project_id === this.inserting!.project_id && r.user_id === this.inserting!.user_id))
+          error = { code: '23505' };
+        else db.project_members.push({ ...this.inserting });
+      }
+      if (this.patch && !error && this.table === 'projects' && this.patch.slug &&
+        db.projects.some(r => r.slug === this.patch!.slug && !this.filters.every(([c, v]) => r[c] === v))) error = { code: '23505' };
       if (this.inserting && !error && this.table === 'topic_drafts') {
         if (db.topic_drafts.some((row) => row.topic_id === this.inserting!.topic_id)) error = { code: '23505' };
         else db.topic_drafts.push({ ...this.inserting, revision: 1, updated_at: new Date().toISOString() });
@@ -98,7 +105,8 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
       let rows = (db[this.table] ?? []).filter((row) => this.filters.every(([column, value]) =>
         Array.isArray(value) ? value.includes(row[column]) : row[column] === value));
       if (this.inserting) rows = rows.filter((row) => ['project_variables', 'condition_categories', 'condition_values', 'reusable_contents'].includes(this.table)
-        ? row.id === this.insertedId : this.table === 'reusable_content_drafts'
+        ? row.id === this.insertedId : this.table === 'project_members'
+          ? row.project_id === this.inserting!.project_id && row.user_id === this.inserting!.user_id : this.table === 'reusable_content_drafts'
           ? row.reusable_content_id === this.inserting!.reusable_content_id : row.topic_id === this.inserting!.topic_id);
       if (this.patch && !error) rows.forEach((row) => Object.assign(row, this.patch));
       if (this.patch && !error && this.table === 'topic_drafts') rows.forEach((row) => {
@@ -109,6 +117,9 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
       });
       if (this.patch && !error && this.table === 'reusable_contents') rows.forEach(row => {
         row.updated_at = new Date().toISOString();
+      });
+      if (this.patch && !error && this.table === 'projects') rows.forEach(row => {
+        row.updated_at = new Date(Math.max(Date.now(), Date.parse(String(row.updated_at)) + 1)).toISOString();
       });
       if (this.deleting && !error) db[this.table] = (db[this.table] ?? []).filter((row) => !rows.includes(row));
       if (this.bounds) rows = rows.slice(this.bounds[0], this.bounds[1] + 1);

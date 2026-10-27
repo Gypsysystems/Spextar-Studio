@@ -27,6 +27,7 @@ import { slugify, suggestKey } from '@/domain/project-identifiers';
 import { demoVariables } from './demo-variables';
 import { demoConditions } from './demo-conditions';
 import { demoReusable } from './demo-reusable';
+import { demoProjectSettings } from './demo-project-settings';
 
 /**
  * Local demo adapter. Fixtures are read-only; anything the user creates or imports
@@ -52,7 +53,8 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
   const userDocuments = () => readJSON<DocumentRecord[]>(STORAGE_KEYS.documents, [], isDocumentArray);
 
   const allWorkspaces = () => [...DEMO_WORKSPACES, ...userWorkspaces()];
-  const allProjects = () => [...DEMO_PROJECTS, ...userProjects()];
+  const settingsOverrides = new Map<string, Partial<Project>>();
+  const allProjects = () => [...DEMO_PROJECTS, ...userProjects()].map(p => ({ ...p, ...settingsOverrides.get(p.id) }));
   const allDocuments = () => [...DEMO_DOCUMENTS, ...userDocuments()];
   const authorizeManagement = async (pid: string) => {
     if (!readJSON<DemoSession | null>(STORAGE_KEYS.session, null, isDemoSession))
@@ -60,6 +62,14 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
     if (!allProjects().some((project) => project.id === pid)) throw new ServiceError('Project not found.', 'not-found');
   };
   const variables = demoVariables(authorizeManagement);
+  const projectSettings = demoProjectSettings(async s => {
+    await authorizeManagement(s.projectId);
+    const project = allProjects().find(p => p.id === s.projectId && p.workspaceId === s.workspaceId);
+    const session = readJSON<DemoSession | null>(STORAGE_KEYS.session, null, isDemoSession);
+    if (!project || !session) throw new ServiceError('Project scope is not accessible.', 'forbidden');
+    return { project, userId: session.userId };
+  }, (id, patch) => settingsOverrides.set(id, { ...settingsOverrides.get(id), ...patch }),
+  (scope, slug) => allProjects().some(p => p.workspaceId === scope.workspaceId && p.id !== scope.projectId && p.key.toLowerCase() === slug));
   const conditions = demoConditions(authorizeManagement);
   const reusable = demoReusable(async (c) => {
     await authorizeManagement(c.projectId);
@@ -102,6 +112,7 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
     variables: variables.service,
     conditions: conditions.service,
     reusable: reusable.service,
+    projectSettings: projectSettings.service,
     auth: {
       async getSession() {
         await wait(120);
@@ -122,6 +133,8 @@ export function createDemoServices(options: { latencyMs?: number } = {}): Servic
         variables.clear();
         conditions.clear();
         reusable.clear();
+        projectSettings.clear();
+        settingsOverrides.clear();
       },
     },
 

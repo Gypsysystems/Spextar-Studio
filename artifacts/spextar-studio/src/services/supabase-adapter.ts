@@ -12,6 +12,7 @@ import { supabaseTopicDrafts } from './supabase-topic-drafts';
 import { supabaseVariables } from './supabase-variables';
 import { supabaseConditions } from './supabase-conditions';
 import { supabaseReusable } from './supabase-reusable';
+import { supabaseProjectSettings } from './supabase-project-settings';
 
 const orgRole = z.enum(['owner', 'admin', 'member']);
 const workspaceRole = z.enum(['admin', 'member', 'viewer']);
@@ -343,6 +344,11 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       async importProject() { throw new ServiceError('Document import is not part of the connected F0/F1 database foundation.', 'unavailable'); },
       async listActivity(projectId) { await requireProject(projectId); return []; },
     },
+    projectSettings: supabaseProjectSettings(client, async (scope) => {
+      const ctx = await context();
+      if (!await getProject(scope.workspaceId, scope.projectId, false)) throw new ServiceError('Project is not accessible in this workspace.', 'forbidden');
+      return ctx.userId;
+    }),
     documents: supabaseDocuments(client, requireProject),
   };
 }
