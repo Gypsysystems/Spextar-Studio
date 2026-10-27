@@ -15,14 +15,17 @@ There are no AI generation features.
   membership-aware reads and atomic creation boundaries.
 - Strictly isolated browser-local demo mode.
 
-Microsoft and Google sign-in are intentionally inactive. Document authoring,
-publishing and document import are not implemented as backend persistence.
+Microsoft and Google sign-in are intentionally inactive. F2 connects document/topic
+metadata, hierarchy, ordering and duplication to the existing Supabase tables/RPCs.
+Topic body authoring remains session-only until F3. Publishing execution and
+document import are not implemented as backend persistence.
 Authenticated live creation-function contracts and two-account RLS acceptance
 checks still require verification; passing contract tests does not prove those
 live database behaviors.
 
 See [the application documentation](artifacts/spextar-studio/README.md) for the
 route map, service contracts, approved branding and known integration boundaries.
+See [the F2 contract](artifacts/spextar-studio/F2.md) for metadata and body-storage boundaries.
 
 ## Development
 

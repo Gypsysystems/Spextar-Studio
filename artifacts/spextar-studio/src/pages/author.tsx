@@ -14,6 +14,10 @@ import { useDocument, useDocuments } from '@/hooks/use-studio-data';
 import { DOC_STATUS_LABEL, DOC_TYPE_LABEL, relative } from '@/lib/format';
 import type { DocumentRecord, ProjectSummary, Topic } from '@/domain/types';
 import { cn } from '@/lib/utils';
+import { useServices } from '@/providers/services-provider';
+import { ContentDialog, DocumentMetadataDialog } from '@/features/content/content-dialogs';
+import { MetadataEditor, type TopicMetadataControls } from '@/features/content/metadata-editor';
+import { useContentMutation } from '@/hooks/use-content-mutation';
 
 const KIND_STYLE: Record<Topic['kind'], string> = {
   concept: 'text-sky-700 bg-sky-50 border-sky-200',
@@ -22,15 +26,19 @@ const KIND_STYLE: Record<Topic['kind'], string> = {
 };
 
 function numbering(topics: Topic[]): string[] {
-  const counters = [0, 0, 0, 0];
+  const counters: number[] = [];
   return topics.map((t) => {
-    counters[t.level - 1] += 1;
-    for (let i = t.level; i < 4; i++) counters[i] = 0;
+    counters[t.level - 1] = (counters[t.level - 1] ?? 0) + 1;
+    counters.length = t.level;
     return counters.slice(0, t.level).map((n) => Math.max(n, 1)).join('.');
   });
 }
 
 function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
+  const services = useServices();
+  const backend = services.mode === 'backend';
+  const canEdit = !backend || doc.canEdit === true;
+  const mutation = useContentMutation(doc.projectId);
   const search = useSearch();
   const initialTopic = new URLSearchParams(search).get('topic');
   const [topics, setTopics] = useState<Topic[]>(doc.topics);
@@ -39,27 +47,49 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   );
   const initFor = useRef(doc.id);
   const outlineRef = useRef<HTMLOListElement>(null);
+  const bodies = useRef(new Map<string, string[]>());
+  const metadataControls = useRef<TopicMetadataControls | null>(null);
 
   useEffect(() => {
     if (initFor.current !== doc.id) {
       initFor.current = doc.id;
       setTopics(doc.topics);
       setSelectedId(doc.topics[0]?.id ?? null);
+    } else {
+      // Refresh persisted metadata/tree without clobbering unsaved F3 body drafts.
+      setTopics(doc.topics.map((topic) => ({ ...topic, body: bodies.current.get(topic.id) ?? topic.body })));
+      setSelectedId((id) => doc.topics.some((t) => t.id === id) ? id : doc.topics[0]?.id ?? null);
     }
   }, [doc]);
+  useEffect(() => {
+    if (initialTopic && doc.topics.some((t) => t.id === initialTopic)) setSelectedId(initialTopic);
+  }, [initialTopic, doc.id]);
+  useEffect(() => {
+    const guard = (event: BeforeUnloadEvent) => {
+      if (bodies.current.size) { event.preventDefault(); event.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, []);
 
   const nums = useMemo(() => numbering(topics), [topics]);
   const index = topics.findIndex((t) => t.id === selectedId);
   const selected = index >= 0 ? topics[index] : null;
-  const dirty = JSON.stringify(topics) !== JSON.stringify(doc.topics);
+  const dirty = backend ? bodies.current.size > 0 : JSON.stringify(topics) !== JSON.stringify(doc.topics);
 
-  const canPromote = !!selected && selected.level > 1;
-  const canDemote = !!selected && index > 0 && selected.level < 4 && selected.level <= topics[index - 1].level;
+  const siblings = selected ? topics.filter((t) => (t.parentTopicId ?? null) === (selected.parentTopicId ?? null)) : [];
+  const siblingIndex = siblings.findIndex((t) => t.id === selected?.id);
+  const canPromote = canEdit && !mutation.isPending && !!selected && selected.level > 1;
+  const canDemote = canEdit && !mutation.isPending && !!selected && (backend ? siblingIndex > 0 : index > 0 && selected.level < 4 && selected.level <= topics[index - 1].level);
 
   const patch = (id: string, change: Partial<Topic>) =>
     setTopics((ts) => ts.map((t) => (t.id === id ? { ...t, ...change } : t)));
-  const promote = () => selected && canPromote && patch(selected.id, { level: selected.level - 1 });
-  const demote = () => selected && canDemote && patch(selected.id, { level: selected.level + 1 });
+  const promote = () => {
+    if (selected && canPromote) backend ? mutation.mutate(() => services.documents.promoteTopic(doc.projectId, doc.id, selected.id)) : patch(selected.id, { level: selected.level - 1 });
+  };
+  const demote = () => {
+    if (selected && canDemote) backend ? mutation.mutate(() => services.documents.demoteTopic(doc.projectId, doc.id, selected.id)) : patch(selected.id, { level: selected.level + 1 });
+  };
 
   const onOutlineKey = (e: KeyboardEvent) => {
     if (!topics.length) return;
@@ -97,6 +127,18 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
             {toolButton('Promote', 'Promote topic (Alt + Left)', promote, canPromote, ArrowLeftToLine, 'promote')}
             {toolButton('Demote', 'Demote topic (Alt + Right)', demote, canDemote, ArrowRightToLine, 'demote')}
           </div>
+          {backend && canEdit && <div className="mt-2 flex flex-wrap gap-1.5">
+            <ContentDialog action="topic" projectId={doc.projectId} doc={doc} topic={selected ?? undefined} onTopic={setSelectedId} />
+            {selected && <>
+              <ContentDialog action="move" projectId={doc.projectId} doc={doc} topic={selected} />
+              <ContentDialog action="duplicate-topic" projectId={doc.projectId} doc={doc} topic={selected} onTopic={setSelectedId} />
+              <Button size="sm" variant="outline" disabled={mutation.isPending || siblingIndex <= 0} onClick={() => mutation.mutate(() => services.documents.moveTopic(doc.projectId, doc.id, selected.id, selected.parentTopicId ?? null, siblings[siblingIndex - 1].sortOrder!))}>Move up</Button>
+              <Button size="sm" variant="outline" disabled={mutation.isPending || siblingIndex < 0 || siblingIndex >= siblings.length - 1} onClick={() => mutation.mutate(() => services.documents.moveTopic(doc.projectId, doc.id, selected.id, selected.parentTopicId ?? null, siblings[siblingIndex + 1].sortOrder!))}>Move down</Button>
+            </>}
+          </div>}
+          {mutation.isPending && <p role="status" className="mt-2 text-xs">Saving topic hierarchy…</p>}
+          {mutation.isSuccess && !mutation.isPending && <p role="status" className="mt-2 text-xs text-muted-foreground">Topic hierarchy saved</p>}
+          {mutation.error && <p role="alert" className="mt-2 text-xs text-destructive">{mutation.error.message}</p>}
         </div>
         {topics.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">This document has no topics.</p>
@@ -138,10 +180,13 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       {/* Editor canvas */}
       <section aria-label="Topic editor" className="min-h-0 overflow-y-auto bg-background">
         <div className="flex flex-wrap items-center gap-2 border-b bg-card/60 px-6 py-2.5">
-          <ScopeMarker kind="demo">Session-only edits · not saved</ScopeMarker>
+          <ScopeMarker kind="demo">{backend ? 'Topic body · session-only · not saved until F3' : 'Session-only edits · not saved'}</ScopeMarker>
           {dirty && (
-            <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => setTopics(doc.topics)} data-testid="button-discard-edits">
-              <RotateCcw className="mr-1 h-3 w-3" /> Discard changes
+            <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => {
+              bodies.current.clear();
+              setTopics(backend ? topics.map((topic) => ({ ...topic, body: doc.topics.find((t) => t.id === topic.id)?.body ?? [] })) : doc.topics);
+            }} data-testid="button-discard-edits">
+              <RotateCcw className="mr-1 h-3 w-3" /> {backend ? 'Discard body edits' : 'Discard changes'}
             </Button>
           )}
         </div>
@@ -155,7 +200,8 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
             <Input
               id="topic-title"
               value={selected.title}
-              onChange={(e) => patch(selected.id, { title: e.target.value })}
+              readOnly={!canEdit}
+              onChange={(e) => { patch(selected.id, { title: e.target.value }); if (backend) metadataControls.current?.changeTitle(e.target.value); }}
               className="mt-3 h-auto border-none bg-transparent px-0 py-1 font-serif text-[30px] font-medium leading-tight shadow-none focus-visible:ring-0"
               data-testid="input-topic-title"
             />
@@ -163,7 +209,12 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
             <Textarea
               id="topic-body"
               value={selected.body.join('\n\n')}
-              onChange={(e) => patch(selected.id, { body: e.target.value.split(/\n{2,}/) })}
+              readOnly={!canEdit}
+              onChange={(e) => {
+                const body = e.target.value.split(/\n{2,}/);
+                bodies.current.set(selected.id, body);
+                patch(selected.id, { body });
+              }}
               placeholder="Write the topic body. Separate paragraphs with a blank line."
               className="prose-doc mt-4 min-h-[340px] resize-none border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
               data-testid="input-topic-body"
@@ -178,6 +229,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       <aside aria-label="Document properties" className="min-h-0 overflow-y-auto border-t bg-card px-5 py-5 lg:col-start-2 xl:col-start-auto xl:border-l xl:border-t-0">
         <h2 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">Document</h2>
         <p className="mt-2 font-medium leading-snug">{doc.title}</p>
+        {backend && <div className="mt-3 space-y-2"><DocumentMetadataDialog doc={doc} />{canEdit && <ContentDialog action="duplicate-document" projectId={doc.projectId} doc={doc} />}</div>}
         <dl className="mt-4 grid grid-cols-[88px_1fr] gap-y-2.5 text-[13px]">
           <dt className="text-muted-foreground">Status</dt><dd><StatusPill status={doc.status} label={DOC_STATUS_LABEL[doc.status]} /></dd>
           <dt className="text-muted-foreground">Type</dt><dd>{DOC_TYPE_LABEL[doc.type]}</dd>
@@ -190,7 +242,10 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
             <h2 className="mt-7 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">Topic</h2>
             <div className="mt-3 space-y-1.5">
               <label htmlFor="topic-kind" className="text-[13px] text-muted-foreground">Topic type</label>
-              <Select value={selected.kind} onValueChange={(v) => patch(selected.id, { kind: v as Topic['kind'] })}>
+              <Select disabled={!canEdit} value={selected.kind} onValueChange={(v) => {
+                patch(selected.id, { kind: v as Topic['kind'] });
+                if (backend) metadataControls.current?.changeKind(v);
+              }}>
                 <SelectTrigger id="topic-kind" className="h-9" data-testid="select-topic-kind"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="concept">Concept</SelectItem>
@@ -199,6 +254,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
                 </SelectContent>
               </Select>
             </div>
+            {backend && <div className="mt-4"><MetadataEditor key={selected.id} controls={metadataControls} projectId={doc.projectId} doc={doc} topic={selected} /></div>}
             <p className="mt-3 text-[12.5px] text-muted-foreground">
               {selected.body.join(' ').split(/\s+/).filter(Boolean).length} words · {selected.body.filter(Boolean).length} paragraphs
             </p>
@@ -256,7 +312,7 @@ function AuthorBody({ project, base, documentId }: { project: ProjectSummary; ba
           ) : docs.isError ? (
             <ErrorState error={docs.error} onRetry={() => docs.refetch()} />
           ) : (docs.data ?? []).length === 0 ? (
-            <EmptyState icon={Files} title="Nothing to author yet" body="This project has no documents. Import a project file to add documents and topics." />
+            <EmptyState icon={Files} title="Nothing to author yet" body="This project has no documents. Open Documents to create a document or view the demo import options." />
           ) : (
             <>
               <h1 className="text-xl font-semibold">Choose a document to author</h1>

@@ -59,9 +59,11 @@ export interface Project {
 export interface ProjectSummary extends Project {
   documentCount: number;
   topicCount: number;
+  /** Explicit project membership, not inherited workspace administration. */
+  canEditContent?: boolean;
 }
 
-export type DocumentStatus = 'draft' | 'in-review' | 'approved';
+export type DocumentStatus = 'draft' | 'in-review' | 'approved' | 'published';
 export type DocumentType = 'guide' | 'procedure' | 'reference' | 'release-notes';
 export type TopicKind = 'concept' | 'task' | 'reference';
 
@@ -72,6 +74,12 @@ export interface Topic {
   /** Outline depth, 1 (top) to 4. Changed with Promote / Demote. */
   level: number;
   body: string[];
+  slug?: string;
+  parentTopicId?: ID | null;
+  sortOrder?: number;
+  status?: DocumentStatus;
+  settings?: Record<string, unknown>;
+  updatedAt?: ISODate;
 }
 
 export interface DocumentRecord {
@@ -85,6 +93,9 @@ export interface DocumentRecord {
   summary: string;
   updatedAt: ISODate;
   topics: Topic[];
+  slug?: string;
+  settings?: Record<string, unknown>;
+  canEdit?: boolean;
 }
 
 export interface ActivityEvent {

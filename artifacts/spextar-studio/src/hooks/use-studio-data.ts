@@ -110,6 +110,7 @@ export function useDocument(projectId: string, documentId: string) {
   return useQuery({
     queryKey: qk.document(projectId, documentId),
     queryFn: () => documents.getDocument(projectId, documentId),
+    enabled: Boolean(projectId && documentId),
   });
 }
 

@@ -1,4 +1,4 @@
-# SPEXTAR Studio — F0/F1 foundation
+# SPEXTAR Studio — F0/F1 foundation and F2 metadata integration
 
 SPEXTAR Studio is a structured authoring and content management workspace for technical writers. It has no AI features. Backend mode uses Supabase Auth and the existing F0/F1 organization/workspace/project database. Isolated demo mode uses browser-local fixture data. The brand uses the exact supplied Figma vectors; full-screen UI fidelity still requires comparison with the complete frozen design file.
 
@@ -20,8 +20,8 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `/workspaces` | Organization selection/creation, workspace search/creation | Supabase or isolated demo |
 | `/workspaces/:workspaceId/projects` | Projects: search, status filter, Create project; document Import project remains demo-only | Supabase or isolated demo |
 | `…/projects/:projectId` | Project Home: lifecycle counts, recent documents, activity, project areas | Functional |
-| `…/documents` | Document list with expandable topic outlines | Foundation preview |
-| `…/author`, `…/author/:documentId` | Three panes: outline / editor / inspector. Promote and Demote work, but edits last only for the session | Foundation preview |
+| `…/documents` | Live document list, expandable topic outlines, create/duplicate and metadata controls | Supabase or isolated demo |
+| `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector. Backend metadata/tree persists; body drafts remain session-only | F2 metadata; F3 body pending |
 | `…/review`, `…/publish` | Placeholder that also lists the matching documents (read-only). Actions are disabled | Placeholder |
 | `…/reusable-content`, `…/variables-conditions`, `…/style-guide`, `…/history`, `…/settings`, `…/brand-outputs` | Route-ready placeholders | Placeholder |
 | anything else | Not found. Unknown workspace, project and document IDs also show not-found inside the shell | — |
@@ -66,7 +66,7 @@ src/pages/                     Routed views
 - The actual creation response must contain the resource ID. The adapter re-reads the resource and verifies the new owner/admin membership before showing success.
 - These authenticated RPC signatures and live multi-account RLS behavior must be verified against an authorized account; automated contract doubles do not prove live database transaction behavior.
 - The database uses `projects.slug` for the UI's short project key. Product metadata and document import are not in the F0/F1 foundation, so the backend form/control does not pretend to save them.
-- Document/topic authoring, publishing and activity persistence remain outside this integration. Backend document/activity queries currently expose empty foundation views after validating project access; they never use demo fixtures.
+- F2 document/topic reads, metadata updates, create/move/promote/demote/duplicate operations use Supabase behind the existing service abstraction. Topic body/content, publishing execution and activity persistence remain outside this integration. Backend activity queries remain empty; document queries do not use fixtures. See `F2.md`.
 - All methods return Promises. `get*` methods resolve `null` for not-found. Conflicts and validation errors throw `ServiceError` (`code`, `issues`).
 
 ### Test-readiness

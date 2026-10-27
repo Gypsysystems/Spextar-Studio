@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-type ScopeKind = 'demo' | 'placeholder' | 'not-connected';
+type ScopeKind = 'demo' | 'placeholder' | 'not-connected' | 'connected';
 
 const scopeStyles: Record<ScopeKind, { icon: LucideIcon; label: string; cls: string }> = {
   demo: { icon: FlaskConical, label: 'Demo', cls: 'border-primary/25 bg-accent text-accent-foreground' },
   placeholder: { icon: Compass, label: 'Placeholder', cls: 'border-amber-500/30 bg-amber-50 text-amber-800' },
   'not-connected': { icon: Plug, label: 'Not connected', cls: 'border-border bg-muted text-muted-foreground' },
+  connected: { icon: Plug, label: 'Connected', cls: 'border-primary/25 bg-accent text-accent-foreground' },
 };
 
 /** Explicit scope marker separating demo/placeholder behaviour from real functionality. */

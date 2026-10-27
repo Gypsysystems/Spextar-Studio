@@ -24,24 +24,32 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
       { id: 'project-b', workspace_id: 'ws-b', name: 'Project B', slug: 'pb', description: '', status: 'active', created_at: at, updated_at: at, created_by: 'another-user' },
     ],
     project_members: [{ project_id: 'project-a', user_id: testUser.id, role: 'admin' }],
+    documents: [],
+    topics: [],
   };
-  const calls: { table: string; filters: [string, unknown][]; columns: string }[] = [];
+  const calls: { table: string; filters: [string, unknown][]; columns: string; patch?: Row }[] = [];
   const errors = new Map<string, { code: string; message?: string }>();
   class Query {
     filters: [string, unknown][] = [];
     columns = '';
     single = false;
+    patch?: Row;
+    bounds?: [number, number];
     constructor(readonly table: string) {}
     select(columns: string) { this.columns = columns; return this; }
     eq(column: string, value: unknown) { this.filters.push([column, value]); return this; }
     in(column: string, values: unknown[]) { this.filters.push([column, values]); return this; }
     order() { return this; }
+    range(from: number, to: number) { this.bounds = [from, to]; return this; }
+    update(patch: Row) { this.patch = patch; return this; }
     maybeSingle() { this.single = true; return this; }
     then(resolve: (value: { data: Row | Row[] | null; error: unknown }) => unknown) {
-      calls.push({ table: this.table, filters: this.filters, columns: this.columns });
+      calls.push({ table: this.table, filters: this.filters, columns: this.columns, ...(this.patch ? { patch: this.patch } : {}) });
       const error = errors.get(this.table) ?? null;
-      const rows = (db[this.table] ?? []).filter((row) => this.filters.every(([column, value]) =>
+      let rows = (db[this.table] ?? []).filter((row) => this.filters.every(([column, value]) =>
         Array.isArray(value) ? value.includes(row[column]) : row[column] === value));
+      if (this.patch && !error) rows.forEach((row) => Object.assign(row, this.patch));
+      if (this.bounds) rows = rows.slice(this.bounds[0], this.bounds[1] + 1);
       return Promise.resolve({ data: error ? null : this.single ? rows[0] ?? null : rows, error }).then(resolve);
     }
   }
@@ -65,7 +73,7 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
       return { data: { subscription: { unsubscribe: () => listeners.delete(listener) } } };
     }),
   };
-  const rpc = vi.fn(async (name: string, args: Record<string, unknown>, options?: { get?: boolean }) => {
+  const rpc = vi.fn(async (name: string, args: Record<string, unknown>, options?: { get?: boolean }): Promise<{ data: unknown; error: { code: string; hint?: string; message?: string } | null }> => {
     const entity = name.includes('organization') ? 'organization' : name.includes('workspace') ? 'workspace' : 'project';
     if (options?.get) {
       const parameters = entity === 'organization' ? 'p_name, p_slug'

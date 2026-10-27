@@ -5,6 +5,7 @@ import { slugify } from '@/domain/project-identifiers';
 import { ServiceError, type Services } from './contracts';
 import { backendError } from './supabase-errors';
 import { atomicOperations } from './supabase-atomic';
+import { contentCounts, supabaseDocuments } from './supabase-documents';
 import { projectInputSchema, workspaceInputSchema } from './validation';
 import { SUPABASE_STORAGE_KEY } from './supabase-client';
 
@@ -126,16 +127,16 @@ export function createSupabaseServices(client: SupabaseClient): Services {
     if (!ws) throw new ServiceError('Workspace not found or not accessible in this organization.', 'not-found');
     return ws;
   }
-  function mapProject(row: z.infer<typeof projectRow>, role?: z.infer<typeof projectRole>): ProjectSummary {
+  function mapProject(row: z.infer<typeof projectRow>, role?: z.infer<typeof projectRole>, contentRole?: z.infer<typeof projectRole>): ProjectSummary {
     return {
       id: row.id, workspaceId: row.workspace_id, name: row.name, key: row.slug.toUpperCase(),
       description: row.description ?? '', product: '', owner: row.created_by === identity?.userId ? identity.name : row.created_by ?? '',
       status: row.status === 'in_review' ? 'in-review' : row.status,
       createdAt: row.created_at, updatedAt: row.updated_at, source: 'backend', role,
-      documentCount: 0, topicCount: 0,
+      documentCount: 0, topicCount: 0, canEditContent: contentRole === 'admin' || contentRole === 'author',
     };
   }
-  async function getProject(workspaceId: string, projectId: string): Promise<ProjectSummary | null> {
+  async function getProject(workspaceId: string, projectId: string, includeContentCounts = true): Promise<ProjectSummary | null> {
     const ws = await getWorkspace(workspaceId);
     if (!ws) return null;
     const result = await client.from('projects').select(projectColumns).eq('workspace_id', workspaceId).eq('id', projectId).maybeSingle();
@@ -144,14 +145,16 @@ export function createSupabaseServices(client: SupabaseClient): Services {
     const ctx = await context();
     const own = await client.from('project_members').select('role').eq('project_id', projectId).eq('user_id', ctx.userId).maybeSingle();
     check(own.error);
-    return mapProject(parse(projectRow, result.data), ws.role === 'admin' ? 'admin' : own.data ? parse(z.object({ role: projectRole }), own.data).role : undefined);
+    const ownRole = own.data ? parse(z.object({ role: projectRole }), own.data).role : undefined;
+    const counts = includeContentCounts ? await contentCounts(client, [projectId]) : null;
+    return { ...mapProject(parse(projectRow, result.data), ws.role === 'admin' ? 'admin' : ownRole, ownRole), ...(counts?.get(projectId) ?? {}) };
   }
   async function requireProject(projectId: string) {
     await context();
     const row = await client.from('projects').select('workspace_id').eq('id', projectId).maybeSingle();
     check(row.error);
     if (!row.data) throw new ServiceError('Project not found or not accessible.', 'not-found');
-    const project = await getProject(parse(z.object({ workspace_id: z.string() }), row.data).workspace_id, projectId);
+    const project = await getProject(parse(z.object({ workspace_id: z.string() }), row.data).workspace_id, projectId, false);
     if (!project) throw new ServiceError('Project not found in this organization.', 'not-found');
     return project;
   }
@@ -291,7 +294,11 @@ export function createSupabaseServices(client: SupabaseClient): Services {
         const memberships = await client.from('project_members').select('project_id,role').eq('user_id', ctx.userId).in('project_id', rows.map((p) => p.id));
         check(memberships.error);
         const roles = parse(z.array(z.object({ project_id: z.string(), role: projectRole })), memberships.data);
-        return rows.map((row) => mapProject(row, ws.role === 'admin' ? 'admin' : roles.find((m) => m.project_id === row.id)?.role));
+        const counts = await contentCounts(client, rows.map((row) => row.id));
+        return rows.map((row) => {
+          const ownRole = roles.find((m) => m.project_id === row.id)?.role;
+          return { ...mapProject(row, ws.role === 'admin' ? 'admin' : ownRole, ownRole), ...counts.get(row.id)! };
+        });
       },
       getProject,
       async createProject(workspaceId, input): Promise<Project> {
@@ -309,9 +316,6 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       async importProject() { throw new ServiceError('Document import is not part of the connected F0/F1 database foundation.', 'unavailable'); },
       async listActivity(projectId) { await requireProject(projectId); return []; },
     },
-    documents: {
-      async listDocuments(projectId) { await requireProject(projectId); return []; },
-      async getDocument(projectId) { await requireProject(projectId); return null; },
-    },
+    documents: supabaseDocuments(client, requireProject),
   };
 }

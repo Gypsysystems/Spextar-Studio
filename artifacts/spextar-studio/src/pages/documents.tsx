@@ -11,8 +11,12 @@ import { useDocuments } from '@/hooks/use-studio-data';
 import { DOC_STATUS_LABEL, DOC_TYPE_LABEL, relative } from '@/lib/format';
 import type { ProjectSummary } from '@/domain/types';
 import { cn } from '@/lib/utils';
+import { useServices } from '@/providers/services-provider';
+import { ContentDialog, DocumentMetadataDialog } from '@/features/content/content-dialogs';
 
 function DocumentsBody({ project, base }: { project: ProjectSummary; base: string }) {
+  const backend = useServices().mode === 'backend';
+  const canEdit = backend && project.canEditContent === true;
   const docs = useDocuments(project.id);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('all');
@@ -30,13 +34,16 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-10">
       <PageHeader
-        eyebrow={<ScopeMarker kind="not-connected">Foundation preview · read-only list</ScopeMarker>}
+        eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? canEdit ? 'Live documents · metadata persistence' : 'Live documents · read-only access' : 'Isolated demo · local preview'}</ScopeMarker>}
         title="Documents"
         description="Documents assemble topics into a deliverable. Expand a document to see its topic outline."
         actions={
+          <>
+          {canEdit && <ContentDialog action="document" projectId={project.id} />}
           <Button asChild data-testid="link-documents-author">
             <Link href={`${base}/author`}><PenLine className="mr-1.5 h-4 w-4" /> Open Author</Link>
           </Button>
+          </>
         }
       />
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -53,6 +60,7 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
             <SelectItem value="draft">Draft</SelectItem>
             <SelectItem value="in-review">In review</SelectItem>
             <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -63,7 +71,7 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
         ) : docs.isError ? (
           <ErrorState error={docs.error} onRetry={() => docs.refetch()} />
         ) : (docs.data ?? []).length === 0 ? (
-          <EmptyState icon={Files} title="This project has no documents" body="Creating documents is outside the F0/F1 scope. Import a project file with documents to populate this list." />
+          <EmptyState icon={Files} title="This project has no documents" body={canEdit ? 'Create a document to begin its topic outline.' : backend ? 'A project admin or author can create documents.' : 'Import a demo project file to populate this list.'} />
         ) : list.length === 0 ? (
           <EmptyState icon={Search} title="No documents match" body="Adjust the search or status filter.">
             <Button variant="outline" onClick={() => { setQuery(''); setStatus('all'); }}>Reset filters</Button>
@@ -89,10 +97,11 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{d.title}</p>
                       <p className="truncate text-[12.5px] text-muted-foreground">
-                        {DOC_TYPE_LABEL[d.type]} · {d.topics.length} topics · v{d.version} · {d.owner} · {relative(d.updatedAt)}
+                        {DOC_TYPE_LABEL[d.type]} · {d.topics.length} topics · {d.version === '—' ? 'Unversioned' : `v${d.version}`} · {d.owner} · {relative(d.updatedAt)}
                       </p>
                     </div>
                     <StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} className="hidden sm:inline-flex" />
+                    {backend && <div className="hidden lg:flex gap-2"><DocumentMetadataDialog doc={d} />{d.canEdit && <ContentDialog action="duplicate-document" projectId={project.id} doc={d} />}</div>}
                     <Button variant="ghost" size="sm" asChild data-testid={`link-author-${d.id}`}>
                       <Link href={`${base}/author/${d.id}`}>Author</Link>
                     </Button>

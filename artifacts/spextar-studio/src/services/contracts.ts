@@ -6,6 +6,7 @@ import type {
   StudioSession,
   StudioMode,
   DocumentRecord,
+  DocumentStatus,
   ID,
   ImportResult,
   Organization,
@@ -58,7 +59,21 @@ export interface ProjectService {
 export interface DocumentService {
   listDocuments(projectId: ID): Promise<DocumentRecord[]>;
   getDocument(projectId: ID, documentId: ID): Promise<DocumentRecord | null>;
+  createDocument(projectId: ID, input: NewDocument): Promise<ID>;
+  updateDocument(projectId: ID, documentId: ID, patch: DocumentMetadata): Promise<void>;
+  createTopic(projectId: ID, documentId: ID, input: NewTopic): Promise<ID>;
+  updateTopic(projectId: ID, documentId: ID, topicId: ID, patch: TopicMetadata): Promise<void>;
+  moveTopic(projectId: ID, documentId: ID, topicId: ID, parentId: ID | null, sortOrder: number): Promise<void>;
+  promoteTopic(projectId: ID, documentId: ID, topicId: ID): Promise<void>;
+  demoteTopic(projectId: ID, documentId: ID, topicId: ID): Promise<void>;
+  duplicateDocument(projectId: ID, documentId: ID, input: { title: string; slug: string }): Promise<ID>;
+  duplicateTopicSubtree(projectId: ID, documentId: ID, topicId: ID, input: { title: string; slug: string }): Promise<ID>;
 }
+
+export interface NewDocument { title: string; slug: string; description: string | null }
+export interface NewTopic { title: string; slug: string; parentTopicId: ID | null }
+export interface DocumentMetadata { title?: string; slug?: string; description?: string | null; status?: DocumentStatus; settings?: Record<string, unknown> }
+export interface TopicMetadata { title?: string; slug?: string; status?: DocumentStatus; settings?: Record<string, unknown> }
 
 export interface Services {
   readonly mode: StudioMode;

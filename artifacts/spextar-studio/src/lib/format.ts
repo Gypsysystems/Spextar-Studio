@@ -27,6 +27,7 @@ export const DOC_STATUS_LABEL: Record<DocumentStatus, string> = {
   draft: 'Draft',
   'in-review': 'In review',
   approved: 'Approved',
+  published: 'Published',
 };
 
 export const DOC_TYPE_LABEL: Record<DocumentType, string> = {
@@ -39,6 +40,7 @@ export const DOC_TYPE_LABEL: Record<DocumentType, string> = {
 export const statusDot: Record<string, string> = {
   active: 'bg-emerald-500',
   approved: 'bg-emerald-500',
+  published: 'bg-emerald-500',
   'in-review': 'bg-amber-500',
   draft: 'bg-[hsl(var(--primary))]',
   archived: 'bg-muted-foreground/50',

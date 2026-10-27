@@ -1,6 +1,6 @@
 # SPEXTAR Studio
 
-A non-AI structured authoring and technical documentation platform with an F0/F1 Supabase adapter and isolated local demo mode.
+A non-AI structured authoring and technical documentation platform with F0/F1 and F2 Supabase adapters and isolated local demo mode.
 
 ## Run & Operate
 
@@ -36,6 +36,7 @@ A non-AI structured authoring and technical documentation platform with an F0/F1
 ## Product
 
 Workspaces → Projects → Project Home and a document-aware project shell. F0/F1 includes route-ready authoring, review, publishing, reusable content, variables/conditions, style, history, settings, and brand/output views.
+F2 persists document/topic metadata and tree operations, not topic body/content. Body editing is explicitly session-only until F3. Only explicit project admin/author memberships enable F2 mutations; inherited workspace administration must not elevate a reviewer/viewer.
 
 ## User preferences
 
