@@ -33,6 +33,18 @@ async function replace(user: ReturnType<typeof userEvent.setup>, id: string, tex
   if (text) await user.type(screen.getByTestId(id), text);
 }
 describe('Conditional tags route and management', () => {
+  it('wraps maximum-length unbroken category names in resolution guidance without changing their data', async () => {
+    const name = 'M'.repeat(120);
+    const key = 'a'.repeat(80);
+    await backend('author', false, ({ db }) => {
+      Object.assign(db.condition_categories[0], { name, key });
+    });
+    expect(await screen.findByTestId('text-category-name')).toHaveTextContent(name);
+    expect(screen.getByTestId('text-category-key')).toHaveTextContent(key);
+    expect(screen.getByTestId('text-condition-resolution-rules')).toHaveTextContent(`Untagged for ${name}:`);
+    expect(screen.getByTestId('text-condition-resolution-rules')).toHaveClass('[overflow-wrap:anywhere]');
+    expect(screen.getByTestId('button-rename-category')).toBeEnabled();
+  });
   it('renders the frozen three-column shell, stored defaults and honest no-reference state without publishing controls', async () => {
     const { user } = await backend();
     expect(await screen.findByTestId('text-category-name')).toHaveTextContent('Audience');

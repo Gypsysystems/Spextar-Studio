@@ -148,7 +148,7 @@ export function ConditionRail({ category }: { category: ConditionCategory }) {
       </div>
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Eye className="h-4 w-4 text-muted-foreground" aria-hidden />How this will resolve</h3>
-        <ul className="mt-2 list-disc space-y-1 pl-4 text-[12.5px] text-muted-foreground" data-testid="text-condition-resolution-rules">
+        <ul className="mt-2 list-disc space-y-1 pl-4 text-[12.5px] text-muted-foreground [overflow-wrap:anywhere]" data-testid="text-condition-resolution-rules">
           <li>Untagged for {category.name}: {category.unassignedBehavior === 'include' ? 'included in every output' : 'excluded from outputs that filter on it'}.</li>
           <li>Several values from this category: {category.valueMatchMode === 'any' ? 'shown if any one matches' : 'shown only if all match'}.</li>
           <li>Tags from different categories must all match.</li>
