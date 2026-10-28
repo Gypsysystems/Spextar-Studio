@@ -300,3 +300,31 @@ existing management checks. Unknown authoring targets (including prototype
 properties), non-dynamic entries and unsafe asset paths are rejected. The
 existing unexpected-network and uncaught-product-error assertions are unchanged.
 This is synthetic browser acceptance, not live Auth or RLS certification.
+
+## Active session and role resilience
+
+`session-resilience.spec.ts` runs in all four desktop/mobile dark/light projects.
+It exercises the actual SDK refresh lifecycle by aging only the synthetic stored
+session and dispatching the browser visibility event. Refresh, Auth and table
+requests remain intercepted; rejection is a non-retryable invalid-refresh-token
+response, not an application auth bypass or timer/deadline relaxation.
+
+- Expired/invalid Author requests cannot save. Failed refresh removes protected
+  content and credentials without erasing an unsaved identity-scoped recovery
+  copy. Re-authentication offers an explicit restore; saving still uses the
+  last-read expected revision and clears only the matching recovery copy.
+- Reviewer, Viewer and inherited-admin downgrades block saves even when the
+  loaded editor still has stale editable affordances. Explicit retry rechecks
+  permissions; reload shows read-only content and cannot restore a write until
+  an explicit project authoring role returns.
+- A controlled RLS denial after successful preflight leaves the persisted draft
+  unchanged. No assertion treats client-side permission checks as a substitute
+  for backend authorization.
+- Account switches and deliberate sign-out retain existing identity-cleanup
+  behavior. Recovery is never offered to a different identity.
+- Review permission failures remove the saved-draft viewer until retry succeeds.
+  Session expiry removes protected content; re-authentication, role upgrades,
+  topic changes and navigation never make the nested viewer editable or write
+  data.
+
+These are isolated regression checks, not live Supabase Auth/RLS certification.

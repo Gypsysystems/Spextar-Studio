@@ -33,6 +33,7 @@ Use desktop and mobile browsers in both semantic themes. Record browser, viewpor
 8. Verify Review only shows In-review documents and saved drafts, not browser-local unsaved recovery copies. Missing drafts have no fabricated revision.
 9. Verify Variables/Conditions/Reusable where-used guidance makes no reference/propagation claims. Publish, Style Guide, History and Brand & Outputs remain labelled placeholders; no workflow should pretend to execute.
 10. Sign out from a project and confirm protected content disappears, the next login does not inherit that project's return URL, and refresh does not restore the signed-out session. Do not expect sign-out to delete server data.
+11. Distinguish involuntary session expiry from explicit sign-out: rejected refresh must remove protected content and stop pending saves, while retaining identity-scoped browser recovery for the same user's re-authentication. A different identity must never be offered that copy. Explicit sign-out still clears recovery and caches. Changed roles are freshly checked before writes; a backend denial remains authoritative even after a successful preflight check. Refresh/reopen after a downgrade must show read-only Author controls, and Review must remain read-only after any role upgrade.
 
 ## Local quality gates
 

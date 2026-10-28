@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import App from '@/App';
@@ -144,7 +144,10 @@ describe('Reusable management route and interactions', () => {
     expect(f.db.reusable_content_drafts[0]).toMatchObject({ revision: 4, content: body });
     fireEvent.change(editor, { target: { value: JSON.stringify({ ...body, extra: 'unsaved before sign-out' }) } });
     expect(reusableRecovery(context, 'reuse-a', true).read()).toHaveLength(1);
-    await act(async () => { await f.services.auth.signOut(); });
+    // Exercise deliberate user sign-out through the provider, not an ambiguous
+    // null adapter event (which can also mean an expired refresh credential).
+    await f.user.click(screen.getByTestId('button-account'));
+    await f.user.click(await screen.findByTestId('button-sign-out'));
     await screen.findByTestId('input-email');
     expect(reusableRecovery(context, 'reuse-a', true).read()).toHaveLength(0);
   });

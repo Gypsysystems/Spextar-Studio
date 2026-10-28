@@ -29,6 +29,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const request = useRef(0);
   const ending = useRef(false);
   const acceptedIdentity = useRef<StudioSession | null>(null);
+  const interruptedRecoveryIdentity = useRef<string | null>(null);
   const dataCache = useRef<QueryClient | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [state, setState] = useState<SessionState>({
@@ -41,8 +42,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const previous = acceptedIdentity.current;
     if (previous?.mode === 'backend' && (session?.mode !== 'backend' || session.userId !== previous.userId)) {
       if (dataCache.current) disposeTopicDrafts(dataCache.current);
-      clearIdentityRecovery(previous.userId);
-      clearReusableIdentityRecovery(previous.userId);
+      if (!session && !ending.current) {
+        // A rejected refresh must stop access and pending work, not erase unsaved
+        // recovery. Only the same authenticated identity can offer this copy.
+        interruptedRecoveryIdentity.current = previous.userId;
+      } else {
+        clearIdentityRecovery(previous.userId);
+        clearReusableIdentityRecovery(previous.userId);
+      }
+    }
+    const interrupted = interruptedRecoveryIdentity.current;
+    if (interrupted && (session || ending.current)) {
+      if (ending.current || session?.mode !== 'backend' || session.userId !== interrupted) {
+        clearIdentityRecovery(interrupted);
+        clearReusableIdentityRecovery(interrupted);
+      }
+      interruptedRecoveryIdentity.current = null;
     }
     acceptedIdentity.current = session;
     setState((old) => ({

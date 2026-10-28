@@ -21,6 +21,8 @@ export class Backend {
   role: Role = 'author';
   identity = 'user-a';
   invalidLogin = false;
+  sessionExpired = false;
+  refreshAttempts = 0;
   offlineLogout = false;
   failDraftWrites = false;
   conflictNextSave = false;
@@ -93,13 +95,20 @@ export class Backend {
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     const user = { id: this.identity, email: `${this.identity}@example.test`, aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: at };
     if (url.pathname === '/auth/v1/token' && request.method() === 'POST') {
+      if (url.searchParams.get('grant_type') === 'refresh_token') {
+        this.refreshAttempts++;
+        if (this.sessionExpired) return send(400, { code: 'refresh_token_not_found', msg: 'Controlled expired refresh token' });
+      }
       if (this.invalidLogin) return send(400, { code: 'invalid_credentials', msg: 'Invalid login credentials' });
       const token = `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ sub: this.identity, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.controlled`;
       return send(200, { access_token: token, refresh_token: 'controlled-only', token_type: 'bearer', expires_in: 3600, user });
     }
-    if (url.pathname === '/auth/v1/user' && request.method() === 'GET') return send(200, user);
+    if (url.pathname === '/auth/v1/user' && request.method() === 'GET') {
+      return this.sessionExpired ? send(401, { code: 'bad_jwt', msg: 'Controlled invalid session' }) : send(200, user);
+    }
     if (url.pathname === '/auth/v1/logout' && request.method() === 'POST') return send(this.offlineLogout ? 503 : 200, this.offlineLogout ? { message: 'Controlled offline logout' } : {});
     const table = url.pathname.startsWith('/rest/v1/rpc/') ? 'rpc/' + url.pathname.split('/').pop()! : url.pathname.split('/').pop()!;
+    if (this.sessionExpired) return send(401, { code: 'PGRST301', message: 'Controlled expired session' });
     if (table.startsWith('rpc/') || !['GET', 'HEAD'].includes(request.method()) && managedTables.includes(table)
       && (table !== 'topic_drafts' || this.management.enabled)) {
       const body = request.postData() ? request.postDataJSON() as Row : {};

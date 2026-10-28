@@ -6,6 +6,8 @@ import { ServicesProvider } from '@/providers/services-provider';
 import { SessionProvider, useStudioSession } from '@/providers/session-provider';
 import { createDemoServices } from '@/services/demo-adapter';
 import type { StudioSession } from '@/domain/types';
+import { rememberRecovery, readRecovery } from '@/services/topic-draft-recovery';
+import { emptyContent } from '@/domain/topic-content';
 
 function Harness({ onClient }: { onClient: (client: QueryClient) => void }) {
   const session = useStudioSession();
@@ -19,6 +21,42 @@ function Harness({ onClient }: { onClient: (client: QueryClient) => void }) {
 }
 
 describe('session-scoped caches', () => {
+  for (const next of ['same-user', 'different-user', 'explicit-sign-out'] as const) {
+    it(`retains recovery after involuntary expiry but enforces ${next} cleanup`, async () => {
+      const demoServices = createDemoServices({ latencyMs: 0 });
+      const demoSession = await demoServices.auth.enterDemo();
+      const backendSession: StudioSession = { ...demoSession, mode: 'backend', userId: 'writer-a' };
+      const services = { ...demoServices, mode: 'backend' as const, auth: {
+        ...demoServices.auth, getSession: async () => backendSession,
+        signOut: async () => {},
+      } };
+      let notify!: (session: StudioSession | null) => void;
+      services.auth.onSessionChange = listener => { notify = listener; return () => {}; };
+      const clients: QueryClient[] = [];
+      const onClient = (client: QueryClient) => { clients.push(client); };
+      render(<ServicesProvider services={services}><SessionProvider><Harness onClient={onClient} /></SessionProvider></ServicesProvider>);
+      await screen.findByText('writer-a');
+      const scope = { userId: 'writer-a', projectId: 'project-a', documentId: 'doc-a', topicId: 'topic-a' };
+      rememberRecovery(scope, emptyContent(), 3);
+      const copies = readRecovery(scope);
+      expect(copies).toHaveLength(1);
+      const old = clients.at(-1)!;
+      old.setQueryData(['private-data'], 'private');
+      act(() => notify(null));
+      await screen.findByText('signed-out');
+      expect(old.getQueryCache().getAll()).toHaveLength(0);
+      expect(clients.at(-1)).not.toBe(old);
+      expect(readRecovery(scope)).toEqual(copies);
+      if (next === 'explicit-sign-out') {
+        await act(async () => screen.getByText('End session').click());
+      } else {
+        act(() => notify({ ...backendSession, userId: next === 'same-user' ? 'writer-a' : 'writer-b' }));
+        await screen.findByText(next === 'same-user' ? 'writer-a' : 'writer-b');
+      }
+      expect(readRecovery(scope)).toEqual(next === 'same-user' ? copies : []);
+    });
+  }
+
   it('locks the UI immediately during slow sign-out and prevents an overlapping new session', async () => {
     const services = createDemoServices({ latencyMs: 0 });
     await services.auth.enterDemo();
