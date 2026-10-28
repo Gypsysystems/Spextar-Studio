@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { readFile, readdir, mkdir, rm, stat, writeFile } from 'node:fs/promises';
+import { readFile, readdir, mkdir, rm, stat, lstat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,6 +25,9 @@ export const variants = {
 } satisfies Record<string, Record<string, string | undefined>>;
 export type Variant = keyof typeof variants;
 
+/** Only deliberately authored diagnostics may reach CLI stderr. Never echo arbitrary errors. */
+class ReadinessFailure extends Error {}
+
 /** Never spread the parent environment, read real credentials, or load .env files. */
 export function isolatedEnvironment(source: NodeJS.ProcessEnv, config: Record<string, string | undefined>) {
   const env: Record<string, string> = { NODE_ENV: 'production', PORT: '4182', BASE_PATH: '/' };
@@ -32,7 +35,7 @@ export function isolatedEnvironment(source: NodeJS.ProcessEnv, config: Record<st
     if (source[key] !== undefined) env[key] = source[key];
   }
   for (const [key, value] of Object.entries(config)) {
-    if (!Object.hasOwn(publicConfig, key)) throw new Error('Unsupported public configuration field');
+    if (!Object.hasOwn(publicConfig, key)) throw new ReadinessFailure('Unsupported public configuration field');
     if (value !== undefined) env[key] = value;
   }
   return env;
@@ -59,7 +62,7 @@ export async function scanClient(root: string): Promise<{ file: string; categori
   async function visit(dir: string) {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
       const file = path.join(dir, entry.name);
-      if (entry.isSymbolicLink()) throw new Error('Client output must not contain symlinks');
+      if (entry.isSymbolicLink()) throw new ReadinessFailure('Client output must not contain symlinks');
       if (entry.isDirectory()) await visit(file);
       else if (entry.isFile()) {
         const categories = clientExposure((await readFile(file)).toString('utf8'));
@@ -74,18 +77,24 @@ export async function scanClient(root: string): Promise<{ file: string; categori
 
 async function scanCandidate() {
   const root = path.join(studio, 'dist/public');
-  await stat(path.join(root, 'index.html'));
-  await stat(path.join(root, '.vite/manifest.json'));
+  if (!(await lstat(root).catch(() => null))?.isDirectory()) {
+    throw new ReadinessFailure('Production candidate output is missing or not a real directory. Rebuild the candidate.');
+  }
+  for (const file of ['index.html', '.vite/manifest.json']) {
+    if (!(await lstat(path.join(root, file)).catch(() => null))?.isFile()) {
+      throw new ReadinessFailure('Production candidate requires regular index and manifest files. Rebuild the candidate.');
+    }
+  }
   const findings = await scanClient(root);
   if (findings.length) {
     const categories = [...new Set(findings.flatMap(f => f.categories))].join(', ');
-    throw new Error(`Candidate client assets contain prohibited credential patterns (${categories}). Remove server credentials from public configuration and rebuild.`);
+    throw new ReadinessFailure(`Candidate client assets contain prohibited credential patterns (${categories}). Remove server credentials from public configuration and rebuild.`);
   }
   console.log('PASS: production candidate client asset exposure scan (including lazy assets and maps)');
 }
 
 async function buildVariant(name: string) {
-  if (!Object.hasOwn(variants, name)) throw new Error('Unknown readiness variant');
+  if (!Object.hasOwn(variants, name)) throw new ReadinessFailure('Unknown readiness variant');
   // These are intentionally fake server-side markers, not inherited environment secrets.
   process.env.SPEXTAR_PRIVATE_CANARY = privateCanary;
   process.env.SESSION_SECRET = privateCanary;
@@ -107,11 +116,11 @@ async function prepare() {
       cwd: studio, env: isolatedEnvironment(process.env, config), encoding: 'utf8',
     });
     await writeFile(path.join(readinessRoot, `${name}.log`), (child.stdout ?? '') + (child.stderr ?? ''));
-    if (child.status !== 0) throw new Error(`Readiness build failed: ${name}`);
+    if (child.status !== 0) throw new ReadinessFailure(`Readiness build failed: ${name}`);
     const findings = await scanClient(path.join(readinessRoot, name));
     if (name === 'secret-key') {
-      if (!findings.some(f => f.categories.includes('Supabase secret key'))) throw new Error('Secret-key negative control did not trip the scanner');
-    } else if (findings.length) throw new Error(`Unexpected client exposure: ${name}`);
+      if (!findings.some(f => f.categories.includes('Supabase secret key'))) throw new ReadinessFailure('Secret-key negative control did not trip the scanner');
+    } else if (findings.length) throw new ReadinessFailure(`Unexpected client exposure: ${name}`);
     console.log(`PASS: isolated production build and exposure control: ${name}`);
   }
 }
@@ -148,6 +157,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === here) {
     : command === 'prepare' ? prepare()
     : command === 'serve' ? serve()
     : command === 'build' ? buildVariant(process.argv[3])
-    : Promise.reject(new Error('Use scan, prepare or serve'));
-  action.catch(error => { console.error(error instanceof Error ? error.message : 'Readiness failed'); process.exitCode = 1; });
+    : Promise.reject(new ReadinessFailure('Use scan, prepare or serve'));
+  action.catch(error => {
+    console.error(error instanceof ReadinessFailure ? error.message
+      : 'Readiness failed. Check candidate files and build configuration. Diagnostic details were redacted.');
+    process.exitCode = 1;
+  });
 }

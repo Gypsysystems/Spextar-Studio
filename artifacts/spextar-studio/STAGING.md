@@ -149,3 +149,30 @@ Passing this gate does **not** certify a real public key against Supabase,
 email/provider configuration, live RLS, migration replay, or the eventual host's
 network/cache configuration. Those remaining gates above still apply. Nothing
 in this command publishes, deploys, creates live users, or modifies Supabase.
+
+### Scanner CLI failure regression
+
+The unit suite executes an exact copy of `scripts/readiness.ts` with the native
+Node runtime inside disposable temporary workspaces. It never scans or changes
+the real production output. Each subprocess receives the existing minimal
+toolchain environment, not inherited credentials or dotenv configuration.
+
+Coverage includes successful scans; every existing exposure category in entry
+and nested lazy/map files; missing or directory-shaped required artifacts;
+linked candidate roots/assets/directories; emitted environment files; sensitive
+values embedded in filesystem paths; and unexpected dependency exceptions.
+The dependency-failure case uses a local throwing stub, not the real Vite
+builder or any network service. Temporary workspaces are removed after tests.
+
+The candidate root must be a real directory, and the index/manifest must be
+regular files. These are scanner layout prerequisites, not certification that
+the manifest is semantically complete or the application can boot; the browser
+and bundle gates still provide that separate coverage.
+
+CLI failures return a nonzero status and only deliberately authored diagnostics:
+safe finding categories and corrective actions. Unexpected error messages,
+stacks, filenames and configuration values are not echoed. Public Supabase URLs
+and publishable keys remain legitimate client inputs, but must not appear in
+scanner diagnostics either. Test assertions also avoid dumping subprocess
+output or synthetic control values when a regression fails. Do not add raw
+error logging or a verbose configuration dump to troubleshoot this gate.
