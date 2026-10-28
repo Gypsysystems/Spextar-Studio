@@ -8,6 +8,7 @@ const entry = Object.keys(manifest).find((key) => manifest[key].isEntry);
 const author = 'src/pages/author.tsx';
 const reviewViewer = 'src/features/review/review-draft-viewer.tsx';
 const management = ['reusable-content', 'variables-conditions', 'project-settings', 'review'].map(name => `src/pages/${name}.tsx`);
+const creationForms = ['workspaces/create-workspace-dialog', 'projects/create-project-dialog'].map(name => `src/features/${name}.tsx`);
 assert.ok(entry, 'Missing application entry');
 assert.ok(manifest[author]?.isDynamicEntry, 'Author must remain a dynamic route entry');
 function staticGraph(key, seen = new Set()) {
@@ -17,6 +18,10 @@ function staticGraph(key, seen = new Set()) {
   return seen;
 }
 const initial = staticGraph(entry);
+for (const form of creationForms) {
+  assert.ok(manifest[form]?.isDynamicEntry, `${form} must remain an on-demand form`);
+  assert.ok(!initial.has(form), `${form} must not be statically reachable from the application entry`);
+}
 const initialBytes = (await Promise.all([...initial].map(key => stat(new URL(manifest[key].file, root)))))
   .reduce((total, file) => total + file.size, 0);
 assert.ok(Number.isSafeInteger(budget.maxInitialBytes) && budget.maxInitialBytes > 0, 'Invalid initial JavaScript budget');

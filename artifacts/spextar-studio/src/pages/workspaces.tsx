@@ -4,13 +4,16 @@ import { ArrowUpRight, Building2, Plus, Search, Users } from 'lucide-react';
 import { AppShell } from '@/components/shell/app-shell';
 import { EmptyState, ErrorState, ListSkeleton, ScopeMarker } from '@/components/states';
 import { PageHeader } from '@/features/project/project-scope';
-import { CreateWorkspaceDialog } from '@/features/workspaces/create-workspace-dialog';
+import { createLazyDialog } from '@/components/lazy-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useOrganization, usePageTitle, useSession, useWorkspaces } from '@/hooks/use-studio-data';
 import { relative } from '@/lib/format';
 import { OrganizationContext } from '@/features/workspaces/organization-context';
 import { useServices } from '@/providers/services-provider';
+
+const CreateWorkspaceDialog = createLazyDialog('Create workspace', () =>
+  import('@/features/workspaces/create-workspace-dialog').then(module => ({ default: module.CreateWorkspaceDialog })));
 
 export default function WorkspacesPage() {
   const { mode } = useServices();

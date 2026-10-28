@@ -84,10 +84,10 @@ describe('connected backend application flows', () => {
     const services = createSupabaseServices(fake.client);
     const view = render(<App services={services} />);
     await userEvent.click(await screen.findByTestId('button-create-workspace'));
-    await userEvent.type(screen.getByTestId('input-workspace-name'), 'Persistence Workspace');
+    await userEvent.type(await screen.findByTestId('input-workspace-name'), 'Persistence Workspace');
     await userEvent.click(screen.getByTestId('button-submit-workspace'));
     await userEvent.click(await screen.findByTestId('button-create-project'));
-    await userEvent.type(screen.getByTestId('input-project-name'), 'Persistence Project');
+    await userEvent.type(await screen.findByTestId('input-project-name'), 'Persistence Project');
     expect(screen.getByTestId('input-project-product')).toBeDisabled();
     await userEvent.click(screen.getByTestId('button-submit-create-project'));
     expect(await screen.findByTestId('nav-documents')).toBeVisible();

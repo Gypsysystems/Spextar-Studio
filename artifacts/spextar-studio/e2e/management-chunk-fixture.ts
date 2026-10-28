@@ -14,6 +14,20 @@ const authoringSources = {
   reviewViewer: 'src/features/review/review-draft-viewer.tsx',
 } as const;
 export type AuthoringDownload = keyof typeof authoringSources;
+const creationSources = {
+  workspace: 'src/features/workspaces/create-workspace-dialog.tsx',
+  project: 'src/features/projects/create-project-dialog.tsx',
+} as const;
+export type CreationDownload = keyof typeof creationSources;
+
+export async function creationChunkUrl(target: CreationDownload) {
+  if (!Object.hasOwn(creationSources, target)) throw new Error('Unknown creation download');
+  return emittedChunkUrl(await buildManifest(), creationSources[target]);
+}
+
+export async function rejectCreationChunk(page: Page, target: CreationDownload) {
+  return rejectExactAsset(page, await creationChunkUrl(target), 'network');
+}
 
 /** Resolve one emitted route asset, never a wildcard, remote URL or source module. */
 export function managementChunkUrl(manifest: unknown, chunk: ManagementPage['chunk']) {

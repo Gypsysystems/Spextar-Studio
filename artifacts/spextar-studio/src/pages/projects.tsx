@@ -6,7 +6,7 @@ import { EmptyState, ErrorState, ListSkeleton, NotFoundPanel, PageSkeleton, Scop
 import { KeyChip, StatusPill } from '@/components/status-pill';
 import { PageHeader } from '@/features/project/project-scope';
 import { projectBase } from '@/features/project/sections';
-import { CreateProjectDialog } from '@/features/projects/create-project-dialog';
+import { createLazyDialog } from '@/components/lazy-dialog';
 import { ImportProjectDialog } from '@/features/projects/import-project-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,9 @@ import { PROJECT_STATUS_LABEL, relative } from '@/lib/format';
 import { useServices } from '@/providers/services-provider';
 import type { ProjectStatus } from '@/domain/types';
 import { cn } from '@/lib/utils';
+
+const CreateProjectDialog = createLazyDialog('Create project', () =>
+  import('@/features/projects/create-project-dialog').then(module => ({ default: module.CreateProjectDialog })));
 
 const FILTERS: { id: 'all' | ProjectStatus; label: string }[] = [
   { id: 'all', label: 'All' },
