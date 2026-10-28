@@ -198,3 +198,24 @@ Project administration's successful writes, role matrix, expected-role/timestamp
 conflicts, revoked permissions and error/retry paths remain covered by
 `project-settings.spec.ts`. These tests certify controlled UI/service behavior,
 not live RLS, atomic database invariants, or submitted Review snapshots.
+
+## Cross-route cache and identity freshness
+
+`cross-route-freshness.spec.ts` uses native desktop/mobile interactions in all
+four theme/viewport profiles, without reloading between management mutations and
+their dependent views:
+
+- Editing a variable refreshes a previously visited Output Preview, including
+  override/default provenance, and remains fresh after project navigation.
+- Document/topic creation and conservative leaf/empty-document deletion refresh
+  Project Home facts, lifecycle counts, recent documents and the Documents outline.
+- An empty Project Home links to the implemented Documents flow rather than
+  claiming document creation is a future feature. Unit tests retain role gating
+  for Admin, Author, Reviewer and Viewer.
+- Sign-out after visiting populated management routes clears their caches before
+  a different read-only synthetic identity signs in in the same browser document.
+  Empty scoped responses must not resurrect the first identity's content.
+
+The existing management, settings, Author persistence, Review, navigation,
+accessibility and editor specs remain part of the same full regression gate.
+All backend traffic is intercepted; these checks do not certify live RLS.

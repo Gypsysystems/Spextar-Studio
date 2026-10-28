@@ -6,6 +6,26 @@ import { createSupabaseServices } from '@/services/supabase-adapter';
 import { supabaseDouble, testSession } from './supabase-double';
 
 describe('connected backend application flows', () => {
+  it.each(['admin', 'author', 'reviewer', 'viewer'])('gives %s accurate empty-project guidance without granting document creation', async role => {
+    const fake = supabaseDouble(testSession);
+    fake.db.project_members[0].role = role;
+    window.history.replaceState(null, '', '/workspaces/ws-a/projects/project-a');
+    render(<App services={createSupabaseServices(fake.client)} />);
+    expect(await screen.findByText('No documents yet')).toBeVisible();
+    expect(screen.getByText(/explicit project Admin or Author can create/)).toBeVisible();
+    expect(screen.queryByText(/Document creation arrives in a later phase/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: /^Open Documents$/ }));
+    expect(await screen.findByRole('heading', { name: /^Documents$/ })).toBeVisible();
+    const create = screen.queryAllByRole('button', { name: /^Create document$/ });
+    if (role === 'admin' || role === 'author') {
+      expect(create.length).toBeGreaterThan(0);
+      expect(create[0]).toBeEnabled();
+    } else {
+      for (const button of create) expect(button).toBeDisabled();
+    }
+    expect(fake.raw.rpc).not.toHaveBeenCalled();
+  });
+
   it('protects backend deep links and keeps OAuth providers inactive', async () => {
     const fake = supabaseDouble(null);
     window.history.replaceState(null, '', '/workspaces/ws-a/projects/project-a');

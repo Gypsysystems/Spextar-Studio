@@ -88,7 +88,8 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
             ) : docs.isError ? (
               <ErrorState error={docs.error} onRetry={() => docs.refetch()} />
             ) : list.length === 0 ? (
-              <EmptyState icon={Files} title="No documents yet" body="Document creation arrives in a later phase. Import a project file to bring in documents and topics.">
+              <EmptyState icon={Files} title="No documents yet" body="Open Documents to get started. An explicit project Admin or Author can create the first document.">
+                <Button variant="outline" asChild><Link href={`${base}/documents`}>Open Documents</Link></Button>
                 <Button variant="outline" asChild><Link href={`/workspaces/${project.workspaceId}/projects`}>Back to Projects</Link></Button>
               </EmptyState>
             ) : (
