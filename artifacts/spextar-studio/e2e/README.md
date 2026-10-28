@@ -88,6 +88,23 @@ native actionability-checked taps and visible controls, not injected DOM clicks.
 - Structured Author autosave, first insert, expected-revision updates, preserved
   metadata/node IDs, stale-write rejection, explicit retry/reload, recovery
   restore/discard and read-only body behavior.
+- Advanced Author interactions in `editor-interactions.spec.ts`: native table
+  cell navigation/selection, row/column edits, header controls, merge/split and
+  exact JSON undo/redo; marked text selection, semantic callout conversion and
+  lossless unwrapping; case-sensitive Find navigation and replacement across
+  marked text, callouts and tables without identity loss.
+- Real browser clipboard writes followed by native paste cover supported rich
+  formatting/containers and unique IDs, rejected unknown semantics, malformed
+  grids and unsafe links, unchanged clipboard/server content, and explicit
+  literal-text fallback. Clipboard permissions are limited to the loopback test
+  origin; no dispatched paste event or private editor command substitutes for
+  actual clipboard handling.
+- Rich callout failure/refresh recovery and stale-revision protection, long-body
+  heading shortcuts, toolbar keyboard focus, read-only advanced controls/search
+  for Reviewer/Viewer/inherited administration, responsive theme checks and
+  deferred Author/editor downloads. Native selection assertions inspect settled
+  DOM selection before sending the next keyboard action; they do not inject
+  ProseMirror commands or force interactions.
 - Review ordered hierarchy, saved revisions, missing drafts, no eligible
   documents, errors/retry, verbatim unsupported JSON and zero writes for all roles.
 - Variables Output Preview default/override selection with zero mutation calls.
