@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["playwright.config.ts", "e2e/**/*.ts"],
+  "include": ["playwright*.ts", "e2e/**/*.ts", "readiness/**/*.ts", "scripts/**/*.ts"],
   "compilerOptions": {
     "noEmit": true,
     "lib": ["esnext", "dom", "dom.iterable"],

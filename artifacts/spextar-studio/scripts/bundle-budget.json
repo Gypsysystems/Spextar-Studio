@@ -1,6 +1,6 @@
 {
   "description": "Uncompressed emitted JavaScript bytes in the complete static application-entry graph; shared chunks count once. Review deliberate budget changes alongside production network evidence.",
   "previousInitialBytes": 1070203,
-  "measuredInitialBytes": 950779,
+  "measuredInitialBytes": 950797,
   "maxInitialBytes": 975000
 }

@@ -7,7 +7,8 @@
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck": "pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
-    "test:browser": "pnpm --filter @workspace/spextar-studio test:browser"
+    "test:browser": "pnpm --filter @workspace/spextar-studio test:browser",
+    "check:readiness": "pnpm --filter @workspace/spextar-studio check:readiness"
   },
   "private": true,
   "devDependencies": {

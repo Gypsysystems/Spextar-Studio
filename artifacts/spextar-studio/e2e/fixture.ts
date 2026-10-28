@@ -1,6 +1,7 @@
 import { test as base, expect, type Page, type Locator, type BrowserContext, type Route } from '@playwright/test';
 import { SettingsWire } from './settings-wire';
 import { ManagementWire, managedTables } from './management-wire';
+import { localFixtureOrigins } from './local-origins';
 
 export const projectPath = '/workspaces/ws-a/projects/project-a';
 export const authKey = 'spextar.backend.luyyxblmtupmugtazgbr.auth';
@@ -70,13 +71,14 @@ export class Backend {
     return () => { this.gates.delete(table); release(); };
   }
   dispose() { this.releases.forEach(release => release()); }
-  async install(context: BrowserContext) {
-    await context.route('**/*', route => this.handle(route));
+  async install(context: BrowserContext, appOrigins = ['http://127.0.0.1:4181']) {
+    const local = localFixtureOrigins(appOrigins);
+    await context.route('**/*', route => this.handle(route, local));
   }
-  private async handle(route: Route) {
+  private async handle(route: Route, local: ReadonlySet<string>) {
     const request = route.request(), url = new URL(request.url());
     // Only the fixed loopback server may escape interception. No fallthrough for API traffic.
-    if (url.origin === 'http://127.0.0.1:4181') return route.continue();
+    if (local.has(url.origin)) return route.continue();
     if (url.origin !== backendOrigin) {
       this.unexpected.push(`Blocked external request: ${url.origin}${url.pathname}`);
       return route.abort('blockedbyclient');
@@ -185,10 +187,11 @@ export class Backend {
   }
 }
 
-type Fixtures = { backend: Backend; theme: 'dark' | 'light' };
+type Fixtures = { backend: Backend; theme: 'dark' | 'light'; appOrigins: string[] };
 export const test = base.extend<Fixtures>({
+  appOrigins: [['http://127.0.0.1:4181'], { option: true }],
   theme: async ({}, use, info) => { await use(info.project.metadata.theme as 'dark' | 'light'); },
-  backend: [async ({ context, page, theme }, use) => {
+  backend: [async ({ context, page, theme, appOrigins }, use) => {
     const backend = new Backend();
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -196,7 +199,7 @@ export const test = base.extend<Fixtures>({
     await context.addInitScript(theme => {
       document.addEventListener('DOMContentLoaded', () => document.documentElement.classList.toggle('dark', theme === 'dark'));
     }, theme);
-    await backend.install(context);
+    await backend.install(context, appOrigins);
     try { await use(backend); }
     finally {
       backend.dispose();

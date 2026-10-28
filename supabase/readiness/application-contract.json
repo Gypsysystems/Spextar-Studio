@@ -2,6 +2,14 @@
   "formatVersion": 1,
   "authority": "Application expectations derived from source and established product behavior; NOT a live schema export or executable migration baseline.",
   "schema": "public",
+  "publicClientConfiguration": {
+    "requiredModeForBackendStaging": "backend",
+    "projectUrl": "https://luyyxblmtupmugtazgbr.supabase.co",
+    "publishableKeyFormat": "sb_publishable_ followed by a nonempty ASCII letter/digit/underscore/hyphen suffix; no whitespace",
+    "serverCredentialsAllowed": false,
+    "backendDemoFallback": false,
+    "authority": "Application initialization guard only; key validity, live RLS and provider settings are not certified."
+  },
   "migrationHistory": {
     "reportedAppliedCount": 18,
     "verifiedFromLiveLedger": false,

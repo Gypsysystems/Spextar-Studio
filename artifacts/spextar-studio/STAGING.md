@@ -95,3 +95,57 @@ no invented persistence, product workflow, design, live writes or deployment.
 - Detailed screen-to-Figma fidelity and any supported-browser matrix beyond the exercised controlled Chromium viewports need separate confirmation.
 
 Assignments/comments/approvals, submitted Review snapshots, publishing, historical versions, linked reusable references and other labelled placeholders remain deliberately unfinished. They are scope exclusions, not simulated QA successes.
+
+## Local pre-deploy readiness gate (no deployment)
+
+Run `pnpm check:readiness` from the repository root using the existing Node/pnpm
+toolchain. It first rebuilds the actual Studio production candidate at `/`, then
+scans **all** emitted files (including lazy chunks and maps) for known secret
+patterns. A missing build or a finding fails the command. No matched secret
+value or decoded JWT payload is printed. The normal `pnpm test:browser` and
+`check:bundle` gates remain separate and mandatory.
+
+The readiness gate starts loopback-only test servers and runs the same Chromium
+desktop/mobile dark/light profiles as the permanent regression suite:
+
+- The **actual freshly built candidate** must open the backend sign-in screen
+  on a protected direct link and refresh, without fetching Author or making
+  live API calls. Missing/wrong candidate configuration must fail this check,
+  even if the separate synthetic build works.
+- Eight additional production variants exercise public-only startup and fail-
+  closed handling of missing/invalid mode, missing/wrong project URL, and
+  missing/malformed/secret keys. Child builds inherit only selected toolchain
+  fields and the three approved public client variables; `envDir: false`
+  prevents local `.env` files from silently repairing a negative case.
+- The public-only build uses a deliberately non-functional publishable key and
+  the existing intercepted backend. It exercises sign-in, protected deep links,
+  refresh/session restoration, and offline sign-out with actual synthetic Author
+  recovery data. No real credentials, users or database records are used.
+- Fake non-public server canaries must stay absent from client output. A
+  deliberately fake secret-key build must trip the exposure scanner and fail
+  runtime initialization. This negative fixture is never a deployable artifact.
+
+Only explicitly selected fixed loopback origins may bypass the wire fixture.
+Real Supabase requests remain intercepted; unknown endpoints, non-synthetic
+authentication headers, other hosts and uncaught product errors still fail.
+The test server refuses dotfiles/traversal and returns 404 for missing assets
+rather than disguising them as SPA HTML.
+
+Only these public client settings belong in a backend build:
+
+| Field | Required behavior |
+| --- | --- |
+| `VITE_STUDIO_MODE` | Explicit `backend`; no automatic production demo fallback |
+| `VITE_SUPABASE_URL` | The already-approved SPEXTAR project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_` followed by nonempty URL-safe characters; never a secret/service-role key |
+
+All readiness outputs, logs, traces and reports live under ignored
+`generated-artifacts/predeploy-readiness/`. Servers are temporary local test
+tools, not deployment configuration. The scanner recognizes known key/token/
+credential patterns plus synthetic canaries; it is not an exhaustive detector
+for arbitrary secrets, and does not rotate or revoke any credentials.
+
+Passing this gate does **not** certify a real public key against Supabase,
+email/provider configuration, live RLS, migration replay, or the eventual host's
+network/cache configuration. Those remaining gates above still apply. Nothing
+in this command publishes, deploys, creates live users, or modifies Supabase.
