@@ -35,7 +35,7 @@ export function ScopeMarker({ kind, children, className }: { kind: ScopeKind; ch
 
 export function ListSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="space-y-2" aria-busy="true" aria-label="Loading">
+    <div role="status" className="space-y-2" aria-busy="true" aria-label="Loading">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 rounded-md border bg-card px-4 py-4">
           <Skeleton className="h-8 w-12" />
@@ -52,7 +52,8 @@ export function ListSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function PageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-6 md:p-10" aria-busy="true" aria-label="Loading">
+    <div role="status" className="mx-auto w-full max-w-6xl space-y-6 p-6 md:p-10" aria-busy="true" aria-label="Loading">
+      <h1 className="sr-only">Loading content</h1>
       <Skeleton className="h-3 w-28" />
       <Skeleton className="h-8 w-80 max-w-full" />
       <Skeleton className="h-4 w-[28rem] max-w-full" />

@@ -310,6 +310,7 @@ function AuthorBody({ project, base, documentId }: { project: ProjectSummary; ba
 
   return (
     <div className="flex flex-col xl:h-[calc(100dvh-56px)]">
+      <h1 className="sr-only">Author workspace</h1>
       <div className="flex flex-wrap items-center gap-3 border-b bg-card px-4 py-2.5 md:px-6">
         <label htmlFor="author-doc" className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">Author</label>
         {docs.isLoading ? (

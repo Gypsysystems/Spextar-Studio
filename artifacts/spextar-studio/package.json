@@ -15,6 +15,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@hookform/resolvers": "^3.10.0",
     "@playwright/test": "^1.64.1",
     "@radix-ui/react-accordion": "^1.2.4",

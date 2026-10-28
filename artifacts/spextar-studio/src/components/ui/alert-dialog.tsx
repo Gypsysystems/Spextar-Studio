@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
+import { useDialogFocusReturn } from './dialog-focus';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -27,8 +28,9 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <AlertDialogPortal>
+>(({ className, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
+  const focusReturn = useDialogFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
+  return <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
       ref={ref}
@@ -37,9 +39,10 @@ const AlertDialogContent = React.forwardRef<
         className,
       )}
       {...props}
+      {...focusReturn}
     />
-  </AlertDialogPortal>
-));
+  </AlertDialogPortal>;
+});
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
 const AlertDialogHeader = ({

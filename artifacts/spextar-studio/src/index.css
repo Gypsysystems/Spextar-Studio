@@ -5,6 +5,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Foreground-only contrast variants. Approved action/selection fills stay #6236FF. */
+@layer utilities {
+  .text-primary { color: hsl(var(--primary-readable)); }
+  .text-destructive { color: hsl(var(--destructive-readable)); }
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -119,6 +125,8 @@
   --popover-border: 250 16% 88%;
 
   --primary: var(--spextar-violet-hsl);
+  --primary-readable: var(--spextar-violet-hsl);
+  --destructive-readable: 356 72% 42%;
 
   --primary-foreground: 250 100% 99%;
 
@@ -138,7 +146,7 @@
 
   --destructive-foreground: 0 0% 99%;
 
-  --input: 250 16% 84%;
+  --input: 250 10% 55%;
   --ring: var(--spextar-violet-hsl);
   --chart-1: var(--spextar-violet-hsl);
   --chart-2: 190 70% 40%;
@@ -266,6 +274,8 @@
   --popover-border: 240 6% 24%;
 
   --primary: var(--spextar-violet-hsl);
+  --primary-readable: 253 100% 80%;
+  --destructive-readable: 356 100% 78%;
   --primary-foreground: var(--text-hsl);
   --secondary: var(--surface-raised-hsl);
   --secondary-foreground: var(--text-hsl);
@@ -273,11 +283,11 @@
   --muted-foreground: var(--text-secondary-hsl);
   --accent: 253 40% 22%;
   --accent-foreground: 253 100% 88%;
-  --destructive: 356 72% 56%;
+  --destructive: 356 72% 50%;
   --destructive-foreground: var(--text-hsl);
 
   /* Stronger than --border for input affordance on surface backgrounds */
-  --input: 240 5% 32%;
+  --input: 240 5% 49%;
   --ring: 253 100% 70%;
   --chart-1: var(--spextar-violet-hsl);
   --chart-2: 190 70% 50%;

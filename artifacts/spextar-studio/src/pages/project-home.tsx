@@ -110,7 +110,7 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
           </div>
         </section>
 
-        <aside className="space-y-8">
+        <aside aria-label="Project summary" className="space-y-8">
           <section aria-labelledby="facts" className="rounded-lg border bg-card p-5">
             <h2 id="facts" className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Project facts</h2>
             <dl className="mt-3 grid grid-cols-2 gap-y-3 text-sm">

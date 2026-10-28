@@ -47,7 +47,7 @@ class ViewerBoundary extends Component<{ children: ReactNode }, { failed: boolea
 
 function ViewerLoading() {
   return (
-    <div className="space-y-2.5 rounded-lg border bg-card p-5" aria-busy="true" aria-label="Loading viewer" data-testid="review-viewer-loading">
+    <div role="status" className="space-y-2.5 rounded-lg border bg-card p-5" aria-busy="true" aria-label="Loading viewer" data-testid="review-viewer-loading">
       <Skeleton className="h-3.5 w-4/5" /><Skeleton className="h-3.5 w-3/5" /><Skeleton className="h-3.5 w-2/3" />
     </div>
   );
@@ -152,7 +152,7 @@ function ReviewBody({ projectId, onDoc }: { projectId: string; onDoc: (d: Docume
     <>
       {toolbar}
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
-        <aside className="min-w-0 space-y-6">
+        <aside aria-label="Review selection" className="min-w-0 space-y-6">
           <nav aria-label="Documents in review">
             <h2 className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">In review · {eligible.length}</h2>
             <ul className="space-y-1">

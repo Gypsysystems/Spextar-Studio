@@ -59,9 +59,11 @@ export default function SignInPage() {
     });
 
   return (
-    <div className="grid min-h-[100dvh] bg-background lg:grid-cols-[1.05fr_1fr]">
+    <main className="grid min-h-[100dvh] bg-background lg:grid-cols-[1.05fr_1fr]">
       <section className="relative hidden overflow-hidden border-r border-border bg-[hsl(var(--sidebar))] p-12 text-white dark:bg-card lg:flex lg:flex-col">
-        <div className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#6236FF]/20 blur-[120px]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          <div className="absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#6236FF]/20 blur-[120px]" />
+        </div>
         <Wordmark tone="light" />
         <div className="relative mt-auto max-w-md">
           <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[hsl(253_100%_80%)]">Structured authoring</p>
@@ -73,13 +75,13 @@ export default function SignInPage() {
           <div className="mt-10 rounded-lg border border-white/10 bg-white/[0.03] p-5 font-mono text-[12.5px]" aria-hidden>
             {OUTLINE.map((o, i) => (
               <div key={o.n} className="flex gap-3 py-1 fade-up" style={{ paddingLeft: o.d * 18, animationDelay: `${200 + i * 70}ms` }}>
-                <span className="w-10 text-white/35">{o.n}</span>
+                <span className="w-10 text-white/65">{o.n}</span>
                 <span className={o.d === 0 ? 'text-white' : 'text-white/65'}>{o.t}</span>
               </div>
             ))}
           </div>
         </div>
-        <p className="relative mt-12 text-xs text-white/35">Topics · Documents · Review · Publish</p>
+        <p className="relative mt-12 text-xs text-white/65">Topics · Documents · Review · Publish</p>
       </section>
 
       <section className="flex items-center justify-center px-6 py-12">
@@ -152,6 +154,6 @@ export default function SignInPage() {
           )}
         </div>
       </section>
-    </div>
+    </main>
   );
 }

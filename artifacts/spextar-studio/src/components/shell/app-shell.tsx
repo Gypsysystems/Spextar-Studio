@@ -84,7 +84,7 @@ function NavItem({
         collapsed ? 'mx-auto w-10 justify-center' : 'px-3',
         active
           ? 'bg-[hsl(var(--sidebar-accent))] font-medium text-[hsl(var(--sidebar-foreground))]'
-          : 'text-[hsl(var(--muted-foreground))] hover:bg-white/[0.045] hover:text-white',
+          : 'text-white/65 hover:bg-white/[0.045] hover:text-white',
       )}
     >
       {active && <span className="absolute -left-3 top-2 bottom-2 w-[3px] rounded-r bg-primary" aria-hidden />}
@@ -106,7 +106,7 @@ function NavItem({
 function GroupLabel({ children, collapsed }: { children: string; collapsed: boolean }) {
   if (collapsed) return <div className="mx-auto my-2 h-px w-6 bg-white/10" aria-hidden />;
   return (
-    <div className="px-3 pb-1.5 pt-4 text-[10.5px] font-medium uppercase tracking-[0.14em] text-[hsl(var(--muted-foreground))]/70">{children}</div>
+    <div className="px-3 pb-1.5 pt-4 text-[10.5px] font-medium uppercase tracking-[0.14em] text-white/65">{children}</div>
   );
 }
 
@@ -117,20 +117,21 @@ function WorkspaceSwitcher({ ctx, collapsed }: { ctx: ShellContext; collapsed: b
   const trigger = (
     <DropdownMenuTrigger
       data-testid="button-workspace-switcher"
-      aria-label={`Workspace: ${label}. Switch workspace`}
+      aria-label={collapsed ? `Workspace: ${label}. Switch workspace` : undefined}
       className={cn(
         'flex items-center gap-2.5 rounded-md border border-white/[0.07] bg-white/[0.03] text-left text-white transition-colors hover:bg-white/[0.06]',
         collapsed ? 'mx-auto h-10 w-10 justify-center' : 'h-11 w-full px-2.5',
       )}
     >
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white/10 font-mono text-[11px] font-medium">
+      <span aria-hidden className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white/10 font-mono text-[11px] font-medium">
         {(ctx.workspaceName ?? 'W').slice(0, 1)}
       </span>
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1">
-            <span className="block font-mono text-[9.5px] uppercase tracking-[0.16em] text-white/40">Workspace</span>
+            <span className="block font-mono text-[9.5px] uppercase tracking-[0.16em] text-white/65">Workspace</span>
             <span className="block truncate text-[13px]">{label}</span>
+            <span className="sr-only">Switch workspace</span>
           </span>
           <ChevronsUpDown className="h-3.5 w-3.5 text-white/40" aria-hidden />
         </>
@@ -211,19 +212,20 @@ function SessionBlock({ collapsed }: { collapsed: boolean }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         data-testid="button-account"
-        aria-label={`Account: ${session.name}`}
         className={cn(
           'flex items-center gap-2.5 rounded-md text-left hover:bg-white/[0.05]',
           collapsed ? 'mx-auto h-10 w-10 justify-center' : 'h-12 w-full px-2',
         )}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/90 text-[11px] font-semibold text-white">
+        <span aria-hidden={!collapsed} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/90 text-[11px] font-semibold text-white">
           {session.initials}
         </span>
+        {collapsed && <span className="sr-only">Account menu for {session.name}</span>}
         {!collapsed && (
           <span className="min-w-0">
             <span className="block truncate text-[13px] text-white">{session.name}</span>
             <span className="block truncate text-[11px] text-white/45">{org?.name ?? session.role}</span>
+            <span className="sr-only">Account menu</span>
           </span>
         )}
       </DropdownMenuTrigger>
@@ -407,6 +409,7 @@ export function AppShell({
         Skip to content
       </a>
       <aside
+        aria-label="Studio navigation"
         data-testid="sidebar"
         data-collapsed={collapsed}
         style={{ width }}

@@ -113,10 +113,28 @@ native actionability-checked taps and visible controls, not injected DOM clicks.
 - Production network boundaries: no initial Author/editor/viewer downloads,
   Review viewer deferred until a draft exists, direct Author load and refresh.
   The separate bundle guard checks the complete initial module graph.
+- Accessibility in `accessibility.spec.ts`: axe-core WCAG A/AA and best-practice
+  scans of sign-in and all implemented routes in all four profiles, including the
+  loaded Author/Review/Reusable structured surfaces and representative loading,
+  error/retry, empty and missing-resource states. Violations fail without rule
+  exclusions; incomplete checks are attached for diagnosis, not counted as passes.
+- Native Tab/Shift+Tab/Enter/Escape verify associated sign-in fields, visible
+  keyboard focus, the skip link, collapsed navigation, mobile drawer, five
+  management dialogs, an administration alertdialog and an enabled destructive
+  confirmation. Direct input-boundary checks require 3:1 contrast against the
+  actual composited ancestor background; decorative drop shadows alone do not
+  satisfy the keyboard-focus assertion. Modal checks cover
+  accessible names/descriptions, bidirectional focus trapping and return focus
+  without executing destructive actions. Shared focus-return unit tests preserve
+  custom editor focus policies and Radix Trigger behavior.
 
 These are controlled browser regressions—not live email-delivery/password
 validation, cross-user RLS certification, real multi-browser database races,
 visual pixel-diff approval, or a supported-browser matrix beyond Chromium.
+Automated contrast/semantics and keyboard checks are not full WCAG certification
+or hands-on NVDA/VoiceOver testing. Axe incomplete results, complex visual
+relationships, and additional assistive-technology/browser combinations still
+need human accessibility review.
 In particular, Settings wire responses do not establish an atomic last-admin
 database invariant or exercise real user membership changes.
 
