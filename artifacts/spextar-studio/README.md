@@ -56,15 +56,15 @@ Demo samples belong to one adapter in memory, are cloned across the service boun
 
 ## F0/F1 foundation and F2 metadata integration
 
-SPEXTAR Studio is a structured authoring and content management workspace for technical writers. It has no AI features. Backend mode uses Supabase Auth and the existing F0/F1 organization/workspace/project database. Isolated demo mode uses browser-local fixture data. The brand uses the exact supplied Figma vectors; full-screen UI fidelity still requires comparison with the complete frozen design file.
+SPEXTAR Studio is a structured authoring and content management workspace for technical writers. It has no AI features. Backend mode uses Supabase Auth and the existing F0/F1 organization/workspace/project database. Isolated demo mode uses browser-local fixture data. The brand uses the supplied Figma vector geometry with a user-approved optical correction to the violet wordmark center; full-screen UI fidelity still requires comparison with the complete frozen design file.
 
 ## Approved branding
 
-- `public/brand/spextar-wordmark-reversed.svg`: exact dark-background wordmark from Figma asset `306e57fe-6f96-4527-8473-c57fab20e1cc`.
-- `public/brand/spextar-wordmark-primary.svg`: exact light-background wordmark from Figma asset `8a246462-3677-40de-932f-fb1b08cd7852`.
+- `public/brand/spextar-wordmark-reversed.svg`: approved dark-background wordmark based on Figma asset `306e57fe-6f96-4527-8473-c57fab20e1cc`.
+- `public/brand/spextar-wordmark-primary.svg`: approved light-background wordmark based on Figma asset `8a246462-3677-40de-932f-fb1b08cd7852`.
 - `public/brand/spextar-signature-x.svg`: exact compact mark from Figma asset `fb26ee43-c3e6-47a3-b8cc-2769e738348a`; also copied verbatim as `public/favicon.svg`.
-- Files are unchanged local copies, not temporary Figma runtime URLs. SHA-256 regression tests protect their original contents.
-- Shared lockup: 115×20 vector wordmark, 6px gap, inline right-hand Studio suffix in Inter Medium 12px/16px, #A7A7B0. Never render SPEXTAR as text.
+- Assets are local, not temporary Figma runtime URLs. The two wordmark center dots are optically enlarged from 3.42px to 4.8px diameter at the standard 115×20 size, using exact `#6236FF`. SHA-256 regression tests protect every original byte outside that authorized correction, including all four X segments and the other lettering; browser raster checks verify visible violet cores at normal sizes on light/dark backgrounds.
+- Shared lockup: 115×20 vector wordmark, 6px gap, bottom-baseline-aligned right-hand Studio suffix in Inter Medium 16px/20px, #A7A7B0 on dark backgrounds and #5F5F6B on light backgrounds. Never render SPEXTAR as text.
 - The black-stroke Signature X retains its original colors; collapsed dark navigation gives it a neutral white backing for contrast. No violet rounded-square replacement mark is used.
 
 ## Route map

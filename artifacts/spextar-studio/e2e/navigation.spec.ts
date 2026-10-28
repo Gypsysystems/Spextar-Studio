@@ -1,4 +1,5 @@
 import { test, expect, login, navigate, activate, signOut, noOverflow, projectPath, authKey, recoveryPrefix } from './fixture';
+import { expectVisibleSignatureCenter } from './brand-assertions';
 
 test('protected deep link, invalid credentials, restoration, offline sign-out and identity teardown', async ({ page, backend }) => {
   await page.goto(projectPath + '/author/doc-a');
@@ -128,6 +129,9 @@ test('sign-in contrast and approved vectors in both themes, safe return URLs', a
   expect(colors.color).toBe('rgb(255, 255, 255)');
   await expect(page.getByTestId('spextar-vector-wordmark').filter({ visible: true }).last())
     .toHaveAttribute('src', theme === 'dark' ? /reversed/ : /primary/);
+  for (const image of await page.getByTestId('spextar-vector-wordmark').filter({ visible: true }).all()) {
+    await expectVisibleSignatureCenter(image);
+  }
   await expect(page.getByRole('button', { name: 'Microsoft', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Google', exact: true })).toHaveCount(0);
   const suffix = page.getByTestId('spextar-studio-suffix').filter({ visible: true }).last();
@@ -148,4 +152,9 @@ test('sign-in contrast and approved vectors in both themes, safe return URLs', a
   await activate(page, page.getByTestId('button-sign-in'));
   await expect(page.getByTestId('card-workspace-ws-a')).toBeVisible();
   await expect(page).toHaveURL(/\/workspaces$/);
+  const drawer = page.getByTestId('button-open-mobile-nav');
+  if (await drawer.isVisible()) await activate(page, drawer);
+  const sidebarLogo = page.getByTestId('spextar-vector-wordmark').filter({ visible: true });
+  await expect(sidebarLogo).toHaveAttribute('src', /spextar-wordmark-reversed/);
+  await expectVisibleSignatureCenter(sidebarLogo);
 });

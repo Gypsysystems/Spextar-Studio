@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { cn } from '@/lib/utils';
 
-/** Frozen Figma vectors, saved verbatim locally. Never recreate the wordmark in text. */
+/** Approved local vectors with optically strengthened X centers. Never recreate the wordmark in text. */
 const brandAsset = (name: string) => `${import.meta.env.BASE_URL}brand/${name}.svg`;
 
 function subscribeToTheme(onChange: () => void) {
