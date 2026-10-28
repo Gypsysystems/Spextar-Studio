@@ -60,7 +60,7 @@ describe('offline backend contract readiness (not live migration/RLS certificati
     ['reusable', ".eq('revision', expected)", ''],
     ['project-settings', ".eq('updated_at', expected)", ''],
     ['atomic', 'if (!parent?.trim())', 'if (false)'],
-    ['documents', "{ __spextar_signature_probe__: true }", '{}'],
+    ['documents', '{ p_topic_id: topicId }', '{}'],
     ['variables', 'project.canEditContent !== true', 'false'],
   ])('detects removal of a reviewed boundary in %s', (name, before, after) => {
     const path = adapter(name), source = readSource(path);
@@ -80,11 +80,13 @@ describe('offline backend contract readiness (not live migration/RLS certificati
     expect(settingsRole.options).toEqual(contract.roles.project);
   });
 
-  it('matches authoritative atomic RPC names and F2 required aliases to actual adapter declarations', () => {
+  it('matches authoritative atomic and document/topic RPC contracts to actual adapter declarations', () => {
     expect(declarationValue(adapter('atomic'), 'rpcNames')).toEqual(contract.rpcs.atomicNames);
-    const required = declarationValue(adapter('documents'), 'required') as Record<string, string[][]>;
-    expect(Object.fromEntries(Object.entries(required).map(([name, groups]) => [name, groups.map(group => group.join('|'))])))
-      .toEqual(contract.rpcs.documentTopicOperations);
+    expect(declarationValue(adapter('documents'), 'rpcParameters')).toEqual(contract.rpcs.documentTopicOperations);
+    const source = readSource(adapter('documents'));
+    expect(source).not.toContain('__spextar_signature_probe__');
+    expect(source).not.toContain('PGRST202');
+    expect(source).not.toContain('error?.hint');
   });
 
   it.each(['organization', 'workspace', 'project'] as const)('keeps %s RPC arguments aligned with the confirmed contract', async entity => {

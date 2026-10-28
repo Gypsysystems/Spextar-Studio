@@ -196,7 +196,7 @@ for (const role of ['admin', 'author'] as const) {
     await body.fill('Saved topic body');
     await expect(page.getByTestId('body-save-status')).toContainText('Saved · revision 1');
     await noOverflow(page);
-    expect(backend.management.probes).toEqual(expect.arrayContaining(['create_document', 'create_topic']));
+    expect(backend.management.probes).toEqual([]);
   });
 
   test(`${role}: Documents and Topics hierarchy, reorder, Promote/Demote and metadata autosave`, async ({ page, backend }) => {
@@ -221,7 +221,7 @@ for (const role of ['admin', 'author'] as const) {
     await page.getByTestId('input-topic-title').fill('Renamed second');
     await expect.poll(() => second.title).toBe('Renamed second');
     await noOverflow(page);
-    expect(backend.management.probes).toEqual(expect.arrayContaining(['create_topic', 'demote_topic', 'promote_topic', 'move_topic']));
+    expect(backend.management.probes).toEqual([]);
   });
 
   // Keep independent user journeys within the unchanged per-test deadline.
@@ -265,7 +265,7 @@ for (const role of ['admin', 'author'] as const) {
     expect(backend.db.topics.some(t => t.id === leaf.id)).toBe(false);
     expect(backend.db.topics.some(t => t.id === first.id)).toBe(true);
     await noOverflow(page);
-    expect(backend.management.probes).toEqual(expect.arrayContaining(['duplicate_topic_subtree', 'duplicate_document']));
+    expect(backend.management.probes).toEqual([]);
   });
 
   test(`${role}: Documents and Topics empty-document deletion requires explicit confirmation`, async ({ page, backend }) => {
@@ -282,7 +282,7 @@ for (const role of ['admin', 'author'] as const) {
     await activate(page, dialog.getByRole('button', { name: /^Delete document$/i }));
     await expect(page).toHaveURL(projectPath + '/documents');
     expect(backend.db.documents.some(d => d.title === 'Disposable empty document')).toBe(false);
-    expect(backend.management.probes).toEqual(expect.arrayContaining(['create_document']));
+    expect(backend.management.probes).toEqual([]);
   });
 }
 

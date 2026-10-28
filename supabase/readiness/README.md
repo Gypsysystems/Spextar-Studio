@@ -81,9 +81,12 @@ verifies the resource and bootstrap role. Description is optional for workspace
 and project creation; omitted descriptions are sent as null. Each creation uses
 one RPC POST, without signature discovery, alternate names, direct entity inserts
 or client-created memberships. A missing/denied operation fails closed.
-F2 creation/tree/duplication retains its existing seven-RPC compatibility adapter
-and authenticated GET discovery; its parameter aliases are not certified installed
-signatures. No draft save RPC exists.
+Document/topic creation, tree operations and duplication bind directly to the
+seven verified RPC names and exact `p_` named parameters listed in
+`application-contract.json`. Each action sends one authenticated POST after
+existing role/scope validation; no discovery GET, error-hint parsing, alternate
+signature or direct-insert fallback is allowed. Failure is surfaced without
+retrying a potentially applied write. No draft save RPC exists.
 
 Reusable duplication is a metadata create followed by draft copy; partial-copy
 warnings are intentional. Document/topic RPC duplication is expected to preserve

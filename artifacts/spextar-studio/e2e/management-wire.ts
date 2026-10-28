@@ -2,13 +2,13 @@ import type { Row } from './settings-wire';
 
 type Input = { table: string; method: string; url: URL; body: Row; db: Record<string, Row[]>; identity: string };
 type Result = { status: number; data: unknown; violation?: string };
-const signatures: Record<string, string[]> = {
-  create_document: ['project_id', 'title', 'slug', 'description'],
-  create_topic: ['document_id', 'parent_topic_id', 'title', 'slug'],
-  move_topic: ['topic_id', 'new_parent_topic_id', 'new_sort_order'],
-  promote_topic: ['topic_id'], demote_topic: ['topic_id'],
-  duplicate_document: ['document_id', 'new_title', 'new_slug'],
-  duplicate_topic_subtree: ['topic_id', 'new_title', 'new_slug'],
+const rpcParameters: Record<string, string[]> = {
+  create_document: ['p_project_id', 'p_title', 'p_slug', 'p_description'],
+  create_topic: ['p_document_id', 'p_parent_topic_id', 'p_title', 'p_slug'],
+  move_topic: ['p_topic_id', 'p_new_parent_topic_id', 'p_new_sort_order'],
+  promote_topic: ['p_topic_id'], demote_topic: ['p_topic_id'],
+  duplicate_document: ['p_document_id', 'p_new_title', 'p_new_slug'],
+  duplicate_topic_subtree: ['p_topic_id', 'p_new_title', 'p_new_slug'],
 };
 const fields: Record<string, string[]> = {
   documents: ['title', 'slug', 'description', 'status', 'settings'],
@@ -35,7 +35,8 @@ export class ManagementWire {
   private sequence = 0;
   private id() { return `controlled-${++this.sequence}`; }
   handle(input: Input): Result {
-    const { table, method, url, body, db, identity } = input;
+    const { table, method, url, db, identity } = input;
+    let { body } = input;
     const invalid = (message: string): Result => ({ ...failure(400, message), violation: message });
     const rpc = table.startsWith('rpc/') ? table.slice(4) : null;
     const atomic: Record<string, { table: string; parent?: string }> = {
@@ -61,11 +62,8 @@ export class ManagementWire {
     }
     if (!this.enabled) return invalid('Management writes require explicit scenario opt-in');
     if (rpc && method === 'GET') {
-      if (!(rpc in signatures) || url.searchParams.get('__spextar_signature_probe__') !== 'true')
-        return invalid('Unknown RPC/probe');
       this.probes.push(rpc);
-      return { status: 404, data: { code: 'PGRST202', message: 'Controlled signature probe',
-        hint: `public.${rpc}(${signatures[rpc].join(', ')})` } };
+      return invalid('RPC discovery is prohibited; use the verified POST contract');
     }
     const author = db.project_members.some(m => m.project_id === 'project-a' && m.user_id === identity && ['admin', 'author'].includes(String(m.role)));
     let target = db[table]?.find(row => url.searchParams.get('id') === `eq.${row.id}`);
@@ -78,8 +76,10 @@ export class ManagementWire {
       ? db.workspace_members.some(m => m.workspace_id === 'ws-a' && m.user_id === identity && m.role === 'admin') : author;
     if (!editable) return invalid('Unexpected mutation by a read-only role');
     if (rpc) {
-      if (method !== 'POST' || !(rpc in signatures)
-        || Object.keys(body).sort().join() !== [...signatures[rpc]].sort().join()) return invalid('Unexpected RPC arguments');
+      if (method !== 'POST' || !(rpc in rpcParameters)
+        || Object.keys(body).sort().join() !== [...rpcParameters[rpc]].sort().join()) return invalid('Unexpected RPC arguments');
+      // Only after exact wire validation, use row-field names in the fixture implementation.
+      body = Object.fromEntries(Object.entries(body).map(([key, value]) => [key.slice(2), value]));
       const topic = db.topics.find(t => t.id === body.topic_id);
       const docId = body.document_id ?? topic?.document_id;
       if (rpc === 'create_document' ? body.project_id !== 'project-a'

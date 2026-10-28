@@ -181,17 +181,17 @@
       "create_project": ["p_workspace_id", "p_name", "p_slug", "p_description"]
     },
     "documentTopicOperations": {
-      "create_document": ["project|project_id", "title", "slug", "description"],
-      "create_topic": ["document|document_id", "parent|parent_topic|parent_topic_id", "title", "slug"],
-      "move_topic": ["topic|topic_id", "new_parent|new_parent_id|new_parent_topic_id|new_parent_topic", "new_sort_order|sort_order"],
-      "promote_topic": ["topic|topic_id"],
-      "demote_topic": ["topic|topic_id"],
-      "duplicate_document": ["document|document_id", "new_title", "new_slug"],
-      "duplicate_topic_subtree": ["topic|topic_id", "new_title", "new_slug"]
+      "create_document": ["p_project_id", "p_title", "p_slug", "p_description"],
+      "create_topic": ["p_document_id", "p_parent_topic_id", "p_title", "p_slug"],
+      "move_topic": ["p_topic_id", "p_new_parent_topic_id", "p_new_sort_order"],
+      "promote_topic": ["p_topic_id"],
+      "demote_topic": ["p_topic_id"],
+      "duplicate_document": ["p_document_id", "p_new_title", "p_new_slug"],
+      "duplicate_topic_subtree": ["p_topic_id", "p_new_title", "p_new_slug"]
     },
     "atomicInvocation": "Authoritative live F0/F1 names and named parameters, one authenticated RPC POST only. Workspace/project description is optional and sent as null when omitted. No signature discovery, aliases, direct entity inserts or client membership inserts.",
-    "documentTopicParameterDiscovery": "F2 only: authenticated GET with unmatched __spextar_signature_probe__; require matching PGRST202 public function hint. Optional p_ prefix supported. Unknown/missing parameters fail closed before POST.",
-    "authority": "Atomic F0/F1 names/parameters are confirmed by the supplied live contract. F2 alias lists remain adapter compatibility behavior, NOT proof of exact installed SQL signatures.",
+    "documentTopicInvocation": "Verified named parameters, one authenticated RPC POST per action. No signature discovery, hint parsing, aliases, retries or direct insert fallback. Existing project/document/topic scope and authoring-role checks precede writes.",
+    "authority": "Atomic F0/F1 and document/topic callable names and named parameters are confirmed by the supplied authoritative live contracts; this does not certify exact migration SQL or live RLS implementation.",
     "returns": "F2 creators/duplicators require a nonempty UUID string. Move/promote/demote do not consume a return value. Atomic F0/F1 create accepts string or id/entity_id record, then verifies bootstrap membership."
   },
   "unresolved": [

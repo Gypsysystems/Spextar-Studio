@@ -12,7 +12,7 @@
     "artifacts/spextar-studio/src/services/supabase-atomic.ts": "b96bb0cc62daca79df708c32e9304785a714d8b5c15a985a50977e72a86f0156",
     "artifacts/spextar-studio/src/services/supabase-client.ts": "3ba484fd1f41d20b50c29b77f133a1590cbe793f8c8fe1d8cd5c240c88f00ae6",
     "artifacts/spextar-studio/src/services/supabase-conditions.ts": "f66f07dc6a6c9170f2004b920c1f679a78280a1cfb15414e6fdd11776e72a204",
-    "artifacts/spextar-studio/src/services/supabase-documents.ts": "89c7089fe46da3b0940718f1594e1a692e571120951d6fd9c5eda07fc8ae388a",
+    "artifacts/spextar-studio/src/services/supabase-documents.ts": "7b7905f0f481f7c0748d6768ccbb29ac1a5b645fb19b36cc2ae4412139d7a8dc",
     "artifacts/spextar-studio/src/services/supabase-errors.ts": "1685e6bdb88a8c9f74deec8ef382ab6c7ebe57af19cab207c7cfc030ada28d95",
     "artifacts/spextar-studio/src/services/supabase-lifecycle.ts": "8885c0941c5dc7d4da64e857daceba1f8be91db2e93d68b86503dde4c0cd96e1",
     "artifacts/spextar-studio/src/services/supabase-project-settings.ts": "f74c4b8af94a29761acfc78705937b39002d3057717d35b61b57b7e906d4cb90",

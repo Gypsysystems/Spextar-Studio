@@ -34,7 +34,7 @@ describe('isolated browser management responses fail closed', () => {
   });
   it('rejects a foreign membership identity', () => {
     db.project_members[0].user_id = 'other-user';
-    expect(call('rpc/create_document', { project_id: 'project-a', title: 'X', slug: 'x', description: null }).violation).toMatch(/read-only/);
+    expect(call('rpc/create_document', { p_project_id: 'project-a', p_title: 'X', p_slug: 'x', p_description: null }).violation).toMatch(/read-only/);
   });
   it.each(['id', 'created_at', 'created_by', 'updated_at'])('rejects client-controlled audit/identity field %s', field => {
     expect(call('project_variables', { project_id: 'project-a', [field]: 'illegal' }).violation).toMatch(/payload/);
@@ -42,12 +42,20 @@ describe('isolated browser management responses fail closed', () => {
   it('rejects foreign project/category/parent scope', () => {
     expect(call('project_variables', { project_id: 'foreign' }).violation).toMatch(/scope/);
     expect(call('condition_values', { category_id: 'foreign' }).violation).toMatch(/scope/);
-    expect(call('rpc/create_topic', { document_id: 'doc-a', parent_topic_id: 'foreign', title: 'X', slug: 'x' }).violation).toMatch(/parent/);
+    expect(call('rpc/create_topic', { p_document_id: 'doc-a', p_parent_topic_id: 'foreign', p_title: 'X', p_slug: 'x' }).violation).toMatch(/parent/);
   });
-  it('only exposes the exact existing RPC parameters through the read-only probe', () => {
-    expect(call('rpc/create_topic', {}, '__spextar_signature_probe__=true', 'GET').data).toMatchObject({
-      code: 'PGRST202', hint: 'public.create_topic(document_id, parent_topic_id, title, slug)',
-    });
+  it.each(['create_document', 'create_topic', 'move_topic', 'promote_topic', 'demote_topic', 'duplicate_document', 'duplicate_topic_subtree'])(
+    'rejects discovery GETs for %s without mutation or signature hints', name => {
+      const before = structuredClone(db);
+      const result = call(`rpc/${name}`, {}, '__spextar_signature_probe__=true', 'GET');
+      expect(result.status).toBe(400);
+      expect(result.violation).toMatch(/discovery is prohibited/);
+      expect(result.data).not.toHaveProperty('hint');
+      expect(db).toEqual(before);
+      expect(wire.probes).toEqual([name]);
+    },
+  );
+  it('rejects missing or alternate arguments and unconfirmed RPCs', () => {
     expect(call('rpc/create_topic', { document_id: 'doc-a', title: 'X', slug: 'x' }).violation).toMatch(/arguments/);
     expect(call('rpc/unconfirmed_operation', {}).violation).toBeTruthy();
   });
@@ -74,8 +82,8 @@ describe('isolated browser management responses fail closed', () => {
     expect(call('condition_categories', { key: 'changed' }, 'project_id=eq.project-a&id=eq.cat-a', 'PATCH').violation).toMatch(/Immutable/);
   });
   it('rejects cyclic and invalid-order topic moves', () => {
-    expect(call('rpc/move_topic', { topic_id: 'topic-a', new_parent_topic_id: 'topic-a', new_sort_order: 0 }).violation).toMatch(/Cyclic/);
-    expect(call('rpc/move_topic', { topic_id: 'topic-a', new_parent_topic_id: null, new_sort_order: -1 }).violation).toMatch(/order/);
+    expect(call('rpc/move_topic', { p_topic_id: 'topic-a', p_new_parent_topic_id: 'topic-a', p_new_sort_order: 0 }).violation).toMatch(/Cyclic/);
+    expect(call('rpc/move_topic', { p_topic_id: 'topic-a', p_new_parent_topic_id: null, p_new_sort_order: -1 }).violation).toMatch(/order/);
   });
   it('allows workspace administration only on workspace-shared reusable scope', () => {
     db.project_members = []; db.workspace_members[0].role = 'admin';

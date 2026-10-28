@@ -4,6 +4,7 @@ import { mapDocument, readAll } from '@/services/supabase-documents';
 import { createSupabaseServices } from '@/services/supabase-adapter';
 import { createDemoServices } from '@/services/demo-adapter';
 import { invalidateContent } from '@/hooks/use-content-mutation';
+import type { DocumentService } from '@/services/contracts';
 import { supabaseDouble, testUser } from './supabase-double';
 
 export const f2Document = {
@@ -16,13 +17,13 @@ export const f2Topic = (id: string, parent: string | null, order: number) => ({
   status: 'draft', settings: { kind: 'task', custom: true }, created_by: testUser.id,
   created_at: '2026-10-27T10:00:00Z', updated_at: '2026-10-27T10:00:00Z',
 });
-const signatures: Record<string, string> = {
-  create_document: 'p_project_id, p_title, p_slug, p_description',
-  create_topic: 'p_document_id, p_parent_topic_id, p_title, p_slug',
-  move_topic: 'p_topic_id, p_new_parent_topic_id, p_new_sort_order',
-  promote_topic: 'p_topic_id', demote_topic: 'p_topic_id',
-  duplicate_document: 'p_document_id, p_new_title, p_new_slug',
-  duplicate_topic_subtree: 'p_topic_id, p_new_title, p_new_slug',
+const rpcParameters: Record<string, string[]> = {
+  create_document: ['p_project_id', 'p_title', 'p_slug', 'p_description'],
+  create_topic: ['p_document_id', 'p_parent_topic_id', 'p_title', 'p_slug'],
+  move_topic: ['p_topic_id', 'p_new_parent_topic_id', 'p_new_sort_order'],
+  promote_topic: ['p_topic_id'], demote_topic: ['p_topic_id'],
+  duplicate_document: ['p_document_id', 'p_new_title', 'p_new_slug'],
+  duplicate_topic_subtree: ['p_topic_id', 'p_new_title', 'p_new_slug'],
 };
 
 export function f2Setup(role = 'admin') {
@@ -31,7 +32,9 @@ export function f2Setup(role = 'admin') {
   fake.db.topics.push(f2Topic('root-b', null, 10), f2Topic('child', 'root-a', 0), f2Topic('root-a', null, 0));
   fake.db.project_members[0].role = role;
   fake.raw.rpc.mockImplementation(async (name, args, options) => {
-    if (options?.get) return { data: null, error: { code: 'PGRST202', hint: `Perhaps you meant to call the function public.${name}(${signatures[name]})` } };
+    if (options || !rpcParameters[name] || Object.keys(args).sort().join() !== [...rpcParameters[name]].sort().join()) {
+      return { data: null, error: { code: 'PGRST202' } };
+    }
     if (name === 'create_document') fake.db.documents.push({ ...f2Document, id: 'new-document', title: args.p_title, slug: args.p_slug, status: 'draft' });
     if (name === 'create_topic') fake.db.topics.push({ ...f2Topic('new-topic', args.p_parent_topic_id as string | null, 20), title: args.p_title, slug: args.p_slug });
     return { data: name === 'create_document' ? 'new-document' : name === 'create_topic' ? 'new-topic' : name.includes('duplicate') ? 'new-record' : null, error: null };
@@ -88,7 +91,8 @@ describe('F2 permission and mutation boundaries', () => {
     expect(raw.rpc).toHaveBeenLastCalledWith('create_document', { p_project_id: 'project-a', p_title: 'New document', p_slug: 'new-document', p_description: null });
     await services.documents.createTopic('project-a', 'doc-a', { title: 'New topic', slug: 'new-topic', parentTopicId: 'root-a' });
     expect(raw.rpc).toHaveBeenLastCalledWith('create_topic', { p_document_id: 'doc-a', p_parent_topic_id: 'root-a', p_title: 'New topic', p_slug: 'new-topic' });
-    expect(raw.rpc.mock.calls.filter(([, , options]) => !options?.get)).toHaveLength(2);
+    expect(raw.rpc).toHaveBeenCalledTimes(2);
+    expect(raw.rpc.mock.calls.every(call => call.length === 2)).toBe(true);
   });
   it.each(['reviewer', 'viewer', undefined])('does not elevate %s through organization/workspace admin access', async (role) => {
     const fake = f2Setup();
@@ -121,6 +125,8 @@ describe('F2 permission and mutation boundaries', () => {
     expect(raw.rpc).toHaveBeenLastCalledWith('duplicate_document', { p_document_id: 'doc-a', p_new_title: 'Copy', p_new_slug: 'copy' });
     await d.duplicateTopicSubtree('project-a', 'doc-a', 'root-a', { title: 'Copy', slug: 'copy' });
     expect(raw.rpc).toHaveBeenLastCalledWith('duplicate_topic_subtree', { p_topic_id: 'root-a', p_new_title: 'Copy', p_new_slug: 'copy' });
+    expect(raw.rpc).toHaveBeenCalledTimes(5);
+    expect(raw.rpc.mock.calls.every(call => call.length === 2)).toBe(true);
     expect(calls.filter((c) => c.patch)).toHaveLength(0);
   });
   it('rejects wrong-document targets before invoking any write', async () => {
@@ -129,24 +135,44 @@ describe('F2 permission and mutation boundaries', () => {
     await expect(d.moveTopic('project-a', 'doc-a', 'foreign', null, 0)).rejects.toMatchObject({ code: 'not-found' });
     expect(raw.rpc).not.toHaveBeenCalled();
   });
-  it('fails closed on missing signature metadata and does not retry a failed write', async () => {
-    const { services, raw } = f2Setup();
-    raw.rpc.mockResolvedValue({ data: null, error: { code: 'PGRST202' } });
-    await expect(services.documents.promoteTopic('project-a', 'doc-a', 'child')).rejects.toMatchObject({ code: 'unavailable' });
-    expect(raw.rpc.mock.calls.every(([, , options]) => options?.get)).toBe(true);
-    raw.rpc.mockClear();
-    raw.rpc.mockImplementation(async (name, _args, options) => options?.get
-      ? { data: null, error: { code: 'PGRST202', hint: `public.${name}(p_topic_id)` } }
-      : { data: null, error: { code: '42501' } });
-    await expect(services.documents.demoteTopic('project-a', 'doc-a', 'root-b')).rejects.toMatchObject({ code: 'forbidden' });
-    expect(raw.rpc.mock.calls.filter(([, , options]) => !options?.get)).toHaveLength(1);
+  const mutations: [string, (service: DocumentService) => Promise<unknown>][] = [
+    ['create_document', d => d.createDocument('project-a', { title: 'A', slug: 'a', description: null })],
+    ['create_topic', d => d.createTopic('project-a', 'doc-a', { title: 'A', slug: 'a', parentTopicId: null })],
+    ['move_topic', d => d.moveTopic('project-a', 'doc-a', 'root-b', null, 0)],
+    ['promote_topic', d => d.promoteTopic('project-a', 'doc-a', 'child')],
+    ['demote_topic', d => d.demoteTopic('project-a', 'doc-a', 'root-b')],
+    ['duplicate_document', d => d.duplicateDocument('project-a', 'doc-a', { title: 'Copy', slug: 'copy' })],
+    ['duplicate_topic_subtree', d => d.duplicateTopicSubtree('project-a', 'doc-a', 'root-a', { title: 'Copy', slug: 'copy' })],
+  ];
+  it.each(mutations)('%s fails closed without discovery, aliases, retries or direct inserts', async (name, mutate) => {
+    for (const [error, code] of [
+      [{ code: 'PGRST202' }, 'unavailable'],
+      [{ code: 'PGRST202', hint: 'public.unrelated_function(p_name)' }, 'unavailable'],
+      [{ code: '42501' }, 'forbidden'],
+      [{ code: '23505' }, 'conflict'],
+      [{ code: '23514' }, 'validation'],
+      [{ code: 'FETCH_ERROR', message: 'Controlled network failure' }, 'network'],
+    ] as const) {
+      const { services, raw, calls } = f2Setup();
+      raw.rpc.mockResolvedValue({ data: null, error });
+      await expect(mutate(services.documents)).rejects.toMatchObject({ code });
+      expect(raw.rpc).toHaveBeenCalledTimes(1);
+      expect(raw.rpc.mock.calls[0]).toHaveLength(2);
+      expect(raw.rpc.mock.calls[0][0]).toBe(name);
+      expect(Object.keys(raw.rpc.mock.calls[0][1]).sort()).toEqual([...rpcParameters[name]].sort());
+      expect(calls.filter(call => call.insert || call.patch || call.deleted)).toEqual([]);
+    }
   });
-  it('does not execute a signature that omits the selected project context', async () => {
-    const { services, raw } = f2Setup();
-    raw.rpc.mockResolvedValue({ data: null, error: { code: 'PGRST202', hint: 'public.create_document(p_title, p_slug, p_description)' } });
-    await expect(services.documents.createDocument('project-a', { title: 'A', slug: 'a', description: null })).rejects.toMatchObject({ code: 'unavailable' });
-    expect(raw.rpc.mock.calls.every(([, , options]) => options?.get)).toBe(true);
-  });
+  it.each(mutations.filter(([name]) => name.startsWith('create_') || name.startsWith('duplicate_')))(
+    '%s requires a confirmed new ID without retrying or falling back', async (_name, mutate) => {
+      const { services, raw, calls } = f2Setup();
+      raw.rpc.mockResolvedValue({ data: null, error: null });
+      await expect(mutate(services.documents)).rejects.toMatchObject({ code: 'unavailable' });
+      expect(raw.rpc).toHaveBeenCalledTimes(1);
+      expect(raw.rpc.mock.calls[0]).toHaveLength(2);
+      expect(calls.filter(call => call.insert || call.patch || call.deleted)).toEqual([]);
+    },
+  );
   it('keeps demo writes isolated and invalidates every affected read cache', async () => {
     const demo = createDemoServices({ latencyMs: 0 });
     await expect(demo.documents.createDocument('project-a', { title: 'A', slug: 'a', description: null })).rejects.toMatchObject({ code: 'unavailable' });

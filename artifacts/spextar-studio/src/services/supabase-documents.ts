@@ -12,6 +12,14 @@ const documentRow = z.object({ ...common, project_id: z.string(), description: z
 const topicRow = z.object({ ...common, document_id: z.string(), parent_topic_id: z.string().nullable(), sort_order: z.number().int() });
 const documentColumns = 'id,project_id,title,slug,description,status,settings,created_by,created_at,updated_at';
 const topicColumns = 'id,document_id,parent_topic_id,title,slug,status,sort_order,settings,created_by,created_at,updated_at';
+const rpcParameters: Record<string, string[]> = {
+  create_document: ['p_project_id', 'p_title', 'p_slug', 'p_description'],
+  create_topic: ['p_document_id', 'p_parent_topic_id', 'p_title', 'p_slug'],
+  move_topic: ['p_topic_id', 'p_new_parent_topic_id', 'p_new_sort_order'],
+  promote_topic: ['p_topic_id'], demote_topic: ['p_topic_id'],
+  duplicate_document: ['p_document_id', 'p_new_title', 'p_new_slug'],
+  duplicate_topic_subtree: ['p_topic_id', 'p_new_title', 'p_new_slug'],
+};
 const toStatus = (value: z.infer<typeof status>): DocumentStatus => value === 'in_review' ? 'in-review' : value;
 const toDatabaseStatus = (value: DocumentStatus) => value === 'in-review' ? 'in_review' : value;
 const text = z.string().trim().min(1).max(500);
@@ -84,7 +92,6 @@ export function mapDocument(raw: unknown, rawTopics: unknown[], canEdit: boolean
 }
 
 export function supabaseDocuments(client: SupabaseClient, requireProject: (id: string) => Promise<ProjectSummary>): DocumentService {
-  const signatures = new Map<string, string[]>();
   async function writable(projectId: string) {
     const project = await requireProject(projectId);
     if (!project.canEditContent) throw new ServiceError('Only project admins and authors can change documents or topics.', 'forbidden');
@@ -113,38 +120,11 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
     if (topicId && !doc.topics.some((t) => t.id === topicId)) throw new ServiceError('Topic not found in this document.', 'not-found');
     return doc;
   }
-  /** Resolve actual SQL parameter names with an authenticated, read-only probe.
-   * Never issue speculative writes or retry a write with another argument mapping.
-   */
-  async function rpc(name: string, values: Record<string, unknown>, returnsId = false): Promise<string> {
-    let parameters = signatures.get(name);
-    if (!parameters) {
-      const probe = await client.rpc(name, { __spextar_signature_probe__: true }, { get: true });
-      const match = probe.error?.hint?.match(/public\.(\w+)\(([^)]*)\)/);
-      if (probe.error?.code !== 'PGRST202' || !match || match[1] !== name) {
-        if (probe.error && probe.error.code !== 'PGRST202') throw backendError(probe.error);
-        throw new ServiceError(`Cannot verify the parameter names for ${name}. No write was attempted.`, 'unavailable');
-      }
-      parameters = match[2].split(',').map((s) => s.trim()).filter(Boolean);
-      signatures.set(name, parameters);
-    }
-    const args: Record<string, unknown> = {};
-    const required: Record<string, string[][]> = {
-      create_document: [['project', 'project_id'], ['title'], ['slug'], ['description']],
-      create_topic: [['document', 'document_id'], ['parent', 'parent_topic', 'parent_topic_id'], ['title'], ['slug']],
-      move_topic: [['topic', 'topic_id'], ['new_parent', 'new_parent_id', 'new_parent_topic_id', 'new_parent_topic'], ['new_sort_order', 'sort_order']],
-      promote_topic: [['topic', 'topic_id']], demote_topic: [['topic', 'topic_id']],
-      duplicate_document: [['document', 'document_id'], ['new_title'], ['new_slug']],
-      duplicate_topic_subtree: [['topic', 'topic_id'], ['new_title'], ['new_slug']],
-    };
-    const actual = parameters.map((parameter) => parameter.replace(/^p_/, ''));
-    if (required[name].some((group) => !group.some((alias) => actual.includes(alias)))) {
-      throw new ServiceError(`The ${name} signature cannot accept all required context and metadata. No write was attempted.`, 'unavailable');
-    }
-    for (const parameter of parameters) {
-      const alias = parameter.replace(/^p_/, '');
-      if (!(alias in values)) throw new ServiceError(`Unsupported ${name} parameter: ${parameter}. No write was attempted.`, 'unavailable');
-      args[parameter] = values[alias];
+  /** Verified live contract: one authenticated POST, never discovery or fallback writes. */
+  async function rpc(name: string, args: Record<string, unknown>, returnsId = false): Promise<string> {
+    const parameters = rpcParameters[name];
+    if (!parameters || Object.keys(args).length !== parameters.length || parameters.some(parameter => !Object.hasOwn(args, parameter))) {
+      throw new ServiceError('This action could not be prepared. Refresh and try again.', 'unavailable');
     }
     const result = await client.rpc(name, args);
     checked(result.error);
@@ -152,8 +132,6 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
     if (typeof result.data !== 'string' || !result.data) throw new ServiceError('The new item could not be confirmed. Refresh before retrying.', 'unavailable');
     return result.data;
   }
-  const docArgs = (id: string) => ({ document: id, document_id: id });
-  const topicArgs = (id: string) => ({ topic: id, topic_id: id });
   function unchanged(actual: string | undefined, expected: string) {
     if (!expected || actual !== expected) throw new ServiceError('This item changed after confirmation opened. Close the dialog, refresh, and confirm the current item again.', 'conflict');
   }
@@ -168,7 +146,7 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
     async createDocument(projectId, input) {
       await writable(projectId);
       const data = validate(z.object({ title: text, slug, description: z.string().nullable() }).strict(), input);
-      return rpc('create_document', { project: projectId, project_id: projectId, ...data }, true);
+      return rpc('create_document', { p_project_id: projectId, p_title: data.title, p_slug: data.slug, p_description: data.description }, true);
     },
     async updateDocument(projectId, documentId, patch) {
       await scoped(projectId, documentId);
@@ -183,7 +161,7 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
       const doc = await scoped(projectId, documentId);
       const data = validate(z.object({ title: text, slug, parentTopicId: z.string().nullable() }).strict(), input);
       if (data.parentTopicId && !doc.topics.some((t) => t.id === data.parentTopicId)) throw new ServiceError('Parent topic must belong to this document.', 'validation');
-      return rpc('create_topic', { ...docArgs(documentId), title: data.title, slug: data.slug, parent_topic: data.parentTopicId, parent_topic_id: data.parentTopicId, parent: data.parentTopicId }, true);
+      return rpc('create_topic', { p_document_id: documentId, p_parent_topic_id: data.parentTopicId, p_title: data.title, p_slug: data.slug }, true);
     },
     async updateTopic(projectId, documentId, topicId, patch) {
       await scoped(projectId, documentId, topicId);
@@ -198,19 +176,19 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
       const doc = await scoped(projectId, documentId, topicId);
       if (!Number.isInteger(sortOrder) || sortOrder < 0) throw new ServiceError('Sibling position must be a non-negative integer.', 'validation');
       if (parentId && !doc.topics.some((t) => t.id === parentId)) throw new ServiceError('Parent topic must belong to this document.', 'validation');
-      return void await rpc('move_topic', { ...topicArgs(topicId), new_parent: parentId, new_parent_id: parentId, new_parent_topic_id: parentId, new_parent_topic: parentId, new_sort_order: sortOrder, sort_order: sortOrder });
+      return void await rpc('move_topic', { p_topic_id: topicId, p_new_parent_topic_id: parentId, p_new_sort_order: sortOrder });
     },
-    async promoteTopic(projectId, documentId, topicId) { await scoped(projectId, documentId, topicId); await rpc('promote_topic', topicArgs(topicId)); },
-    async demoteTopic(projectId, documentId, topicId) { await scoped(projectId, documentId, topicId); await rpc('demote_topic', topicArgs(topicId)); },
+    async promoteTopic(projectId, documentId, topicId) { await scoped(projectId, documentId, topicId); await rpc('promote_topic', { p_topic_id: topicId }); },
+    async demoteTopic(projectId, documentId, topicId) { await scoped(projectId, documentId, topicId); await rpc('demote_topic', { p_topic_id: topicId }); },
     async duplicateDocument(projectId, documentId, input) {
       await scoped(projectId, documentId);
       const data = validate(z.object({ title: text, slug }).strict(), input);
-      return rpc('duplicate_document', { ...docArgs(documentId), new_title: data.title, new_slug: data.slug }, true);
+      return rpc('duplicate_document', { p_document_id: documentId, p_new_title: data.title, p_new_slug: data.slug }, true);
     },
     async duplicateTopicSubtree(projectId, documentId, topicId, input) {
       await scoped(projectId, documentId, topicId);
       const data = validate(z.object({ title: text, slug }).strict(), input);
-      return rpc('duplicate_topic_subtree', { ...topicArgs(topicId), new_title: data.title, new_slug: data.slug }, true);
+      return rpc('duplicate_topic_subtree', { p_topic_id: topicId, p_new_title: data.title, p_new_slug: data.slug }, true);
     },
     async deleteDocument(projectId, documentId, expectedUpdatedAt) {
       const doc = await scoped(projectId, documentId);

@@ -97,8 +97,13 @@ test('topic move failures preserve the existing tree; retry refreshes hierarchy 
   await save(page);
   expect(backend.db.topics.find(t => t.id === 'topic-b')).toMatchObject({ parent_topic_id: null, sort_order: 0 });
   expect(backend.writes).toHaveLength(3);
-  expect(backend.writes.every(w => w.table === 'rpc/move_topic'
-    && w.body.topic_id === 'topic-b' && w.body.new_parent_topic_id === null && w.body.new_sort_order === 0)).toBe(true);
+  expect(backend.writes.map(w => ({ table: w.table, method: w.method, body: w.body }))).toEqual(
+    Array.from({ length: 3 }, () => ({
+      table: 'rpc/move_topic', method: 'POST',
+      body: { p_topic_id: 'topic-b', p_new_parent_topic_id: null, p_new_sort_order: 0 },
+    })),
+  );
+  expect(backend.management.probes).toEqual([]);
   const outline = page.locator('[data-testid^="outline-topic-"]');
   await expect(outline.first()).toContainText('Child topic');
   await page.reload();
