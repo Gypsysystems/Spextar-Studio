@@ -8,8 +8,8 @@ import { reusableBody, reusableContext as context, reusableDouble } from './reus
 
 // Transport/controller integration here; real Tiptap interactions are covered by editor regressions and controlled browser acceptance.
 vi.mock('@/features/editor/structured-editor', () => ({
-  StructuredEditor: ({ content, editable, onChange }: { content: TopicContent; editable: boolean; onChange: (c: TopicContent) => void }) =>
-    <textarea data-testid="reusable-test-editor" readOnly={!editable} value={JSON.stringify(content)} onChange={e => onChange(JSON.parse(e.target.value))} />,
+  StructuredEditor: ({ content, editable, onChange, deferRender }: { content: TopicContent; editable: boolean; onChange: (c: TopicContent) => void; deferRender?: boolean }) =>
+    <textarea data-testid="reusable-test-editor" data-deferred={deferRender} readOnly={!editable} value={JSON.stringify(content)} onChange={e => onChange(JSON.parse(e.target.value))} />,
 }));
 const path = '/workspaces/ws-a/projects/project-a/reusable-content';
 async function mount(role: string | null = 'author', workspaceAdmin = false, prepare?: (f: ReturnType<typeof reusableDouble>) => void) {
@@ -81,6 +81,7 @@ describe('Reusable management route and interactions', () => {
     for (const id of ['new', 'edit', 'rename', 'duplicate']) expect(screen.getByTestId(`reusable-${id}`)).toBeDisabled();
     await f.user.click(screen.getByTestId('reusable-body-open'));
     expect(await screen.findByTestId('reusable-test-editor')).toHaveAttribute('readonly');
+    expect(screen.getByTestId('reusable-test-editor')).toHaveAttribute('data-deferred', 'true');
     expect(f.calls.some(c => c.patch || c.insert)).toBe(false);
   });
   it('lets an inherited workspace admin manage shared content but not project content', async () => {
@@ -129,6 +130,7 @@ describe('Reusable management route and interactions', () => {
     const f = await mount(); await ready();
     await f.user.click(screen.getByTestId('reusable-body-open'));
     const editor = await screen.findByTestId('reusable-test-editor');
+    expect(editor).toHaveAttribute('data-deferred', 'true');
     await waitFor(() => expect(editor).not.toHaveAttribute('readonly'));
     const body = { ...reusableBody, content: [{ ...reusableBody.content[0], content: [{ type: 'text', text: 'Unsaved UI draft' }] }] };
     f.db.reusable_content_drafts[0].revision = 3;

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StructuredEditor } from '@/features/editor/structured-editor';
 import { contentText, emptyContent, withText, type TopicContent } from '@/domain/topic-content';
+import { contentStatistics, type ContentStatistics } from '@/domain/content-statistics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -54,6 +55,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
   const bodies = useRef(new Map<string, string[]>());
   const demoDocuments = useRef(new Map<string, TopicContent>());
   const metadataControls = useRef<TopicMetadataControls | null>(null);
+  const [bodyStatistics, setBodyStatistics] = useState<{ topicId: string; value: ContentStatistics | null; loading: boolean } | null>(null);
 
   useEffect(() => {
     if (initFor.current !== doc.id) {
@@ -216,7 +218,9 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
               className="mt-3 h-auto border-none bg-transparent px-0 py-1 text-[28px] md:text-[28px] font-semibold leading-tight tracking-tight shadow-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0"
               data-testid="input-topic-title"
             />
-            {backend ? <TopicBodyEditor key={selected.id} doc={doc} topic={selected} onBody={(id, body) => {
+            {backend ? <TopicBodyEditor key={selected.id} doc={doc} topic={selected}
+              onStatistics={(topicId, value, loading) => setBodyStatistics({ topicId, value, loading })}
+              onBody={(id, body) => {
               bodies.current.set(id, body);
               patch(id, { body });
             }} /> : <StructuredEditor
@@ -266,8 +270,14 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
               </Select>
             </div>
             {backend && <div className="mt-4"><MetadataEditor key={selected.id} controls={metadataControls} projectId={doc.projectId} doc={doc} topic={selected} /></div>}
-            <p className="mt-3 text-[12.5px] text-muted-foreground">
-              {selected.body.join(' ').split(/\s+/).filter(Boolean).length} words · {selected.body.filter(Boolean).length} paragraphs
+            <p className="mt-3 text-[12.5px] text-muted-foreground" data-testid="topic-statistics"
+              title="Current structured body, including unsaved edits. Words use whitespace boundaries; paragraphs count non-empty paragraph nodes.">
+              {(() => {
+                if (backend && (bodyStatistics?.topicId !== selected.id || bodyStatistics.loading)) return 'Loading body statistics…';
+                const counts = backend ? bodyStatistics?.value : contentStatistics(demoDocuments.current.get(selected.id)
+                  ?? withText(emptyContent(), selected.body.join('\n\n')));
+                return counts ? `${counts.words} words · ${counts.paragraphs} paragraphs` : 'Body statistics unavailable';
+              })()}
             </p>
           </>
         )}
@@ -279,7 +289,9 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
           <Button variant="outline" size="sm" asChild data-testid="link-inspector-history">
             <Link href={`${base}/history`}>View History</Link>
           </Button>
-          <ScopeMarker kind="not-connected" className="self-start">Save and submit not connected</ScopeMarker>
+          <p className="text-[12px] text-muted-foreground" data-testid="author-workflow-scope">
+            {backend ? 'Draft bodies autosave. Submission for review is not available yet.' : 'Demo edits are session-only. Submission for review is not available yet.'}
+          </p>
         </div>
       </aside>
     </>

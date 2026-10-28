@@ -7,7 +7,7 @@ import { useReusableDraft } from '@/hooks/use-reusable-draft';
 import type { ReusableContext, ReusableItem } from '@/domain/reusable-content';
 import type { TopicContent } from '@/domain/topic-content';
 
-type EditorProps = { content: TopicContent; editable: boolean; onChange: (c: TopicContent) => void; loading?: boolean };
+type EditorProps = { content: TopicContent; editable: boolean; onChange: (c: TopicContent) => void; loading?: boolean; deferRender?: boolean };
 const loadEditor = () => import('@/features/editor/structured-editor').then((m) => ({ default: m.StructuredEditor as ComponentType<EditorProps> }));
 
 const statusCopy = { loading: 'Loading…', saved: 'Saved', unsaved: 'Unsaved changes', saving: 'Saving…', error: 'Save failed', conflict: 'Conflict' } as const;
@@ -65,7 +65,7 @@ export function ReusableDraftPanel({ context, item }: { context: ReusableContext
       <div className="mt-3">
         <ErrorBoundary FallbackComponent={Fallback} resetKey={attempt}>
           <Suspense fallback={<div className="space-y-2" aria-hidden><Skeleton className="h-9 w-full" /><Skeleton className="h-40 w-full" /></div>}>
-            <Editor content={state.content} editable={editable} loading={!state.loaded} onChange={(c) => controller.changeDocument(c)} />
+            <Editor content={state.content} editable={editable} loading={!state.loaded} deferRender onChange={(c) => controller.changeDocument(c)} />
           </Suspense>
         </ErrorBoundary>
       </div>

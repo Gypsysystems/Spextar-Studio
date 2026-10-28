@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { DocumentRecord, Topic } from '@/domain/types';
 import { supportsStructuredEditing } from '@/domain/structured-content';
+import { contentStatistics, type ContentStatistics } from '@/domain/content-statistics';
 import { useServices } from '@/providers/services-provider';
 import { useStudioSession } from '@/providers/session-provider';
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,9 @@ import { metadataDeletionState } from '@/hooks/use-content-deletion';
 import { TopicDraftController } from './topic-draft-controller';
 import { draftEntry } from './topic-draft-registry';
 
-export function TopicBodyEditor({ doc, topic, onBody }: {
+export function TopicBodyEditor({ doc, topic, onBody, onStatistics }: {
   doc: DocumentRecord; topic: Topic; onBody: (id: string, body: string[]) => void;
+  onStatistics?: (topicId: string, value: ContentStatistics | null, loading: boolean) => void;
 }) {
   const services = useServices();
   const { data: session } = useStudioSession();
@@ -28,6 +30,12 @@ export function TopicBodyEditor({ doc, topic, onBody }: {
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const onBodyRef = useRef(onBody);
   onBodyRef.current = onBody;
+  const statisticsRef = useRef(onStatistics);
+  statisticsRef.current = onStatistics;
+  const loadingStatistics = state.status === 'loading';
+  useEffect(() => {
+    statisticsRef.current?.(topic.id, state.loaded && !loadingStatistics ? contentStatistics(state.content) : null, loadingStatistics);
+  }, [state.content, state.loaded, loadingStatistics, topic.id]);
   useEffect(() => {
     if (state.loaded) onBodyRef.current(topic.id, state.text ? state.text.split(/\n{2,}/) : []);
   }, [state.text, state.loaded, topic.id]);

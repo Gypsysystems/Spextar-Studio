@@ -1,5 +1,6 @@
 import { test as base, expect, type Page, type Locator, type BrowserContext, type Route } from '@playwright/test';
 import { SettingsWire } from './settings-wire';
+import { ManagementWire, managedTables } from './management-wire';
 
 export const projectPath = '/workspaces/ws-a/projects/project-a';
 export const authKey = 'spextar.backend.luyyxblmtupmugtazgbr.auth';
@@ -23,6 +24,7 @@ export class Backend {
   failDraftWrites = false;
   conflictNextSave = false;
   readonly settings = new SettingsWire();
+  readonly management = new ManagementWire();
   readonly failures = new Set<string>();
   readonly unexpected: string[] = [];
   readonly writes: { table: string; method: string; query: string; body: Row }[] = [];
@@ -95,7 +97,16 @@ export class Backend {
     }
     if (url.pathname === '/auth/v1/user' && request.method() === 'GET') return send(200, user);
     if (url.pathname === '/auth/v1/logout' && request.method() === 'POST') return send(this.offlineLogout ? 503 : 200, this.offlineLogout ? { message: 'Controlled offline logout' } : {});
-    const table = url.pathname.split('/').pop()!;
+    const table = url.pathname.startsWith('/rest/v1/rpc/') ? 'rpc/' + url.pathname.split('/').pop()! : url.pathname.split('/').pop()!;
+    if (table.startsWith('rpc/') || !['GET', 'HEAD'].includes(request.method()) && managedTables.includes(table)
+      && (table !== 'topic_drafts' || this.management.enabled)) {
+      const body = request.postData() ? request.postDataJSON() as Row : {};
+      if (request.method() !== 'GET') this.writes.push({ table, method: request.method(), query: url.search, body });
+      const result = this.management.handle({ table, method: request.method(), url, body, db: this.db, identity: this.identity });
+      if (result.violation) this.unexpected.push(result.violation);
+      const single = request.headers().accept?.includes('application/vnd.pgrst.object+json');
+      return send(result.status, single && Array.isArray(result.data) ? result.data[0] ?? null : result.data);
+    }
     if (url.pathname !== `/rest/v1/${table}` || !(table in this.db)) {
       this.unexpected.push(`Unsupported intercepted endpoint: ${url.pathname}`);
       return send(500, { message: 'Unmodelled browser fixture endpoint' });
@@ -104,6 +115,7 @@ export class Backend {
       const scopedField: Record<string, string> = {
         documents: 'project_id', topics: 'document_id', topic_drafts: 'topic_id',
         project_variables: 'project_id', condition_categories: 'project_id', condition_values: 'category_id',
+        reusable_contents: 'workspace_id', reusable_content_drafts: 'reusable_content_id',
       };
       const field = scopedField[table];
       if (field && !/^(eq\.|in\.\()/.test(url.searchParams.get(field) ?? '')) {

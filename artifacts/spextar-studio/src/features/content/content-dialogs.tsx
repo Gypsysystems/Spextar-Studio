@@ -13,7 +13,7 @@ import { MetadataEditor } from './metadata-editor';
 
 export function DocumentMetadataDialog({ doc }: { doc: DocumentRecord }) {
   return <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Document metadata</Button></DialogTrigger>
-    <DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Document metadata</DialogTitle><DialogDescription>Metadata saves automatically. Topic bodies are not saved.</DialogDescription></DialogHeader>
+    <DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Document metadata</DialogTitle><DialogDescription>Metadata saves automatically. Topic bodies autosave separately in Author; saving does not submit content for review.</DialogDescription></DialogHeader>
       <MetadataEditor projectId={doc.projectId} doc={doc} />
     </DialogContent></Dialog>;
 }

@@ -54,6 +54,24 @@ native actionability-checked taps and visible controls, not injected DOM clicks.
   mobile drawers, direct route refreshes, semantic themes and approved vectors.
 - Explicit Admin/Author, Reviewer/Viewer and inherited workspace-admin controls;
   Project Settings remains admin-only.
+- Documents/Topics: real compiled create dialogs, retained input on server failure,
+  metadata/body autosave, move/reorder, Promote/Demote, saved-body duplication and
+  blocked dependent-document deletion, confirmed leaf/empty-document deletion,
+  and retained confirmation after a denied delete. RPC signature probes and mutation arguments
+  are intercepted explicitly; no live procedure executes.
+- Variables: invalid-key rejection before a write, create failure/retry, editing
+  defaults/output overrides, rename, duplication, search and refreshed selection.
+- Conditions: category create failure/retry, metadata and stable-key rename,
+  value creation/editing/order, search and refreshed selection.
+- Reusable Content: project authoring versus workspace-shared authority,
+  create failure/retry, tags, rename, saved structured-body duplication, draft
+  error/refresh recovery and a stale-revision conflict with explicit reload/discard.
+  Controlled cold editor downloads also protect the lazy editor's post-commit
+  mount lifecycle rather than silently accepting its error-boundary fallback.
+- Author statistics derive from canonical structured JSON, not legacy metadata:
+  loading, marked/container content, edited headings, saved refresh, topic switching,
+  missing bodies and unsupported versions. Counts describe the current body,
+  including unsaved edits; only non-empty paragraph nodes count as paragraphs.
 - Project Settings administration: explicit metadata saves and validation, scoped
   expected-timestamp writes, server-owned audit preservation, cache refresh and
   reload; permission/network failures retain edits; stale reads and read/write
@@ -111,4 +129,7 @@ pnpm --filter @workspace/spextar-studio check:bundle
 pnpm test:browser
 ```
 
+Management responses are opt-in in `management-wire.ts`. Pure unit tests protect
+their fail-closed scope, expected-revision/timestamp, role and audit-field guards.
+They model existing browser service responses, not live database/RLS certification.
 No deployment or GitHub Actions is configured by this suite.
