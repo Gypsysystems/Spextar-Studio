@@ -176,3 +176,23 @@ and publishable keys remain legitimate client inputs, but must not appear in
 scanner diagnostics either. Test assertions also avoid dumping subprocess
 output or synthetic control values when a regression fails. Do not add raw
 error logging or a verbose configuration dump to troubleshoot this gate.
+
+### Local readiness HTTP server regression
+
+The unit suite starts the real readiness request handler on an ephemeral
+loopback port against disposable synthetic files. It does not use Supabase,
+production output, or a deployed host. Tests remove their files and close their
+server sockets after completion.
+
+The existing fixture-server contract is GET/HEAD only (other methods return
+405), known build variants only, MIME-typed resources and `Cache-Control:
+no-store` on success. Safe extensionless application paths receive that
+variant's SPA shell; missing assets, hidden paths, traversal attempts and
+symlinks must not receive HTML or another variant's files. Malformed encodings
+and unreadable/missing fallback files terminate with an empty 400 response.
+HEAD retains the equivalent GET status and content headers without a body.
+The server does not implement ranges, conditional caching, CORS or cookies.
+
+These are local test-server boundaries, not new requirements for a deployment
+platform. Eventual host deep-link, response-header and cache verification
+remains a separate staging acceptance gate.

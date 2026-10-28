@@ -129,24 +129,42 @@ const mime: Record<string, string> = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.png': 'image/png', '.ico': 'image/x-icon',
 };
-async function serve() {
-  const server = createServer(async (req, res) => {
+/** Local fixture server only; the caller owns listening and teardown. */
+export function createReadinessServer(outputRoot = readinessRoot) {
+  return createServer(async (req, res) => {
     try {
       if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405).end(); return; }
-      const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://127.0.0.1').pathname);
+      // Inspect the original target: URL parsing normalizes dot segments before validation.
+      const pathname = decodeURIComponent((req.url ?? '/').split(/[?#]/, 1)[0]);
+      if (!pathname.startsWith('/') || pathname.startsWith('//') || /[\\\0]/.test(pathname)) {
+        res.writeHead(404).end(); return;
+      }
       const [name, ...parts] = pathname.slice(1).split('/');
       if (!Object.hasOwn(variants, name) || parts.some(p => p.startsWith('.'))) { res.writeHead(404).end(); return; }
-      const root = path.join(readinessRoot, name);
+      const root = path.join(outputRoot, name);
       let file = path.resolve(root, ...parts);
-      if (!file.startsWith(root + path.sep)) { res.writeHead(404).end(); return; }
+      if (file !== root && !file.startsWith(root + path.sep)) { res.writeHead(404).end(); return; }
+      // The scanner rejects links too. Never follow a variant root, parent or file link.
+      let current = root;
+      for (const part of ['', ...parts]) {
+        current = path.join(current, part);
+        if ((await lstat(current).catch(() => null))?.isSymbolicLink()) { res.writeHead(404).end(); return; }
+      }
       if (!(await stat(file).catch(() => null))?.isFile()) {
-        if (path.extname(file)) { res.writeHead(404).end(); return; }
+        if (path.extname(file) || parts[0] === 'assets') { res.writeHead(404).end(); return; }
         file = path.join(root, 'index.html'); // Deep links only; missing assets must never receive HTML.
       }
+      if ((await lstat(file)).isSymbolicLink()) { res.writeHead(404).end(); return; }
+      // Read before committing headers so a missing/unreadable fallback terminates safely.
+      const body = await readFile(file);
       res.writeHead(200, { 'content-type': mime[path.extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-store' });
-      res.end(req.method === 'HEAD' ? undefined : await readFile(file));
+      res.end(req.method === 'HEAD' ? undefined : body);
     } catch { res.writeHead(400).end(); }
   });
+}
+
+async function serve() {
+  const server = createReadinessServer();
   server.listen(4182, '127.0.0.1', () => console.log('Isolated readiness server listening on loopback:4182'));
   for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => server.close(() => process.exit(0)));
 }
