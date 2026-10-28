@@ -195,14 +195,14 @@ describe('existing atomic creation operations', () => {
     const { services, raw } = setup();
     const org = await services.organizations.createOrganization!({ name: 'New Organization', slug: 'new-organization' });
     expect(org).toMatchObject({ name: 'New Organization', role: 'owner' });
-    const writes = raw.rpc.mock.calls.filter((call) => !call[2]?.get);
-    expect(writes).toEqual([['create_organization_with_owner', { p_name: 'New Organization', p_slug: 'new-organization' }]]);
+    expect(raw.rpc.mock.calls).toEqual([['create_organization', { p_name: 'New Organization', p_slug: 'new-organization' }]]);
   });
   it('creates a workspace with its admin membership using the active tenant', async () => {
     const { services, raw } = setup();
     const ws = await services.workspaces.createWorkspace({ name: 'New Workspace', description: 'Team scope' });
     expect(ws).toMatchObject({ organizationId: 'org-a', role: 'admin', source: 'backend' });
-    expect(raw.rpc).toHaveBeenCalledWith('create_workspace_with_admin', {
+    expect(raw.rpc).toHaveBeenCalledTimes(1);
+    expect(raw.rpc).toHaveBeenCalledWith('create_workspace', {
       p_organization_id: 'org-a', p_name: 'New Workspace', p_slug: 'new-workspace', p_description: 'Team scope',
     });
   });
@@ -210,29 +210,71 @@ describe('existing atomic creation operations', () => {
     const { services, raw } = setup();
     const project = await services.projects.createProject('ws-a', projectInput);
     expect(project).toMatchObject({ key: 'NP', workspaceId: 'ws-a', role: 'admin', source: 'backend' });
-    expect(raw.rpc).toHaveBeenCalledWith('create_project_with_admin', {
+    expect(raw.rpc).toHaveBeenCalledTimes(1);
+    expect(raw.rpc).toHaveBeenCalledWith('create_project', {
       p_workspace_id: 'ws-a', p_name: 'New project', p_slug: 'np', p_description: 'A deliverable',
     });
   });
-  it('uses GET/read-only probes and never direct table inserts when operations are undiscoverable', async () => {
-    const { services, raw, db } = setup();
-    raw.rpc.mockResolvedValue({ data: null, error: { code: 'PGRST202', hint: null } } as never);
-    await expect(services.workspaces.createWorkspace({ name: 'Workspace Test', description: '' })).rejects.toMatchObject({ code: 'unavailable' });
-    expect(raw.rpc.mock.calls.every((call) => call[2]?.get === true)).toBe(true);
-    expect(db.workspaces).toHaveLength(2);
+  it('onboards a freshly authenticated user with no organization using the exact RPC without hints', async () => {
+    const { services, db, raw, calls } = setup();
+    db.organization_members = [];
+    expect(await services.auth.getSession()).toMatchObject({ organizationId: '' });
+    expect(await services.organizations.createOrganization!({ name: 'First Organization', slug: 'first-organization' }))
+      .toMatchObject({ name: 'First Organization', role: 'owner' });
+    expect(raw.rpc.mock.calls).toEqual([['create_organization', { p_name: 'First Organization', p_slug: 'first-organization' }]]);
+    expect(calls.some(call => call.insert || call.patch || call.deleted)).toBe(false);
+    expect((await services.auth.getSession())?.organizationId).not.toBe('');
   });
-  it('does not attempt a create for an unsupported signature parameter', async () => {
-    const { services, raw } = setup();
-    raw.rpc.mockResolvedValue({ data: null, error: { code: 'PGRST202', hint: 'public.create_workspace_with_admin(p_name, p_unrecognized)' } } as never);
-    await expect(services.workspaces.createWorkspace({ name: 'Workspace Test', description: '' })).rejects.toMatchObject({ code: 'unavailable' });
-    expect(raw.rpc).toHaveBeenCalledTimes(1);
-  });
-  it('propagates an atomic write error without a second write or partial client-side membership insertion', async () => {
+  for (const entity of ['organization', 'workspace', 'project'] as const) {
+    const values = { name: 'Test Resource', slug: 'test-resource', organizationId: 'org-a', workspaceId: 'ws-a' };
+    it.each([
+      [{ code: '42501' }, 'forbidden'],
+      [{ code: 'PGRST202', hint: null }, 'unavailable'],
+      [{ code: 'PGRST202', hint: 'public.unrelated_function(p_name)' }, 'unavailable'],
+      [{ code: '23505' }, 'conflict'],
+      [{ status: 401 }, 'unauthorized'],
+    ])(`${entity} RPC failure %j never probes, retries aliases, or inserts entities/memberships`, async (error, code) => {
+      const { client, raw } = setup();
+      raw.rpc.mockResolvedValueOnce({ data: null, error } as never);
+      await expect(atomicOperations(client)(entity, values)).rejects.toMatchObject({ code });
+      expect(raw.rpc).toHaveBeenCalledTimes(1);
+      expect(raw.rpc.mock.calls[0][0]).toBe(`create_${entity}`);
+      expect(raw.rpc.mock.calls[0]).toHaveLength(2);
+      expect(raw.from).not.toHaveBeenCalled();
+    });
+    it(`${entity} transport failure never falls back to direct inserts`, async () => {
+      const { client, raw } = setup();
+      raw.rpc.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      await expect(atomicOperations(client)(entity, values)).rejects.toThrow('Failed to fetch');
+      expect(raw.rpc).toHaveBeenCalledTimes(1);
+      expect(raw.from).not.toHaveBeenCalled();
+    });
+    it(`${entity} rejects invalid slugs before any request`, async () => {
+      const { client, raw } = setup();
+      await expect(atomicOperations(client)(entity, { ...values, slug: 'Not Valid' })).rejects.toMatchObject({ code: 'validation' });
+      expect(raw.rpc).not.toHaveBeenCalled();
+      expect(raw.from).not.toHaveBeenCalled();
+    });
+    it(`${entity} refuses a missing result identifier without a second write`, async () => {
+      const { client, raw } = setup();
+      raw.rpc.mockResolvedValueOnce({ data: null, error: null });
+      await expect(atomicOperations(client)(entity, values)).rejects.toMatchObject({ code: 'unavailable' });
+      expect(raw.rpc).toHaveBeenCalledTimes(1);
+      expect(raw.from).not.toHaveBeenCalled();
+    });
+  }
+  it.each(['workspace', 'project'] as const)('%s sends null for an omitted optional description', async entity => {
     const { client, raw } = setup();
-    raw.rpc.mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', hint: 'public.create_organization_with_owner(p_name, p_slug)' } } as never)
-      .mockResolvedValueOnce({ data: null, error: { code: '42501' } } as never);
-    await expect(atomicOperations(client)('organization', { name: 'Test Org', slug: 'test-org' })).rejects.toMatchObject({ code: 'forbidden' });
-    expect(raw.rpc).toHaveBeenCalledTimes(2);
+    await atomicOperations(client)(entity, { name: 'Test Resource', slug: 'test-resource', organizationId: 'org-a', workspaceId: 'ws-a' });
+    expect(raw.rpc.mock.calls).toEqual([[`create_${entity}`, {
+      p_name: 'Test Resource', p_slug: 'test-resource', p_description: null,
+      [entity === 'workspace' ? 'p_organization_id' : 'p_workspace_id']: entity === 'workspace' ? 'org-a' : 'ws-a',
+    }]]);
+  });
+  it.each(['workspace', 'project'] as const)('%s requires tenant context before calling its RPC', async entity => {
+    const { client, raw } = setup();
+    await expect(atomicOperations(client)(entity, { name: 'Test Resource', slug: 'test-resource' })).rejects.toMatchObject({ code: 'validation' });
+    expect(raw.rpc).not.toHaveBeenCalled();
     expect(raw.from).not.toHaveBeenCalled();
   });
   it('rejects product metadata rather than pretending it was saved', async () => {

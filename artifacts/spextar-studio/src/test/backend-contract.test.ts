@@ -7,6 +7,7 @@ import { variableKeySchema } from '@/domain/project-variables';
 import { projectMetadataSchema, settingsRole } from '@/domain/project-settings';
 import { createSupabaseServices } from '@/services/supabase-adapter';
 import { supabaseDouble, testSession } from './supabase-double';
+import { atomicOperations } from '@/services/supabase-atomic';
 
 const contract = JSON.parse(readFileSync(resolve(repositoryRoot, 'supabase/readiness/application-contract.json'), 'utf8'));
 const review = JSON.parse(readFileSync(resolve(repositoryRoot, 'supabase/readiness/source-review.json'), 'utf8')) as {
@@ -58,7 +59,7 @@ describe('offline backend contract readiness (not live migration/RLS certificati
     ['topic-drafts', ".eq('revision', expectedRevision)", ''],
     ['reusable', ".eq('revision', expected)", ''],
     ['project-settings', ".eq('updated_at', expected)", ''],
-    ['atomic', '{ get: true }', '{ get: false }'],
+    ['atomic', 'if (!parent?.trim())', 'if (false)'],
     ['documents', "{ __spextar_signature_probe__: true }", '{}'],
     ['variables', 'project.canEditContent !== true', 'false'],
   ])('detects removal of a reviewed boundary in %s', (name, before, after) => {
@@ -79,11 +80,21 @@ describe('offline backend contract readiness (not live migration/RLS certificati
     expect(settingsRole.options).toEqual(contract.roles.project);
   });
 
-  it('matches documented RPC candidates and required aliases to the actual adapter declarations', () => {
-    expect(declarationValue(adapter('atomic'), 'candidates')).toEqual(contract.rpcs.atomicCandidates);
+  it('matches authoritative atomic RPC names and F2 required aliases to actual adapter declarations', () => {
+    expect(declarationValue(adapter('atomic'), 'rpcNames')).toEqual(contract.rpcs.atomicNames);
     const required = declarationValue(adapter('documents'), 'required') as Record<string, string[][]>;
     expect(Object.fromEntries(Object.entries(required).map(([name, groups]) => [name, groups.map(group => group.join('|'))])))
       .toEqual(contract.rpcs.documentTopicOperations);
+  });
+
+  it.each(['organization', 'workspace', 'project'] as const)('keeps %s RPC arguments aligned with the confirmed contract', async entity => {
+    const { client, raw } = supabaseDouble();
+    await atomicOperations(client)(entity, { name: 'Contract Test', slug: 'contract-test', organizationId: 'org-a', workspaceId: 'ws-a' });
+    const [name, args] = raw.rpc.mock.calls[0];
+    expect(name).toBe(contract.rpcs.atomicNames[entity]);
+    expect(Object.keys(args).sort()).toEqual([...contract.rpcs.atomicParameters[name]].sort());
+    expect(raw.rpc).toHaveBeenCalledTimes(1);
+    expect(raw.from).not.toHaveBeenCalled();
   });
 
   it.each([['orgRole', 'organization'], ['workspaceRole', 'workspace'], ['projectRole', 'project']])(

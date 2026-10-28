@@ -9,7 +9,7 @@
     "artifacts/spextar-studio/src/domain/structured-content.ts": "66e72816535a9abebebf03f5c59122dfeae75c56d056af7c343a63b9a3b957aa",
     "artifacts/spextar-studio/src/domain/topic-content.ts": "5155d0270d223cc638e80dbdbfb179d4e22bd2f92572ec047d3b3696652ec731",
     "artifacts/spextar-studio/src/services/supabase-adapter.ts": "10937a84d7e24b25c67490bcb19d41d8884065658fbee931238ddea8b9979ea2",
-    "artifacts/spextar-studio/src/services/supabase-atomic.ts": "8a17706982dba9ee581abf22cbd4dc568d8ddb86c26ef19df0d6416443a39da2",
+    "artifacts/spextar-studio/src/services/supabase-atomic.ts": "b96bb0cc62daca79df708c32e9304785a714d8b5c15a985a50977e72a86f0156",
     "artifacts/spextar-studio/src/services/supabase-client.ts": "e18bff4bbe29140cc19f423bc97dd1ed96652fda4d9c8ee443590833e1b3f350",
     "artifacts/spextar-studio/src/services/supabase-conditions.ts": "f2c568ae378bece6b24e5fb949d32441d4cdb4281fcef949eddfdd50d9de17d3",
     "artifacts/spextar-studio/src/services/supabase-documents.ts": "0641bd909fd2e6bf9ca2c5b6992b7474b305e4c1207506396cfd5ab7500d6ab0",

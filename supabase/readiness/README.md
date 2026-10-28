@@ -74,12 +74,16 @@ deletion uses expected `updated_at` plus preflight dependency checks.
 Document/topic metadata, variable and condition edits have no equivalent
 server-side CAS in the existing adapters; do not claim universal conflict safety.
 
-F0/F1 creation resolves an existing resource-plus-membership RPC, then verifies
-the resource and bootstrap role. F2 creation/tree/duplication uses its seven
-existing RPCs. Candidate names/parameter aliases in the manifest describe
-compatibility handling, not certified installed signatures. Only unmatched
-authenticated GET probes are used for discovery; no speculative POST probe.
-Unknown signatures fail closed. No draft save RPC exists.
+F0/F1 creation calls the authoritative `create_organization(p_name, p_slug)`,
+`create_workspace(p_organization_id, p_name, p_slug, p_description)` or
+`create_project(p_workspace_id, p_name, p_slug, p_description)` directly, then
+verifies the resource and bootstrap role. Description is optional for workspace
+and project creation; omitted descriptions are sent as null. Each creation uses
+one RPC POST, without signature discovery, alternate names, direct entity inserts
+or client-created memberships. A missing/denied operation fails closed.
+F2 creation/tree/duplication retains its existing seven-RPC compatibility adapter
+and authenticated GET discovery; its parameter aliases are not certified installed
+signatures. No draft save RPC exists.
 
 Reusable duplication is a metadata create followed by draft copy; partial-copy
 warnings are intentional. Document/topic RPC duplication is expected to preserve

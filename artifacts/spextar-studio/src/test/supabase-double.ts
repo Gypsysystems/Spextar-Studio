@@ -147,12 +147,13 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     }),
   };
   const rpc = vi.fn(async (name: string, args: Record<string, unknown>, options?: { get?: boolean }): Promise<{ data: unknown; error: { code: string; hint?: string; message?: string } | null }> => {
-    const entity = name.includes('organization') ? 'organization' : name.includes('workspace') ? 'workspace' : 'project';
-    if (options?.get) {
-      const parameters = entity === 'organization' ? 'p_name, p_slug'
-        : entity === 'workspace' ? 'p_organization_id, p_name, p_slug, p_description'
-          : 'p_workspace_id, p_name, p_slug, p_description';
-      return { data: null, error: { code: 'PGRST202', hint: `Perhaps you meant to call the function public.${name}(${parameters})` } };
+    const names: Record<string, string> = { create_organization: 'organization', create_workspace: 'workspace', create_project: 'project' };
+    const entity = names[name];
+    const expected = entity === 'organization' ? ['p_name', 'p_slug']
+      : entity === 'workspace' ? ['p_organization_id', 'p_name', 'p_slug', 'p_description']
+        : ['p_workspace_id', 'p_name', 'p_slug', 'p_description'];
+    if (!entity || options || Object.keys(args).sort().join() !== expected.sort().join()) {
+      return { data: null, error: { code: 'PGRST202', hint: 'No signature hint is available.' } };
     }
     const id = `${entity}-created-${db[`${entity}s`].length}`;
     db[`${entity}s`].push({

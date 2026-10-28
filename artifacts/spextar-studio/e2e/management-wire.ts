@@ -25,6 +25,8 @@ const failure = (status: number, message: string, code?: string): Result => ({ s
 
 /** Opt-in responses for existing service contracts only. Never an RLS simulator. */
 export class ManagementWire {
+  atomicEnabled = false;
+  atomicFailure = false;
   enabled = false;
   failNext: string | null = null;
   denyNext = false;
@@ -35,8 +37,29 @@ export class ManagementWire {
   handle(input: Input): Result {
     const { table, method, url, body, db, identity } = input;
     const invalid = (message: string): Result => ({ ...failure(400, message), violation: message });
-    if (!this.enabled) return invalid('Management writes require explicit scenario opt-in');
     const rpc = table.startsWith('rpc/') ? table.slice(4) : null;
+    const atomic: Record<string, { table: string; parent?: string }> = {
+      create_organization: { table: 'organizations' },
+      create_workspace: { table: 'workspaces', parent: 'organization_id' },
+      create_project: { table: 'projects', parent: 'workspace_id' },
+    };
+    if (rpc && atomic[rpc]) {
+      if (!this.atomicEnabled) return invalid('Atomic creation requires explicit scenario opt-in');
+      const target = atomic[rpc], entity = rpc.slice(7);
+      const parameters = ['p_name', 'p_slug', ...(target.parent ? [`p_${target.parent}`, 'p_description'] : [])];
+      if (method !== 'POST' || Object.keys(body).sort().join() !== parameters.sort().join())
+        return invalid('Unexpected atomic RPC method/arguments');
+      if (this.atomicFailure) return { status: 404, data: { code: 'PGRST202', hint: null, message: 'Controlled missing operation without signature hints' } };
+      const id = this.id(), at = new Date().toISOString();
+      db[target.table].push({
+        id, name: body.p_name, slug: body.p_slug, description: body.p_description ?? '',
+        ...(target.parent ? { [target.parent]: body[`p_${target.parent}`] } : {}),
+        status: 'active', created_by: identity, created_at: at, updated_at: at,
+      });
+      db[`${entity}_members`].push({ [`${entity}_id`]: id, user_id: identity, role: entity === 'organization' ? 'owner' : 'admin' });
+      return { status: 200, data: id };
+    }
+    if (!this.enabled) return invalid('Management writes require explicit scenario opt-in');
     if (rpc && method === 'GET') {
       if (!(rpc in signatures) || url.searchParams.get('__spextar_signature_probe__') !== 'true')
         return invalid('Unknown RPC/probe');
