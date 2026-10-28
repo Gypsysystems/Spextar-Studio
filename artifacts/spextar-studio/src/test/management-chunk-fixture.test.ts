@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { managementChunkUrl, managementPages } from '../../e2e/management-chunk-fixture';
+import { authoringChunkUrl, managementChunkUrl, managementPages } from '../../e2e/management-chunk-fixture';
 
 describe('isolated management download fault scope', () => {
   it.each(managementPages)('resolves only the emitted $chunk route on the loopback fixture origin', item => {
@@ -25,5 +25,27 @@ describe('isolated management download fault scope', () => {
   });
   it('rejects an unknown route rather than intercepting arbitrary assets', () => {
     expect(() => managementChunkUrl({}, 'author' as 'review')).toThrow('Unknown management route');
+  });
+});
+
+describe('isolated Author and nested Review viewer download scope', () => {
+  const sources = [
+    ['author', 'src/pages/author.tsx'],
+    ['reviewViewer', 'src/features/review/review-draft-viewer.tsx'],
+  ] as const;
+  it.each(sources)('resolves only the exact emitted %s boundary', (target, source) => {
+    expect(authoringChunkUrl({
+      [source]: { isDynamicEntry: true, file: `assets/${target}-hash.js` },
+    }, target)).toBe(`http://127.0.0.1:4181/assets/${target}-hash.js`);
+  });
+  it.each(sources)('rejects a missing %s boundary without targeting the main graph', (target) => {
+    expect(() => authoringChunkUrl({ 'src/main.tsx': { isEntry: true, file: 'assets/index.js' } }, target)).toThrow();
+  });
+  it.each(sources)('rejects a static or unsafe %s entry', (target, source) => {
+    expect(() => authoringChunkUrl({ [source]: { file: 'assets/index.js' } }, target)).toThrow();
+    expect(() => authoringChunkUrl({ [source]: { isDynamicEntry: true, file: 'https://example.test/viewer.js' } }, target)).toThrow();
+  });
+  it.each(['toString', '__proto__', 'structuredEditor', 'src/main.tsx'])('rejects non-allowlisted target %s', target => {
+    expect(() => authoringChunkUrl({}, target as 'author')).toThrow('Unknown authoring download');
   });
 });

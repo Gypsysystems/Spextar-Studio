@@ -270,3 +270,33 @@ with no new error suppression. No live Supabase writes, accounts, keys or RLS
 certification are involved. Traces and screenshots remain in ignored generated
 output; no application runtime, dependency, budget or build configuration changes
 are needed for these tests.
+
+## Author and nested Review viewer download recovery
+
+`author-viewer-download-recovery.spec.ts` extends the same exact-asset fault
+fixture with two explicitly allowlisted production entries: Author and the
+nested read-only Review viewer. It adds nine scenarios per desktop/mobile
+dark/light profile (36 checks):
+
+- Author's protected deep link does not fetch the editor before sign-in.
+  HTTP 404 recovery is explicit; Back to Documents works, and returning to the
+  cached rejected route does not retry or refresh automatically. Reload retains
+  the route, theme and Author/Viewer editing affordances.
+- Admin/Author creates real identity-scoped recovery through a denied synthetic
+  autosave, then reloads into an aborted Author download. The local copy and
+  untouched server revision survive the error, navigation away/back, and explicit
+  reload. Restore saves through the existing revision-safe controller, retaining
+  owned JSON metadata and node IDs; discard clears recovery without a write.
+- Review's shell and missing-draft state need no viewer download. Admin, Author,
+  Reviewer, Viewer and inherited Workspace Admin encounter a missing/aborted
+  viewer only after a saved draft is available. Data Refresh, Topic selection and
+  navigation remain safe but do not pretend to retry a cached failed module.
+  Explicit Reload restores the viewer, which stays read-only even for authors
+  and admins; attempted typing cannot alter content. All Review checks assert
+  zero writes and unchanged saved draft JSON/revisions.
+
+The manifest resolver and exact local-script interceptor are shared with the
+existing management checks. Unknown authoring targets (including prototype
+properties), non-dynamic entries and unsafe asset paths are rejected. The
+existing unexpected-network and uncaught-product-error assertions are unchanged.
+This is synthetic browser acceptance, not live Auth or RLS certification.
