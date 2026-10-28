@@ -4,6 +4,15 @@ Professional structured authoring and technical-documentation management.
 This repository starts with the **SPEXTAR Studio F0/F1 foundation baseline**.
 There are no AI generation features.
 
+## Backend contract and migration readiness
+
+The repository-owned [application backend contract](supabase/readiness/README.md)
+documents consumed tables, RPC compatibility, roles, scope/concurrency boundaries,
+and unresolved live assumptions. Offline drift checks run with `pnpm test`.
+This is **not** an authoritative migration export or live RLS certification.
+The [migration handoff](supabase/migrations/README.md) records partial supplied
+identities and the safe completion gate; no guessed SQL baseline is provided.
+
 ## Included in the baseline
 
 - React/TypeScript application, tests, pnpm lockfile and workspace configuration.

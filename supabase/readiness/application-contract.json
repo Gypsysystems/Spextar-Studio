@@ -1,0 +1,186 @@
+{
+  "formatVersion": 1,
+  "authority": "Application expectations derived from source and established product behavior; NOT a live schema export or executable migration baseline.",
+  "schema": "public",
+  "migrationHistory": {
+    "reportedAppliedCount": 18,
+    "verifiedFromLiveLedger": false,
+    "exactSqlAvailable": false,
+    "replayCertified": false
+  },
+  "tables": {
+    "profiles": {
+      "columns": ["id", "display_name", "avatar_url"],
+      "operations": ["select"],
+      "scope": ["id"],
+      "authorization": "Own authenticated profile during session hydration; auth-user linkage and profile trigger expected, exact SQL unavailable."
+    },
+    "organizations": {
+      "columns": ["id", "name", "slug"],
+      "operations": ["select"],
+      "scope": ["id"],
+      "authorization": "Authenticated organization membership; organization creation uses atomic RPC, never separate membership inserts."
+    },
+    "organization_members": {
+      "columns": ["organization_id", "user_id", "role"],
+      "operations": ["select"],
+      "scope": ["user_id"],
+      "authorization": "Current identity membership. Bootstrap owner membership is protected by the established backend contract."
+    },
+    "workspaces": {
+      "columns": ["id", "organization_id", "name", "slug", "description", "created_at", "updated_at"],
+      "operations": ["select"],
+      "scope": ["organization_id"],
+      "authorization": "Selected organization and accessible workspace; atomic RPC creation only."
+    },
+    "workspace_members": {
+      "columns": ["workspace_id", "user_id", "role"],
+      "operations": ["select"],
+      "scope": ["workspace_id", "user_id"],
+      "authorization": "Accessible workspace membership. Workspace admin is not an implicit project author."
+    },
+    "projects": {
+      "columns": ["id", "workspace_id", "name", "slug", "description", "status", "created_by", "created_at", "updated_at"],
+      "operations": ["select", "update"],
+      "scope": ["workspace_id", "id"],
+      "authorization": "Accessible workspace/project reads; metadata updates only by explicit Project Admin. Creation uses atomic RPC.",
+      "insertFields": [],
+      "updateFields": ["name", "slug", "description", "status"],
+      "concurrency": ["workspace_id", "id", "updated_at"]
+    },
+    "project_members": {
+      "columns": ["project_id", "user_id", "role"],
+      "operations": ["select", "insert", "update", "delete"],
+      "scope": ["project_id", "user_id"],
+      "authorization": "Project members read; explicit Project Admin manages existing accessible workspace members. No invitation workflow.",
+      "insertFields": ["project_id", "user_id", "role"],
+      "updateFields": ["role"],
+      "concurrency": ["project_id", "user_id", "role"]
+    },
+    "documents": {
+      "columns": ["id", "project_id", "title", "slug", "description", "status", "settings", "created_by", "created_at", "updated_at"],
+      "operations": ["select", "update", "delete"],
+      "scope": ["project_id", "id"],
+      "authorization": "Project access for reads; explicit Project Admin/Author for mutation; create/duplicate via existing RPCs.",
+      "insertFields": [],
+      "updateFields": ["title", "slug", "description", "status", "settings"],
+      "concurrency": ["project_id", "id", "updated_at"],
+      "limitations": "Metadata autosave is not revision-CAS; updated_at guard is for deletion. Only empty documents may be deleted by the application; FK actions/atomic dependency guarantees are unverified."
+    },
+    "topics": {
+      "columns": ["id", "document_id", "parent_topic_id", "title", "slug", "status", "sort_order", "settings", "created_by", "created_at", "updated_at"],
+      "operations": ["select", "update", "delete"],
+      "scope": ["document_id", "id"],
+      "authorization": "Project access through document; explicit Project Admin/Author for mutation. Tree operations and creation/duplication use RPCs.",
+      "insertFields": [],
+      "updateFields": ["title", "slug", "status", "settings"],
+      "concurrency": ["document_id", "id", "updated_at"],
+      "limitations": "Parent must be same-document and acyclic; server tree functions maintain hierarchy/order. Metadata autosave is not revision-CAS. Only leaf deletion; cascading draft/child relationships not certified."
+    },
+    "topic_drafts": {
+      "columns": ["topic_id", "content", "revision", "updated_at", "updated_by"],
+      "operations": ["select", "insert", "update"],
+      "scope": ["topic_id"],
+      "authorization": "Authenticated identity and document/topic/project checked; explicit Project Admin/Author writes. Review is read-only in UI.",
+      "insertFields": ["topic_id", "content", "updated_by"],
+      "updateFields": ["content", "updated_by"],
+      "concurrency": ["topic_id", "revision"],
+      "serverBehavior": "Insert establishes revision 1; update trigger advances revision. RETURNING confirms the row; zero-row expected-revision update or duplicate first insert is conflict. No save RPC."
+    },
+    "project_variables": {
+      "columns": ["id", "project_id", "name", "key", "value_type", "value", "description", "required", "output_values", "created_at", "updated_at"],
+      "operations": ["select", "insert", "update"],
+      "scope": ["project_id", "id"],
+      "authorization": "Project access reads; explicit Project Admin/Author writes. Output Preview never writes.",
+      "insertFields": ["project_id", "name", "key", "value_type", "value", "description", "required", "output_values"],
+      "updateFields": ["name", "key", "value_type", "value", "description", "required", "output_values"],
+      "limitations": "No optimistic revision/timestamp write guard; no deletion or semantic references."
+    },
+    "condition_categories": {
+      "columns": ["id", "project_id", "name", "key", "description", "settings", "unassigned_behavior", "value_match_mode", "created_at", "updated_at"],
+      "operations": ["select", "insert", "update"],
+      "scope": ["project_id", "id"],
+      "authorization": "Project access reads; explicit Project Admin/Author writes.",
+      "insertFields": ["project_id", "name", "key", "description", "settings", "unassigned_behavior", "value_match_mode"],
+      "updateFields": ["name", "key", "description", "settings", "unassigned_behavior", "value_match_mode"],
+      "limitations": "Management only, not persisted content assignment/resolution; no CAS or delete."
+    },
+    "condition_values": {
+      "columns": ["id", "category_id", "name", "key", "sort_order", "created_at", "updated_at"],
+      "operations": ["select", "insert", "update"],
+      "scope": ["category_id", "id"],
+      "authorization": "Category checked in the current project; explicit Project Admin/Author writes.",
+      "insertFields": ["category_id", "name", "key", "sort_order"],
+      "updateFields": ["name", "key", "sort_order"],
+      "limitations": "Nonnegative sort order, no reorder RPC/transaction or uniqueness guarantee inferred."
+    },
+    "reusable_contents": {
+      "columns": ["id", "workspace_id", "project_id", "scope", "name", "slug", "description", "settings", "status", "update_policy", "tags", "created_by", "created_at", "updated_at"],
+      "operations": ["select", "insert", "update"],
+      "scope": ["workspace_id", "project_id", "scope", "id"],
+      "authorization": "Workspace-shared mutation uses workspace-admin authority; project mutation requires explicit Project Admin/Author.",
+      "insertFields": ["workspace_id", "project_id", "scope", "name", "slug", "description", "settings", "status", "update_policy", "tags"],
+      "updateFields": ["name", "description", "settings", "status", "update_policy", "tags"],
+      "concurrency": ["workspace_id", "id", "scope", "updated_at"],
+      "limitations": "Project writes also filter project_id. Scope/slug identity cannot change on update. Duplication is client-orchestrated, not atomic; a body-copy failure may leave a metadata copy and explicit warning."
+    },
+    "reusable_content_drafts": {
+      "columns": ["reusable_content_id", "content", "revision", "updated_at", "updated_by"],
+      "operations": ["select", "insert", "update"],
+      "scope": ["reusable_content_id"],
+      "authorization": "Parent reusable scope/authority checked; read-only roles cannot save.",
+      "insertFields": ["reusable_content_id", "content"],
+      "updateFields": ["content"],
+      "concurrency": ["reusable_content_id", "revision"],
+      "serverBehavior": "Database owns audits and revision: first insert 1, subsequent expected-revision update exactly +1. Zero-row update/duplicate first insert is conflict; no save RPC."
+    }
+  },
+  "roles": {
+    "organization": ["owner", "admin", "member"],
+    "workspace": ["admin", "member", "viewer"],
+    "project": ["admin", "author", "reviewer", "viewer"],
+    "projectContentWriters": ["admin", "author"],
+    "projectAdministrators": ["admin"]
+  },
+  "values": {
+    "documentTopicStatus": ["draft", "in_review", "approved", "published"],
+    "projectWritableStatus": ["active", "archived"],
+    "projectReadCompatibility": ["active", "in-review", "in_review", "archived"],
+    "reusableStatus": ["draft", "in_review", "approved", "published"],
+    "reusableScope": ["workspace", "project"],
+    "reusableUpdatePolicy": ["notify", "manual", "auto"],
+    "variableType": ["text"],
+    "outputIds": ["web-help", "pdf-manual", "word-review"],
+    "conditionUnassignedBehavior": ["include", "exclude"],
+    "conditionValueMatchMode": ["any", "all"],
+    "stableKeyPattern": "^[a-z][a-z0-9_]{0,79}(?![\\s\\S])"
+  },
+  "rpcs": {
+    "atomicCandidates": {
+      "organization": ["create_organization_with_owner", "create_organization"],
+      "workspace": ["create_workspace_with_admin", "create_workspace"],
+      "project": ["create_project_with_admin", "create_project"]
+    },
+    "documentTopicOperations": {
+      "create_document": ["project|project_id", "title", "slug", "description"],
+      "create_topic": ["document|document_id", "parent|parent_topic|parent_topic_id", "title", "slug"],
+      "move_topic": ["topic|topic_id", "new_parent|new_parent_id|new_parent_topic_id|new_parent_topic", "new_sort_order|sort_order"],
+      "promote_topic": ["topic|topic_id"],
+      "demote_topic": ["topic|topic_id"],
+      "duplicate_document": ["document|document_id", "new_title", "new_slug"],
+      "duplicate_topic_subtree": ["topic|topic_id", "new_title", "new_slug"]
+    },
+    "parameterDiscovery": "Authenticated GET with unmatched __spextar_signature_probe__; require matching PGRST202 public function hint. Optional p_ prefix supported. Unknown/missing parameters fail closed before POST.",
+    "authority": "Candidate/alias lists are adapter compatibility behavior, NOT proof of exact installed SQL signatures or that every candidate exists.",
+    "returns": "F2 creators/duplicators require a nonempty UUID string. Move/promote/demote do not consume a return value. Atomic F0/F1 create accepts string or id/entity_id record, then verifies bootstrap membership."
+  },
+  "unresolved": [
+    "All 18 applied versions/names and exact original SQL from the authoritative migration ledger",
+    "Exact constraints, indexes, FK ON DELETE actions, triggers, private helpers and grants/policy definitions",
+    "Exact installed atomic RPC candidate/signatures, security-definer configuration and authenticated-only execution grants",
+    "Live multi-identity RLS coverage for all management/draft tables; fixtures are not live certification",
+    "Atomic last-project-admin and dependency-delete protections under concurrent sessions",
+    "General project reader accepts legacy in_review/in-review; this does not expand the active/archived writable database contract",
+    "No confirmed persisted reference, comments/approval, release/history, brand/output or publishing contract"
+  ]
+}

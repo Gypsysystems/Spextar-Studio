@@ -1,0 +1,23 @@
+{
+  "formatVersion": 1,
+  "reviewPolicy": "Offline semantic-source review guard, not live introspection. Review application-contract.json and adapter tests before accepting changed digests.",
+  "files": {
+    "artifacts/spextar-studio/src/domain/project-conditions.ts": "6d2a6e97b7040b7550ae5e4259683021bd3988b21fdf4d1fa81053acd883832b",
+    "artifacts/spextar-studio/src/domain/project-settings.ts": "333f59678883e98ebd78d2cbd261838239b388a21ef2300a68b57abfe1af544c",
+    "artifacts/spextar-studio/src/domain/project-variables.ts": "74f8aa140b3840949617d1822d654ffd5ba99057c3f278b33abcc88f1bd4b9a2",
+    "artifacts/spextar-studio/src/domain/reusable-content.ts": "16f39adef06441c59132b119f86484fc8e0c4d0a207b51c8f70e3ed6500de666",
+    "artifacts/spextar-studio/src/domain/structured-content.ts": "66e72816535a9abebebf03f5c59122dfeae75c56d056af7c343a63b9a3b957aa",
+    "artifacts/spextar-studio/src/domain/topic-content.ts": "5155d0270d223cc638e80dbdbfb179d4e22bd2f92572ec047d3b3696652ec731",
+    "artifacts/spextar-studio/src/services/supabase-adapter.ts": "10937a84d7e24b25c67490bcb19d41d8884065658fbee931238ddea8b9979ea2",
+    "artifacts/spextar-studio/src/services/supabase-atomic.ts": "8a17706982dba9ee581abf22cbd4dc568d8ddb86c26ef19df0d6416443a39da2",
+    "artifacts/spextar-studio/src/services/supabase-client.ts": "0e0afd518764f0d507bd7a76f60675ee9e2a64e6d9d252fec92d1436aaff003b",
+    "artifacts/spextar-studio/src/services/supabase-conditions.ts": "f2c568ae378bece6b24e5fb949d32441d4cdb4281fcef949eddfdd50d9de17d3",
+    "artifacts/spextar-studio/src/services/supabase-documents.ts": "cd6235744be52799fb7cd672803b99dfbea342517ebd8ff7a5df154a3d39ecf5",
+    "artifacts/spextar-studio/src/services/supabase-errors.ts": "ce64312705368cdba2d51ea00b78df6bb3fdd3539af1d4abbfc3dd690613a5a0",
+    "artifacts/spextar-studio/src/services/supabase-project-settings.ts": "f74c4b8af94a29761acfc78705937b39002d3057717d35b61b57b7e906d4cb90",
+    "artifacts/spextar-studio/src/services/supabase-reusable.ts": "210a5d860d29b8ce5935be777c8e904ffd1f70c03e062424d311b85735fa9010",
+    "artifacts/spextar-studio/src/services/supabase-topic-drafts.ts": "88eaaec4c6d8a899ab30fc130d4704f5ae5a04d2b5783f65a2501e527328a8f7",
+    "artifacts/spextar-studio/src/services/supabase-variables.ts": "815dbc043958b14967f1e85545be727cd7b80a7f651cd6e7a4f2a5f42af1fa79",
+    "artifacts/spextar-studio/src/services/validation.ts": "89f7033a3a6b3ba7936c8f42d8a8ba88b22f95d0d7137906e622e2cadac5fb5a"
+  }
+}

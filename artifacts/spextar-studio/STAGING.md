@@ -82,6 +82,12 @@ no invented persistence, product workflow, design, live writes or deployment.
 
 ## Remaining external readiness gaps
 
+- [Backend-contract readiness](../../supabase/readiness/README.md) now captures
+  application expectations and offline drift checks. It does not close exact
+  migration-ledger export, replay validation or live RLS acceptance. The
+  [migration handoff](../../supabase/migrations/README.md) explicitly records
+  those unresolved gates without generating or executing guessed SQL.
+
 - Real email/password confirmation/sign-in and authenticated multi-account RLS acceptance require authorized test users and safe test data. Controlled browser checks do not close this gap.
 - An isolated staging account/dataset policy and the actual future host configuration have not been certified. Do not assume the approved backend is a disposable staging database.
 - Exact applied migration SQL is not yet source-controlled; reproducing a fresh equivalent backend remains a separate blocked task requiring authoritative migration-history access/files.
