@@ -36,7 +36,7 @@ const documentSchema = z.object({
 
 export const importSchema = z.object({
   spextarImport: z.literal(1, {
-    errorMap: () => ({ message: 'Missing "spextarImport": 1 version marker' }),
+    error: 'Missing "spextarImport": 1 version marker',
   }),
   project: z.object({
     name: z.string().trim().min(3, 'Project name must be at least 3 characters').max(80),

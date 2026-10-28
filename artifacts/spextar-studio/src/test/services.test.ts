@@ -10,6 +10,27 @@ import { suggestKey } from '@/domain/project-identifiers';
 const demo = () => createDemoServices({ latencyMs: 0 });
 const input = { name: 'New service guide', key: 'NSG', description: '', product: '' };
 
+describe('patched validation compatibility', () => {
+  it('rejects an oversized invalid import collection without accumulating element issues', () => {
+    const parsed = importSchema.safeParse({
+      spextarImport: 1, project: { ...input, documents: Array(5000).fill(null) },
+    });
+    expect(parsed.success).toBe(false);
+    if (parsed.success) throw new Error('Oversized imports must be rejected.');
+    expect(parsed.error.issues).toHaveLength(1);
+    expect(parsed.error.issues[0]).toMatchObject({ code: 'too_big', path: ['project', 'documents'] });
+  });
+
+  it('preserves import version feedback and optional-field defaults', () => {
+    const invalid = importSchema.safeParse({ spextarImport: 2, project: input });
+    expect(invalid.success).toBe(false);
+    if (invalid.success) throw new Error('Unsupported import versions must be rejected.');
+    expect(invalid.error.issues[0].message).toBe('Missing "spextarImport": 1 version marker');
+    expect(importSchema.parse({ spextarImport: 1, project: { name: input.name } }).project)
+      .toMatchObject({ name: input.name, description: '', product: '', documents: [] });
+  });
+});
+
 describe('demo service boundaries', () => {
   it('restores only a structurally valid demo session and removes it on sign-out', async () => {
     const services = demo();

@@ -6,7 +6,7 @@ import { ServiceError, type DocumentService } from './contracts';
 import { backendError } from './supabase-errors';
 
 const status = z.enum(['draft', 'in_review', 'approved', 'published']);
-const settings = z.record(z.unknown());
+const settings = z.record(z.string(), z.unknown());
 const common = { id: z.string(), title: z.string(), slug: z.string(), status, settings, created_by: z.string(), created_at: z.string(), updated_at: z.string() };
 const documentRow = z.object({ ...common, project_id: z.string(), description: z.string().nullable() });
 const topicRow = z.object({ ...common, document_id: z.string(), parent_topic_id: z.string().nullable(), sort_order: z.number().int() });

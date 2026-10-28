@@ -12,7 +12,7 @@
     "artifacts/spextar-studio/src/services/supabase-atomic.ts": "8a17706982dba9ee581abf22cbd4dc568d8ddb86c26ef19df0d6416443a39da2",
     "artifacts/spextar-studio/src/services/supabase-client.ts": "e18bff4bbe29140cc19f423bc97dd1ed96652fda4d9c8ee443590833e1b3f350",
     "artifacts/spextar-studio/src/services/supabase-conditions.ts": "f2c568ae378bece6b24e5fb949d32441d4cdb4281fcef949eddfdd50d9de17d3",
-    "artifacts/spextar-studio/src/services/supabase-documents.ts": "cd6235744be52799fb7cd672803b99dfbea342517ebd8ff7a5df154a3d39ecf5",
+    "artifacts/spextar-studio/src/services/supabase-documents.ts": "0641bd909fd2e6bf9ca2c5b6992b7474b305e4c1207506396cfd5ab7500d6ab0",
     "artifacts/spextar-studio/src/services/supabase-errors.ts": "ce64312705368cdba2d51ea00b78df6bb3fdd3539af1d4abbfc3dd690613a5a0",
     "artifacts/spextar-studio/src/services/supabase-project-settings.ts": "f74c4b8af94a29761acfc78705937b39002d3057717d35b61b57b7e906d4cb90",
     "artifacts/spextar-studio/src/services/supabase-reusable.ts": "210a5d860d29b8ce5935be777c8e904ffd1f70c03e062424d311b85735fa9010",
