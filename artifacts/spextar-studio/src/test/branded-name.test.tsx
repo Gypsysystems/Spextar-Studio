@@ -33,8 +33,8 @@ describe('visual product names', () => {
   it('uses the official wordmark for mixed-case names and the unchanged Studio lockup', () => {
     const { container } = render(<BrandedText>Welcome to Spextar and SPEXTAR Studio.</BrandedText>);
     expect(screen.getByRole('img', { name: 'SPEXTAR' })).toBeVisible();
-    expect(screen.getByRole('img', { name: 'SPEXTAR Studio' })).toHaveClass('items-baseline', 'gap-[6px]');
-    expect(screen.getByTestId('spextar-studio-suffix')).toHaveClass('text-[16px]', 'leading-[20px]');
+    expect(screen.getByRole('img', { name: 'SPEXTAR Studio' })).toHaveClass('items-end', 'h-[20px]', 'gap-[6px]');
+    expect(screen.getByTestId('spextar-studio-suffix')).toHaveClass('text-[16px]', 'leading-[12px]');
     expect(visibleCopy(container)).toBe('Welcome to  and Studio.');
     expect(container.querySelector('svg, text')).toBeNull();
   });

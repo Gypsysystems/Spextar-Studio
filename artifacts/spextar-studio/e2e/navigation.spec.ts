@@ -1,5 +1,5 @@
 import { test, expect, login, navigate, activate, signOut, noOverflow, projectPath, authKey, recoveryPrefix } from './fixture';
-import { expectNoPlainProductName, expectVisibleSignatureCenter } from './brand-assertions';
+import { expectBottomAlignedStudio, expectNoPlainProductName, expectVisibleSignatureCenter } from './brand-assertions';
 
 test('protected deep link, invalid credentials, restoration, offline sign-out and identity teardown', async ({ page, backend }) => {
   await page.goto(projectPath + '/author/doc-a');
@@ -137,18 +137,9 @@ test('sign-in contrast and approved vectors in both themes, safe return URLs', a
   }
   await expect(page.getByRole('button', { name: 'Microsoft', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Google', exact: true })).toHaveCount(0);
-  const suffix = page.getByTestId('spextar-studio-suffix').filter({ visible: true }).last();
-  await expect(suffix).toHaveCSS('font-size', '16px');
-  const difference = await suffix.evaluate(el => {
-    const wordmark = el.parentElement!.querySelector('[data-testid="spextar-vector-wordmark"]')!;
-    const baseline = document.createElement('span');
-    Object.assign(baseline.style, { display: 'inline-block', width: '0', height: '0', verticalAlign: 'baseline' });
-    el.append(baseline);
-    const distance = Math.abs(baseline.getBoundingClientRect().top - wordmark.getBoundingClientRect().bottom);
-    baseline.remove();
-    return distance;
-  });
-  expect(difference).toBeLessThanOrEqual(1);
+  for (const lockup of await page.getByTestId('spextar-lockup').filter({ visible: true }).all()) {
+    await expectBottomAlignedStudio(lockup);
+  }
   await noOverflow(page);
   await page.getByTestId('input-email').fill('user-a@example.test');
   await page.getByTestId('input-password').fill('synthetic-not-real');
@@ -160,4 +151,5 @@ test('sign-in contrast and approved vectors in both themes, safe return URLs', a
   const sidebarLogo = page.getByTestId('spextar-vector-wordmark').filter({ visible: true });
   await expect(sidebarLogo).toHaveAttribute('src', /spextar-wordmark-reversed/);
   await expectVisibleSignatureCenter(sidebarLogo);
+  await expectBottomAlignedStudio(page.getByTestId('spextar-lockup').filter({ visible: true }));
 });

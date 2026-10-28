@@ -17,9 +17,9 @@ describe('approved vector lockup', () => {
     expect(vector).toHaveAttribute('src', `/brand/spextar-wordmark-${asset}.svg`);
     expect(vector).toHaveAttribute('width', '115');
     expect(vector).toHaveAttribute('height', '20');
-    expect(lockup).toHaveClass('inline-flex', 'items-baseline', 'gap-[6px]');
+    expect(lockup).toHaveClass('inline-flex', 'h-[20px]', 'items-end', 'gap-[6px]');
     const suffix = screen.getByText('Studio');
-    expect(suffix).toHaveClass('text-[16px]', 'font-medium', 'leading-[20px]');
+    expect(suffix).toHaveClass('text-[16px]', 'font-medium', 'leading-[12px]');
     expect(suffix).toHaveClass(tone === 'light' ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]');
     expect(suffix.style.fontFamily).toContain('Inter');
     expect(screen.getByText('SPEXTAR Studio')).toHaveClass('sr-only');

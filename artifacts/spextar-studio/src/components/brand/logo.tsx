@@ -74,13 +74,15 @@ export function Wordmark({ className, tone = 'auto' }: { className?: string; ton
     <span
       role="img"
       aria-label="SPEXTAR Studio"
-      className={cn('inline-flex shrink-0 items-baseline gap-[6px] whitespace-nowrap', className)}
+      className={cn('inline-flex h-[20px] shrink-0 items-end gap-[6px] whitespace-nowrap', className)}
       data-testid="spextar-lockup"
     >
       <span className="sr-only">SPEXTAR Studio</span>
       <VectorWordmark lightInk={lightInk} />
       <span
-        className={cn('text-[16px] font-medium leading-[20px]', lightInk ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]')}
+        // Inter Medium's "Studio" ink is 12px high at 16px. A tight line box
+        // removes invisible descender space so frame, ink and vector end together.
+        className={cn('text-[16px] font-medium leading-[12px]', lightInk ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]')}
         style={{ fontFamily: 'Inter, sans-serif' }}
         aria-hidden="true"
         data-testid="spextar-studio-suffix"
