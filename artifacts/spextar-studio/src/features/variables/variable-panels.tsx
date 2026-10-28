@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/states';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { BrandedText } from '@/components/brand/logo';
 import { resolveVariable, variableOutputs, type ProjectVariable, type VariableOutputId } from '@/domain/project-variables';
 
 export function VariableList({ items, total, query, onQuery, selectedId, onSelect, loading, error, onRetry, canEdit, onCreate }: {
@@ -41,7 +42,7 @@ export function VariableList({ items, total, query, onQuery, selectedId, onSelec
                     active && 'border-primary bg-primary text-primary-foreground ring-1 ring-primary [&_p]:text-primary-foreground')}
                   data-testid={`card-variable-${v.id}`}>
                   <p className="truncate text-[14px] font-medium">{v.name}</p>
-                  <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">{v.value || <span className="italic">No default value</span>}</p>
+                  <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground"><BrandedText tone={active ? 'light' : 'auto'}>{v.value || <span className="italic">No default value</span>}</BrandedText></p>
                 </button>
               </li>
             );
@@ -56,7 +57,7 @@ function Pair({ label, children, testId }: { label: string; children: React.Reac
   return (
     <div className="min-w-0">
       <dt className="text-[12px] text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 break-words text-[13.5px]" data-testid={testId}>{children}</dd>
+      <dd className="mt-0.5 break-words text-[13.5px]" data-testid={testId}><BrandedText>{children}</BrandedText></dd>
     </div>
   );
 }
@@ -94,7 +95,7 @@ export function VariableDetails({ variable, canEdit, pending, onEdit, onRename, 
               <li key={o.id} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4" data-testid={`row-output-${o.id}`}>
                 <span className="text-[13px] font-medium">{o.label}</span>
                 <div className="min-w-0 break-words sm:text-right">
-                  <p className="text-[13px]" data-testid={`text-output-value-${o.id}`}>{resolveVariable(variable, o.id) || <span className="italic text-muted-foreground">Empty</span>}</p>
+                  <p className="text-[13px]" data-testid={`text-output-value-${o.id}`}><BrandedText>{resolveVariable(variable, o.id) || <span className="italic text-muted-foreground">Empty</span>}</BrandedText></p>
                   {!has && <p className="text-[11.5px] text-muted-foreground">Uses default</p>}
                 </div>
               </li>
@@ -132,7 +133,7 @@ export function VariableRail({ variable, output, onOutput }: { variable: Project
         </div>
         <div className="mt-3 space-y-2 rounded-md bg-muted/50 p-3">
           <code className="block break-all font-mono text-[12px] text-muted-foreground" data-testid="text-preview-token">{`{{${variable.key}}}`}</code>
-          <p className="break-words text-[13.5px]" data-testid="text-preview-resolved">{resolveVariable(variable, output) || <span className="italic text-muted-foreground">Empty</span>}</p>
+          <p className="break-words text-[13.5px]" data-testid="text-preview-resolved"><BrandedText>{resolveVariable(variable, output) || <span className="italic text-muted-foreground">Empty</span>}</BrandedText></p>
         </div>
       </div>
     </aside>

@@ -4,6 +4,7 @@ import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { BrandedText } from '@/components/brand/logo';
 
 type ScopeKind = 'demo' | 'placeholder' | 'status' | 'read-only';
 
@@ -68,8 +69,8 @@ export function ErrorState({ error, onRetry, title = 'Something did not load' }:
     <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/5 p-6">
       <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden />
       <div>
-        <p className="font-medium">{title}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{message}</p>
+        <p className="font-medium"><BrandedText>{title}</BrandedText></p>
+        <p className="mt-1 text-sm text-muted-foreground"><BrandedText>{message}</BrandedText></p>
       </div>
       <Button variant="outline" size="sm" onClick={onRetry} data-testid="button-retry">
         <RotateCw className="mr-1.5 h-3.5 w-3.5" /> Retry
@@ -94,8 +95,8 @@ export function EmptyState({
       <span className="flex h-11 w-11 items-center justify-center rounded-md border bg-card text-primary shadow-sm">
         <Icon className="h-5 w-5" aria-hidden />
       </span>
-      <p className="mt-4 font-medium">{title}</p>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{body}</p>
+      <p className="mt-4 font-medium"><BrandedText>{title}</BrandedText></p>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground"><BrandedText>{body}</BrandedText></p>
       {children && <div className="mt-5 flex flex-wrap justify-center gap-2">{children}</div>}
     </div>
   );
@@ -115,9 +116,9 @@ export function NotFoundPanel({
   return (
     <div className="mx-auto flex max-w-lg flex-col items-start px-6 py-20 fade-up" data-testid="state-not-found">
       <span className="font-mono text-xs uppercase tracking-[0.2em] text-primary">404 · Not found</span>
-      <h1 className="mt-3 text-2xl font-semibold">{what} not found</h1>
+      <h1 className="mt-3 text-2xl font-semibold"><BrandedText>{what}</BrandedText> not found</h1>
       <p className="mt-2 text-muted-foreground">
-        {detail ?? 'It may have been removed, or the link points to a different workspace.'}
+        <BrandedText>{detail ?? 'It may have been removed, or the link points to a different workspace.'}</BrandedText>
       </p>
       <Button asChild className="mt-6" data-testid="link-not-found-back">
         <Link href={backHref}>{backLabel}</Link>

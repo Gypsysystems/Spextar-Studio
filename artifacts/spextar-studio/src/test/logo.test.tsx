@@ -22,7 +22,10 @@ describe('approved vector lockup', () => {
     expect(suffix).toHaveClass('text-[16px]', 'font-medium', 'leading-[20px]');
     expect(suffix).toHaveClass(tone === 'light' ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]');
     expect(suffix.style.fontFamily).toContain('Inter');
-    expect(container.textContent).toBe('Studio');
+    expect(screen.getByText('SPEXTAR Studio')).toHaveClass('sr-only');
+    const visibleCopy = container.cloneNode(true) as HTMLElement;
+    visibleCopy.querySelectorAll('.sr-only').forEach(node => node.remove());
+    expect(visibleCopy.textContent).toBe('Studio');
     expect(container.querySelector('svg')).toBeNull();
   });
   it('renders one reversed vector in dark mode and follows future light-theme changes', async () => {

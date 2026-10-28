@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import App from '@/App';
 import { createDemoServices } from '@/services/demo-adapter';
 import { createSupabaseServices } from '@/services/supabase-adapter';
@@ -8,6 +8,10 @@ import { supabaseDouble } from './supabase-double';
 import { STORAGE_KEYS } from '@/services/storage';
 
 const base = '/workspaces/product-docs/projects/meridian-x4-user-guide';
+// These tests exercise editor behavior, not Vite's cold transformation time.
+// Production lazy-download and loading-state coverage remains in Playwright.
+beforeAll(async () => { await import('@/pages/author'); });
+
 async function mount(path = '/workspaces', authenticated = true) {
   const services = createDemoServices({ latencyMs: 0 });
   if (authenticated) await services.auth.enterDemo();

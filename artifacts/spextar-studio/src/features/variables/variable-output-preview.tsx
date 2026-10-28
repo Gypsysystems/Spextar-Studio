@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/states';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { BrandedText } from '@/components/brand/logo';
 import { useServices } from '@/providers/services-provider';
 import { useProjectVariables } from '@/hooks/use-project-variables';
 import { resolveVariable, variableOutputs, type ProjectVariable, type VariableOutputId } from '@/domain/project-variables';
@@ -15,7 +16,7 @@ function OverrideText({ variable, output }: { variable: ProjectVariable; output:
   const ov = variable.outputValues[output];
   if (ov === undefined) return <span className="italic text-muted-foreground">Not set</span>;
   if (!ov.trim()) return <span className="italic text-muted-foreground">{ov === '' ? 'Set but empty' : 'Set but blank (whitespace only)'}</span>;
-  return <>{ov}</>;
+  return <BrandedText>{ov}</BrandedText>;
 }
 
 function PreviewCard({ variable, output }: { variable: ProjectVariable; output: VariableOutputId }) {
@@ -37,7 +38,7 @@ function PreviewCard({ variable, output }: { variable: ProjectVariable; output: 
       <dl className="mt-3 grid gap-3 text-[13px] sm:grid-cols-2">
         <div className="min-w-0">
           <dt className="text-[12px] text-muted-foreground">Default</dt>
-          <dd className="mt-0.5 break-words" data-testid={`text-preview-default-${id}`}>{variable.value || <span className="italic text-muted-foreground">Empty</span>}</dd>
+          <dd className="mt-0.5 break-words" data-testid={`text-preview-default-${id}`}><BrandedText>{variable.value || <span className="italic text-muted-foreground">Empty</span>}</BrandedText></dd>
         </div>
         <div className="min-w-0">
           <dt className="text-[12px] text-muted-foreground">Override for this output</dt>
@@ -46,7 +47,7 @@ function PreviewCard({ variable, output }: { variable: ProjectVariable; output: 
       </dl>
       <div className="mt-3 rounded-md bg-muted/50 p-3">
         <p className="text-[12px] text-muted-foreground">Resolved value</p>
-        <p className="mt-0.5 whitespace-pre-wrap break-words text-[13.5px]" data-testid={`text-preview-resolved-${id}`}>{resolved || <span className="italic text-muted-foreground">Empty</span>}</p>
+        <p className="mt-0.5 whitespace-pre-wrap break-words text-[13.5px]" data-testid={`text-preview-resolved-${id}`}><BrandedText>{resolved || <span className="italic text-muted-foreground">Empty</span>}</BrandedText></p>
       </div>
       {missingRequired && <p className="mt-2 text-[12.5px] text-destructive" data-testid={`text-preview-missing-required-${id}`}>Required variable is missing a default value.</p>}
     </li>

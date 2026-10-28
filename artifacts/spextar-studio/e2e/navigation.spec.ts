@@ -1,5 +1,5 @@
 import { test, expect, login, navigate, activate, signOut, noOverflow, projectPath, authKey, recoveryPrefix } from './fixture';
-import { expectVisibleSignatureCenter } from './brand-assertions';
+import { expectNoPlainProductName, expectVisibleSignatureCenter } from './brand-assertions';
 
 test('protected deep link, invalid credentials, restoration, offline sign-out and identity teardown', async ({ page, backend }) => {
   await page.goto(projectPath + '/author/doc-a');
@@ -70,6 +70,7 @@ test('workspace/project navigation, mobile drawer, collapse preference, theme an
     await page.reload();
     await expect(page.getByTestId(marker)).toBeVisible();
     await noOverflow(page);
+    await expectNoPlainProductName(page);
   }
   await signOut(page);
   await page.reload();
@@ -129,7 +130,9 @@ test('sign-in contrast and approved vectors in both themes, safe return URLs', a
   expect(colors.color).toBe('rgb(255, 255, 255)');
   await expect(page.getByTestId('spextar-vector-wordmark').filter({ visible: true }).last())
     .toHaveAttribute('src', theme === 'dark' ? /reversed/ : /primary/);
-  for (const image of await page.getByTestId('spextar-vector-wordmark').filter({ visible: true }).all()) {
+  await expect(page.getByRole('heading', { name: 'Sign in to SPEXTAR' })).toBeVisible();
+  await expectNoPlainProductName(page);
+  for (const image of await page.locator('[data-testid="spextar-vector-wordmark"], [data-testid="spextar-inline-wordmark"]').filter({ visible: true }).all()) {
     await expectVisibleSignatureCenter(image);
   }
   await expect(page.getByRole('button', { name: 'Microsoft', exact: true })).toHaveCount(0);

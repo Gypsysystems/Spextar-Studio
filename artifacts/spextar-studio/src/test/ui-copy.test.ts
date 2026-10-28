@@ -13,13 +13,13 @@ function files(directory: string): string[] {
   });
 }
 
-function inspect(directories: string[], collect: (node: ts.Node) => string | undefined) {
+function inspect(directories: string[], collect: (node: ts.Node) => string | undefined, forbidden = engineeringLabels) {
   const violations: string[] = [];
   for (const directory of directories) for (const file of files(join(root, directory))) {
     const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
     const visit = (node: ts.Node) => {
       const text = collect(node);
-      if (text && engineeringLabels.test(text)) violations.push(`${file.replace(root, '')}: ${text.trim()}`);
+      if (text && forbidden.test(text)) violations.push(`${file.replace(root, '')}: ${text.trim()}`);
       ts.forEachChild(node, visit);
     };
     visit(source);
@@ -28,6 +28,28 @@ function inspect(directories: string[], collect: (node: ts.Node) => string | und
 }
 
 describe('customer-facing product language', () => {
+  it('requires the shared vector treatment for literal product names in visible JSX copy', () => {
+    expect(inspect(['components', 'features', 'pages'], node => {
+      if (!ts.isJsxText(node) && !ts.isStringLiteralLike(node)) return undefined;
+      const attribute = ts.findAncestor(node, ts.isJsxAttribute);
+      if (attribute && ts.isJsxAttribute(attribute)) {
+        const name = attribute.name.getText();
+        if (/^(aria-|data-|on[A-Z])/.test(name) || ['className', 'src', 'alt', 'href', 'title', 'id', 'key', 'name', 'type', 'value', 'defaultValue', 'placeholder', 'download', 'htmlFor'].includes(name)) return undefined;
+        const opening = attribute.parent.parent;
+        if ((ts.isJsxOpeningElement(opening) || ts.isJsxSelfClosingElement(opening)) && ['EmptyState', 'ErrorState', 'NotFoundPanel'].includes(opening.tagName.getText())) return undefined;
+      }
+      if (!ts.isJsxText(node) && !attribute && !ts.findAncestor(node, ts.isJsxElement)) return undefined;
+      const branded = ts.findAncestor(node, parent => {
+        if (!ts.isJsxElement(parent)) return false;
+        if (parent.openingElement.tagName.getText() === 'BrandedText') return true;
+        return parent.openingElement.attributes.properties.some(property =>
+          ts.isJsxAttribute(property) && property.name.getText() === 'className' &&
+          property.initializer && ts.isStringLiteral(property.initializer) && property.initializer.text.split(/\s+/).includes('sr-only'));
+      });
+      return branded ? undefined : node.text;
+    }, /\bSPEXTAR\b/i)).toEqual([]);
+  });
+
   it('keeps environment and implementation labels out of application JSX', () => {
     expect(inspect(['components', 'features', 'pages'], node => {
       if (ts.isJsxText(node)) return node.text;

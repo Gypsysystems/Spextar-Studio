@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { Fragment, useSyncExternalStore, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 /** Approved local vectors with optically strengthened X centers. Never recreate the wordmark in text. */
@@ -12,6 +12,47 @@ function subscribeToTheme(onChange: () => void) {
 
 const isDarkTheme = () => document.documentElement.classList.contains('dark');
 const defaultServerTheme = () => true;
+type BrandTone = 'auto' | 'dark' | 'light';
+
+function useLightInk(tone: BrandTone) {
+  const darkTheme = useSyncExternalStore(subscribeToTheme, isDarkTheme, defaultServerTheme);
+  return tone === 'auto' ? darkTheme : tone === 'light';
+}
+
+function VectorWordmark({ lightInk, inline = false }: { lightInk: boolean; inline?: boolean }) {
+  return (
+    <img
+      src={brandAsset(lightInk ? 'spextar-wordmark-reversed' : 'spextar-wordmark-primary')}
+      width={115}
+      height={20}
+      className={cn('shrink-0', inline ? 'h-[1em] w-[5.75em]' : 'h-[20px] w-[115px]')}
+      alt=""
+      aria-hidden="true"
+      data-testid={inline ? 'spextar-inline-wordmark' : 'spextar-vector-wordmark'}
+    />
+  );
+}
+
+/** Inline product name: official vector lettering, never a text-rendered X. */
+export function BrandedName({ tone = 'auto' }: { tone?: BrandTone }) {
+  const lightInk = useLightInk(tone);
+  return (
+    <span role="img" aria-label="SPEXTAR" className="inline-flex items-baseline whitespace-nowrap align-baseline" data-testid="spextar-branded-name">
+      <span className="sr-only">SPEXTAR</span>
+      <VectorWordmark lightInk={lightInk} inline />
+    </span>
+  );
+}
+
+/** Application-owned copy only; leaves editable content, URLs and technical identifiers intact. */
+export function BrandedText({ children, tone = 'auto' }: { children: ReactNode; tone?: BrandTone }): ReactNode {
+  if (Array.isArray(children)) return children.map((child, index) => <Fragment key={index}><BrandedText tone={tone}>{child}</BrandedText></Fragment>);
+  if (typeof children !== 'string') return children;
+  // A domain/email/path/identifier is not a visual product-name occurrence.
+  return children.split(/((?<![\w@./-])SPEXTAR(?:[ \t]+Studio)?(?![\w@/-]|\.[\w]))/gi).map((part, index) =>
+    /^SPEXTAR[ \t]+Studio$/i.test(part) ? <Wordmark key={index} tone={tone} className="align-baseline" /> :
+      /^SPEXTAR$/i.test(part) ? <BrandedName key={index} tone={tone} /> : part);
+}
 
 export function LogoMark({ className, title = 'SPEXTAR' }: { className?: string; title?: string }) {
   return (
@@ -25,11 +66,10 @@ export function LogoMark({ className, title = 'SPEXTAR' }: { className?: string;
   );
 }
 
-export function Wordmark({ className, tone = 'auto' }: { className?: string; tone?: 'auto' | 'dark' | 'light' }) {
-  const darkTheme = useSyncExternalStore(subscribeToTheme, isDarkTheme, defaultServerTheme);
+export function Wordmark({ className, tone = 'auto' }: { className?: string; tone?: BrandTone }) {
   // Explicit tones describe ink, not the background. Keep the dark sidebar's
   // reversed lockup independent of a future page-theme preference.
-  const lightInk = tone === 'auto' ? darkTheme : tone === 'light';
+  const lightInk = useLightInk(tone);
   return (
     <span
       role="img"
@@ -37,15 +77,8 @@ export function Wordmark({ className, tone = 'auto' }: { className?: string; ton
       className={cn('inline-flex shrink-0 items-baseline gap-[6px] whitespace-nowrap', className)}
       data-testid="spextar-lockup"
     >
-      <img
-        src={brandAsset(lightInk ? 'spextar-wordmark-reversed' : 'spextar-wordmark-primary')}
-        width={115}
-        height={20}
-        className="h-[20px] w-[115px] shrink-0"
-        alt=""
-        aria-hidden="true"
-        data-testid="spextar-vector-wordmark"
-      />
+      <span className="sr-only">SPEXTAR Studio</span>
+      <VectorWordmark lightInk={lightInk} />
       <span
         className={cn('text-[16px] font-medium leading-[20px]', lightInk ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]')}
         style={{ fontFamily: 'Inter, sans-serif' }}

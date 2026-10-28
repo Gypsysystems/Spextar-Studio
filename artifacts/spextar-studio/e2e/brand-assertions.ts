@@ -1,4 +1,21 @@
-import { expect, type Locator } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
+
+export async function expectNoPlainProductName(page: Page) {
+  const plainNames = await page.evaluate(() => {
+    const result: string[] = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const parent = node.parentElement;
+      if (!parent || parent.closest('script, style, textarea, option, .sr-only, [aria-hidden="true"], [contenteditable]')) continue;
+      const rect = parent.getBoundingClientRect();
+      if (rect.width <= 1 && rect.height <= 1) continue; // Clipped live-announcement text is non-visual.
+      if (parent.checkVisibility() && /\bSPEXTAR\b/i.test(node.textContent ?? '')) result.push(node.textContent!);
+    }
+    return result;
+  });
+  expect(plainNames).toEqual([]);
+}
 
 /** Rasterize the actual local asset; an SVG fill string alone cannot prove visibility. */
 export async function expectVisibleSignatureCenter(image: Locator) {
@@ -8,7 +25,7 @@ export async function expectVisibleSignatureCenter(image: Locator) {
     const img = element as HTMLImageElement;
     await img.decode();
     const results: { height: number; density: number; background: string; purplePixels: number }[] = [];
-    for (const height of [16, 20, 24]) for (const density of [1, 2]) for (const background of ['#111114', '#FFFFFF']) {
+    for (const height of [12, 14, 16, 20, 24]) for (const density of [1, 2]) for (const background of ['#111114', '#FFFFFF']) {
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(115 * height / 20 * density);
       canvas.height = height * density;
@@ -26,7 +43,7 @@ export async function expectVisibleSignatureCenter(image: Locator) {
     return results;
   });
   for (const sample of samples) {
-    const minimum = sample.height === 16 ? 4 : sample.height === 20 ? 8 : 12;
+    const minimum = sample.height === 12 ? 1 : sample.height === 14 ? 2 : sample.height === 16 ? 4 : sample.height === 20 ? 8 : 12;
     expect(sample.purplePixels, JSON.stringify(sample)).toBeGreaterThanOrEqual(minimum * sample.density ** 2);
   }
 }

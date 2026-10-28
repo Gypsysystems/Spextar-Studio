@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { safeReturnPath } from '@/lib/return-path';
 import { ArrowRight, Loader2 } from 'lucide-react';
-import { Wordmark } from '@/components/brand/logo';
+import { BrandedText, Wordmark } from '@/components/brand/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,7 +86,7 @@ export default function SignInPage() {
       <section className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[380px] rounded-xl border border-border bg-card p-7 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.6)] fade-up sm:p-8">
           <Wordmark />
-          <h1 className="mt-8 text-[24px] font-semibold tracking-tight">Sign in to SPEXTAR</h1>
+          <h1 className="mt-8 text-[24px] font-semibold tracking-tight"><BrandedText>Sign in to SPEXTAR</BrandedText></h1>
 
           {mode === 'backend' && <form onSubmit={onSignIn} className="mt-6" aria-label="Email and password sign-in">
           <fieldset disabled={signingIn || sessionState.isLoading || sessionState.isSigningOut} className="space-y-4">

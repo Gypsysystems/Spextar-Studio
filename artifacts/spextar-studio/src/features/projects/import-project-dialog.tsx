@@ -17,6 +17,7 @@ import { IMPORT_EXAMPLE, MAX_IMPORT_BYTES, formatIssues, importSchema, type Impo
 import { ServiceError } from '@/services/contracts';
 import { projectBase } from '@/features/project/sections';
 import { cn } from '@/lib/utils';
+import { BrandedText } from '@/components/brand/logo';
 
 type Parsed =
   | { state: 'idle' }
@@ -122,7 +123,7 @@ export function ImportProjectDialog({
         <DialogHeader>
           <DialogTitle>Import project</DialogTitle>
           <DialogDescription>
-            Upload a SPEXTAR import file (JSON, version 1). The file is validated before anything is created.
+            <BrandedText>Upload a SPEXTAR import file (JSON, version 1). The file is validated before anything is created.</BrandedText>
           </DialogDescription>
         </DialogHeader>
 
