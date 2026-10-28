@@ -70,9 +70,10 @@ function VariablesBody({ project }: { project: ProjectSummary }) {
   return (
     <div className="mx-auto w-full max-w-[1440px] px-5 py-8 md:px-10 md:py-10">
       <PageHeader
-        eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{onVars ? (backend ? canEdit ? 'Live variables' : 'Live variables · read-only access' : 'Demo · variable edits last for this session only')
-          : tab === 'conditions' ? (backend ? canEdit ? 'Live conditional tags' : 'Live conditional tags · read-only access' : 'Demo · condition edits last for this session only')
-          : (backend ? 'Live output preview · read-only' : 'Demo output preview · read-only')}</ScopeMarker>}
+        eyebrow={backend ? (!onVars && tab !== 'conditions' || !canEdit
+          ? <ScopeMarker kind="read-only">{!onVars && tab !== 'conditions' ? 'Read-only · variable values' : 'Read-only'}</ScopeMarker>
+          : undefined)
+          : <ScopeMarker kind="demo">{!onVars && tab !== 'conditions' ? 'Demo · read-only preview' : 'Demo · session-only changes'}</ScopeMarker>}
         title="Variables & Conditions"
         description="Manage reusable values and conditional content for this project."
         actions={onVars ? <>

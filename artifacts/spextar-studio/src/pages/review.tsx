@@ -233,7 +233,8 @@ export default function ReviewPage() {
       {({ project }) => (
         <div className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-10 md:py-10" data-testid="review-page">
           <PageHeader
-            eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? 'Read-only · live drafts' : 'Read-only · demo samples'}</ScopeMarker>}
+            eyebrow={backend ? <ScopeMarker kind="read-only">Read-only · current drafts</ScopeMarker>
+              : <ScopeMarker kind="demo">Read-only · sample content</ScopeMarker>}
             title="Review"
             description="Inspect the current draft of documents marked In review. Nothing on this page can change content."
           />

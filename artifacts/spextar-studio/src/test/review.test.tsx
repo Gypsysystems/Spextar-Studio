@@ -51,7 +51,7 @@ describe('Review current-draft inspection', () => {
     await waitFor(() => expect(within(crumb).getByText('doc-a')).toBeVisible());
     expect(within(crumb).getByText('Review')).toBeVisible();
     expect(screen.getByTestId('text-draft-updated-by')).toHaveTextContent('user-a');
-    expect(screen.queryByText('Route-ready placeholder')).not.toBeInTheDocument();
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
     assertNoWrites(f);
   });
   it.each(['admin', 'author', 'reviewer', 'viewer', null])('never saves or exposes enabled write commands for role %s', async (role) => {

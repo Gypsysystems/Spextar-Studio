@@ -68,3 +68,23 @@ export function disposeDeletedDrafts(client: QueryClient, projectId: string, doc
     }
   }
 }
+
+/** Stop only removed-scope editors. Unrelated unsaved controllers must remain recoverable. */
+export function disposeLifecycleDrafts(client: QueryClient, kind: 'organization' | 'workspace' | 'project', id: string, projectIds: string[]) {
+  const registry = registries.get(client);
+  if (!registry) return;
+  if (kind === 'organization') { disposeTopicDrafts(client); return; }
+  const projects = new Set(projectIds);
+  for (const [key, entry] of registry.entries) {
+    const parts = JSON.parse(key) as (string | boolean)[];
+    const matches = entry.kind === 'topic' ? projects.has(String(parts[1]))
+      : kind === 'workspace' ? parts[2] === id : parts[3] === id;
+    if (matches) {
+      entry.unsubscribe(); entry.controller.stop(); registry.entries.delete(key);
+    }
+  }
+}
+
+export function hasUnsavedDrafts(client: QueryClient) {
+  return [...registries.get(client)?.entries.values() ?? []].some(entry => entry.controller.hasUnsaved());
+}

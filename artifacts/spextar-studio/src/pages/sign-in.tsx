@@ -1,9 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { safeReturnPath } from '@/lib/return-path';
-import { ArrowRight, Loader2, Lock } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { Wordmark } from '@/components/brand/logo';
-import { ScopeMarker } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -87,59 +86,40 @@ export default function SignInPage() {
       <section className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[380px] rounded-xl border border-border bg-card p-7 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.6)] fade-up sm:p-8">
           <Wordmark />
-          <div className="mt-6 flex items-center gap-2">
-            {mode === 'demo' ? <ScopeMarker kind="demo">Demo environment</ScopeMarker>
-              : <span className="text-xs text-muted-foreground" data-testid="backend-environment">Secure workspace · Supabase</span>}
-          </div>
-          <h1 className="mt-4 text-[24px] font-semibold tracking-tight">Sign in to SPEXTAR</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {mode === 'demo' ? 'Isolated local demo workspace' : 'Secure organization workspace'}
-          </p>
+          <h1 className="mt-8 text-[24px] font-semibold tracking-tight">Sign in to SPEXTAR</h1>
 
-          <form onSubmit={onSignIn} className="mt-6" aria-label="Email and password sign-in">
-          <fieldset disabled={mode === 'demo' || signingIn || sessionState.isLoading || sessionState.isSigningOut} className="space-y-4" aria-describedby="credential-note">
+          {mode === 'backend' && <form onSubmit={onSignIn} className="mt-6" aria-label="Email and password sign-in">
+          <fieldset disabled={signingIn || sessionState.isLoading || sessionState.isSigningOut} className="space-y-4">
             <legend className="sr-only">Email and password</legend>
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-muted-foreground">Work email</Label>
-              <Input id="email" type="email" required={mode === 'backend'} placeholder="name@company.com" autoComplete={mode === 'backend' ? 'username' : 'off'} value={email} onChange={(e) => setEmail(e.target.value)} data-testid="input-email" />
+              <Input id="email" type="email" required placeholder="name@company.com" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} data-testid="input-email" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-muted-foreground">Password</Label>
-              <Input id="password" type="password" required={mode === 'backend'} placeholder={mode === 'backend' ? 'Enter your password' : 'Demo mode — no credentials'} autoComplete={mode === 'backend' ? 'current-password' : 'off'} value={password} onChange={(e) => setPassword(e.target.value)} data-testid="input-password" />
+              <Input id="password" type="password" required placeholder="Enter your password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} data-testid="input-password" />
             </div>
           </fieldset>
-          <p id="credential-note" className="mt-3 flex items-start gap-2 rounded-md border border-border bg-[hsl(var(--surface-raised))] px-3 py-2 text-[12.5px] text-muted-foreground">
-            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            {mode === 'demo' ? 'Credential sign-in is disabled in demo mode. No passwords are accepted or stored.'
-              : 'Sign in with your existing account. Credentials are sent securely to Supabase, not stored by Studio.'}
-          </p>
           {authError && <p role="alert" className="mt-3 text-sm text-destructive" data-testid="auth-error">{authError}</p>}
-          {mode === 'backend' && <>
-            <Button type="submit" className="mt-5 h-11 w-full" disabled={signingIn || sessionState.isLoading || sessionState.isSigningOut} data-testid="button-sign-in">
-              {signingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />}
-              {signingIn ? 'Signing in…' : 'Sign in'}
-            </Button>
-            <div className="mt-4 grid grid-cols-2 gap-3" aria-describedby="provider-note">
-              <Button type="button" variant="outline" disabled data-testid="button-microsoft">Microsoft</Button>
-              <Button type="button" variant="outline" disabled data-testid="button-google">Google</Button>
-            </div>
-            <p id="provider-note" className="mt-2 text-xs text-muted-foreground">Microsoft and Google sign-in are not configured.</p>
-          </>}
-          </form>
+          <Button type="submit" className="mt-5 h-11 w-full" disabled={signingIn || sessionState.isLoading || sessionState.isSigningOut} data-testid="button-sign-in">
+            {signingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />}
+            {signingIn ? 'Signing in…' : 'Sign in'}
+          </Button>
+          </form>}
 
           {sessionState.isError && <div className="mt-4"><ErrorState error={sessionState.error} onRetry={() => void sessionState.refetch()} /></div>}
           {mode === 'demo' ? <>
-          <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="my-8 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             <span className="h-px flex-1 bg-border" /> Demo access <span className="h-px flex-1 bg-border" />
           </div>
 
           <Button className="group h-11 w-full text-[14px]" onClick={onEnter} disabled={enter.isPending || sessionState.isLoading || sessionState.isError || sessionState.isSigningOut} data-testid="button-enter-demo">
             {enter.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Enter demo as Ingrid Sæther
+            Explore demo workspace
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Opens a local demo session with sample documentation. Data stays in this browser.
+            Explore sample documentation. Changes last for this session only.
           </p>
           </> : null}
           {session && (

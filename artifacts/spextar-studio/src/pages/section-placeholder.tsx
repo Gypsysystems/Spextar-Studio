@@ -1,5 +1,5 @@
 import { Link, useParams } from 'wouter';
-import { ArrowLeft, CircleDashed } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { ProjectScope, PageHeader } from '@/features/project/project-scope';
 import { SECTION_BY_ID, type SectionId } from '@/features/project/sections';
 import { ErrorState, ListSkeleton, ScopeMarker } from '@/components/states';
@@ -34,7 +34,7 @@ function StageDocuments({ project, base, status }: { project: ProjectSummary; ba
                 </Link>
                 <span className="hidden text-xs text-muted-foreground sm:block">{relative(d.updatedAt)}</span>
                 <StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} />
-                <Button size="sm" variant="outline" disabled title="Not connected in F0/F1" data-testid={`button-stage-action-${d.id}`}>
+                <Button size="sm" variant="outline" disabled title="Not available yet" data-testid={`button-stage-action-${d.id}`}>
                   {status === 'approved' ? 'Publish' : 'Review'}
                 </Button>
               </li>
@@ -58,7 +58,7 @@ export function SectionPlaceholderPage({ section }: { section: SectionId }) {
             eyebrow={
               <>
                 <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-primary"><meta.icon className="h-4 w-4" aria-hidden /></span>
-                <ScopeMarker kind="placeholder">Route-ready placeholder</ScopeMarker>
+                <ScopeMarker kind="placeholder">Coming soon</ScopeMarker>
               </>
             }
             title={meta.label}
@@ -71,17 +71,9 @@ export function SectionPlaceholderPage({ section }: { section: SectionId }) {
           />
           <div className="mt-8 grid-paper rounded-lg border p-6 fade-up fade-up-2">
             <p className="text-sm text-muted-foreground">
-              {meta.label} for <span className="font-medium text-foreground">{project.name}</span> is not implemented in this foundation build.
-              Nothing on this page changes data{section === 'publish' ? ' and nothing is published' : ''}.
+              {meta.label} isn’t available yet for <span className="font-medium text-foreground">{project.name}</span>.
+              {section === 'publish' ? ' No content can be published from this page.' : ' Nothing on this page changes content.'}
             </p>
-            <h2 className="mt-5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Planned scope</h2>
-            <ul className="mt-3 space-y-2">
-              {meta.planned.map((p) => (
-                <li key={p} className="flex items-center gap-2.5 text-sm">
-                  <CircleDashed className="h-4 w-4 text-primary/60" aria-hidden /> {p}
-                </li>
-              ))}
-            </ul>
           </div>
           {stage && <StageDocuments project={project} base={base} status={stage} />}
         </div>

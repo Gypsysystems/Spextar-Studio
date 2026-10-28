@@ -13,6 +13,7 @@ import { supabaseVariables } from './supabase-variables';
 import { supabaseConditions } from './supabase-conditions';
 import { supabaseReusable } from './supabase-reusable';
 import { supabaseProjectSettings } from './supabase-project-settings';
+import { supabaseLifecycle } from './supabase-lifecycle';
 
 const orgRole = z.enum(['owner', 'admin', 'member']);
 const workspaceRole = z.enum(['admin', 'member', 'viewer']);
@@ -21,18 +22,19 @@ const orgRow = z.object({ id: z.string(), name: z.string(), slug: z.string() });
 const workspaceRow = z.object({
   id: z.string(), organization_id: z.string(), name: z.string(), slug: z.string(),
   description: z.string().nullable(), created_at: z.string(), updated_at: z.string(),
+  status: z.enum(['active', 'archived']),
 });
 const projectRow = z.object({
   id: z.string(), workspace_id: z.string(), name: z.string(), slug: z.string(),
   description: z.string().nullable(), status: z.enum(['active', 'in-review', 'in_review', 'archived']), created_at: z.string(),
   updated_at: z.string(), created_by: z.string().nullable(),
 });
-const workspaceColumns = 'id,organization_id,name,slug,description,created_at,updated_at';
+const workspaceColumns = 'id,organization_id,name,slug,description,status,created_at,updated_at';
 const projectColumns = 'id,workspace_id,name,slug,description,status,created_at,updated_at,created_by';
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
-  if (!result.success) throw new ServiceError('Supabase returned data that does not match the F0/F1 contract.', 'unavailable');
+  if (!result.success) throw new ServiceError('The saved information is unavailable or invalid. Reload and try again.', 'unavailable');
   return result.data;
 }
 function check(error: unknown) { if (error) throw backendError(error); }
@@ -132,6 +134,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       id: row.id, organizationId: row.organization_id, name: row.name, description: row.description ?? '',
       memberCount: members.length, projectCount: projects.length, createdAt: row.created_at, updatedAt: row.updated_at, source: 'backend',
       role: inheritedAdmin ? 'admin' : own?.role,
+      status: row.status,
     };
   }
   async function requireWorkspace(id: string) {
@@ -202,7 +205,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
           return next.session;
         } finally { ownSignIn = false; }
       },
-      async enterDemo() { throw new ServiceError('Demo access is disabled in backend mode.', 'unauthorized'); },
+      async enterDemo() { throw new ServiceError('This action is only available in the demo.', 'unauthorized'); },
       async signOut() {
         ++generation;
         signedOut = true;
@@ -244,6 +247,16 @@ export function createSupabaseServices(client: SupabaseClient): Services {
         return () => { listeners.delete(listener); data.subscription.unsubscribe(); };
       },
     },
+    lifecycle: supabaseLifecycle(client, context, async () => {
+      try {
+        await restore();
+        if (identity) saveSelection(identity.userId, identity.organizationId || null);
+        emit();
+      } catch {
+        identity = null; organizations = []; ++generation; emit();
+        throw new ServiceError('The change was saved, but your organization selection could not refresh. Sign in again before continuing.', 'unauthorized');
+      }
+    }),
     organizations: {
       async getOrganization() {
         const ctx = await context(false);
@@ -293,6 +306,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
         const memberRows = parse(z.array(z.object({ workspace_id: z.string(), user_id: z.string(), role: workspaceRole })), members.data);
         return rows.map((row): WorkspaceSummary => ({
           id: row.id, organizationId: row.organization_id, name: row.name, description: row.description ?? '',
+          status: row.status,
           createdAt: row.created_at, updatedAt: row.updated_at, source: 'backend',
           memberCount: memberRows.filter((m) => m.workspace_id === row.id).length,
           projectCount: projectRows.filter((p) => p.workspace_id === row.id).length,
@@ -333,7 +347,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
         const ctx = await context();
         await requireWorkspace(workspaceId);
         const data = parse(projectInputSchema, input);
-        if (data.product) throw new ServiceError('Product metadata is not supported by the F0/F1 database.', 'validation');
+        if (data.product) throw new ServiceError('Product details cannot be added to a project yet.', 'validation');
         const id = await createAtomic('project', { name: data.name, description: data.description, slug: slugify(data.key), workspaceId });
         const project = await getProject(workspaceId, id);
         const member = await client.from('project_members').select('role').eq('project_id', id).eq('user_id', ctx.userId).maybeSingle();
@@ -341,7 +355,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
         if (!project || member.data?.role !== 'admin') throw new ServiceError('Project and admin membership could not be confirmed. Refresh before retrying.', 'unavailable');
         return project;
       },
-      async importProject() { throw new ServiceError('Document import is not part of the connected F0/F1 database foundation.', 'unavailable'); },
+      async importProject() { throw new ServiceError('Project import is not available yet.', 'unavailable'); },
       async listActivity(projectId) { await requireProject(projectId); return []; },
     },
     projectSettings: supabaseProjectSettings(client, async (scope) => {

@@ -6,7 +6,10 @@ import { variants } from '../scripts/readiness';
 test('fresh production candidate starts in backend mode and protects direct links without network credentials', async ({ page, backend }) => {
   await page.goto(`http://127.0.0.1:4183${projectPath}/author/doc-a`);
   await expect(page.getByTestId('button-sign-in')).toBeVisible();
-  await expect(page.getByText('Secure workspace · Supabase', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in to SPEXTAR' })).toBeVisible();
+  await expect(page.getByText('Secure workspace · Supabase', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Microsoft' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Google' })).toHaveCount(0);
   expect(backend.scripts.some(url => /\/(?:author|structured-editor|review-draft-viewer)-/.test(url))).toBe(false);
   await page.reload();
   await expect(page.getByTestId('button-sign-in')).toBeVisible();

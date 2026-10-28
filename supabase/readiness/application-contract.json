@@ -24,10 +24,13 @@
       "authorization": "Own authenticated profile during session hydration; auth-user linkage and profile trigger expected, exact SQL unavailable."
     },
     "organizations": {
-      "columns": ["id", "name", "slug"],
-      "operations": ["select"],
+      "columns": ["id", "name", "slug", "updated_at"],
+      "operations": ["select", "update", "delete"],
       "scope": ["id"],
-      "authorization": "Authenticated organization membership; organization creation uses atomic RPC, never separate membership inserts."
+      "updateFields": ["name", "slug"],
+      "concurrency": ["updated_at"],
+      "authorization": "Reads require organization membership; owner/admin may edit; permanent deletion is owner-only. Fresh membership checks supplement RLS. Creation remains atomic RPC only; no organization archive state.",
+      "limitations": "Parent deletion relies on live database dependencies/triggers. No client-side child or membership cleanup. Exact applied SQL remains unavailable; isolated checks are not live RLS/cascade certification."
     },
     "organization_members": {
       "columns": ["organization_id", "user_id", "role"],
@@ -36,10 +39,13 @@
       "authorization": "Current identity membership. Bootstrap owner membership is protected by the established backend contract."
     },
     "workspaces": {
-      "columns": ["id", "organization_id", "name", "slug", "description", "created_at", "updated_at"],
-      "operations": ["select"],
-      "scope": ["organization_id"],
-      "authorization": "Selected organization and accessible workspace; atomic RPC creation only."
+      "columns": ["id", "organization_id", "name", "slug", "description", "status", "created_at", "updated_at"],
+      "operations": ["select", "update", "delete"],
+      "scope": ["organization_id", "id"],
+      "updateFields": ["name", "description", "status"],
+      "concurrency": ["updated_at", "status"],
+      "authorization": "Workspace admin or inherited organization owner/admin manages details and active/archived status. Permanent delete additionally requires archived state. RLS remains authoritative; atomic creation is unchanged.",
+      "limitations": "Lifecycle requires status active/archived, never substitutes demo data or fabricates absent status. Exact live status constraint/FK SQL is not independently certified by this repository."
     },
     "workspace_members": {
       "columns": ["workspace_id", "user_id", "role"],
@@ -49,7 +55,7 @@
     },
     "projects": {
       "columns": ["id", "workspace_id", "name", "slug", "description", "status", "created_by", "created_at", "updated_at"],
-      "operations": ["select", "update"],
+      "operations": ["select", "update", "delete"],
       "scope": ["workspace_id", "id"],
       "authorization": "Accessible workspace/project reads; metadata updates only by explicit Project Admin. Creation uses atomic RPC.",
       "insertFields": [],

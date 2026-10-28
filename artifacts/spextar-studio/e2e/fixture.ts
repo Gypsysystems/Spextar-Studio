@@ -2,6 +2,7 @@ import { test as base, expect, type Page, type Locator, type BrowserContext, typ
 import { SettingsWire } from './settings-wire';
 import { ManagementWire, managedTables } from './management-wire';
 import { localFixtureOrigins } from './local-origins';
+import { LifecycleWire } from './lifecycle-wire';
 
 export const projectPath = '/workspaces/ws-a/projects/project-a';
 export const authKey = 'spextar.backend.luyyxblmtupmugtazgbr.auth';
@@ -27,6 +28,7 @@ export class Backend {
   failDraftWrites = false;
   conflictNextSave = false;
   readonly settings = new SettingsWire();
+  readonly lifecycle = new LifecycleWire();
   readonly management = new ManagementWire();
   readonly failures = new Set<string>();
   readonly unexpected: string[] = [];
@@ -37,9 +39,9 @@ export class Backend {
   private releases: (() => void)[] = [];
   db: Record<string, Row[]> = {
     profiles: [{ id: 'user-a', display_name: 'QA Writer A', avatar_url: null }],
-    organizations: [{ id: 'org-a', name: 'Organization A', slug: 'organization-a' }],
+    organizations: [{ id: 'org-a', name: 'Organization A', slug: 'organization-a', updated_at: at }],
     organization_members: [{ organization_id: 'org-a', user_id: 'user-a', role: 'member' }],
-    workspaces: [{ id: 'ws-a', organization_id: 'org-a', name: 'Workspace A', slug: 'workspace-a', description: '', created_at: at, updated_at: at }],
+    workspaces: [{ id: 'ws-a', organization_id: 'org-a', name: 'Workspace A', slug: 'workspace-a', description: '', status: 'active', created_at: at, updated_at: at }],
     workspace_members: [{ workspace_id: 'ws-a', user_id: 'user-a', role: 'member' }],
     projects: [{ id: 'project-a', workspace_id: 'ws-a', name: 'Project A', slug: 'pa', description: '', status: 'active', created_by: 'user-a', created_at: at, updated_at: at }],
     project_members: [{ project_id: 'project-a', user_id: 'user-a', role: 'author' }],
@@ -148,6 +150,12 @@ export class Backend {
     } else {
       const patch = request.postData() ? request.postDataJSON() as Row : {};
       this.writes.push({ table, method: request.method(), query: url.search, body: patch });
+      if (this.lifecycle.enabled && (table === 'organizations' || table === 'workspaces' || (table === 'projects' && request.method() === 'DELETE'))) {
+        const result = this.lifecycle.handle({ table, method: request.method(), url, body: patch, identity: this.identity, db: this.db });
+        if (result.violation) this.unexpected.push(result.violation);
+        const single = request.headers().accept?.includes('application/vnd.pgrst.object+json');
+        return send(result.status, single && Array.isArray(result.data) ? result.data[0] ?? null : result.data);
+      }
       if (table === 'projects' || table === 'project_members') {
         const result = this.settings.handle({ table, method: request.method(), url, body: patch, identity: this.identity, db: this.db });
         if (result.violation) this.unexpected.push(result.violation);

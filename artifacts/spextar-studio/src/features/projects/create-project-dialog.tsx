@@ -108,7 +108,7 @@ export function CreateProjectDialog({
                 </FormItem>
               )}
             />
-            <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
+            <div className={mode === 'demo' ? 'grid gap-4 sm:grid-cols-[140px_1fr]' : 'grid gap-4 sm:max-w-xs'}>
               <FormField
                 control={form.control}
                 name="key"
@@ -132,19 +132,19 @@ export function CreateProjectDialog({
                   </FormItem>
                 )}
               />
-              <FormField
+              {mode === 'demo' && <FormField
                 control={form.control}
                 name="product"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Product (optional)</FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={mode === 'backend'} placeholder={mode === 'demo' ? 'Meridian X5' : 'Not part of F0/F1'} data-testid="input-project-product" />
+                      <Input {...field} placeholder="Meridian X5" data-testid="input-project-product" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              />}
             </div>
             <FormField
               control={form.control}
@@ -155,13 +155,13 @@ export function CreateProjectDialog({
                   <FormControl>
                     <Textarea {...field} rows={3} placeholder="Audience, scope and release this project covers." data-testid="input-project-description" />
                   </FormControl>
-                  <FormDescription>{mode === 'demo' ? 'The key prefixes document IDs and cannot repeat in a workspace.' : 'The key is saved as the project slug and cannot repeat in a workspace.'}</FormDescription>
+                  <FormDescription>{mode === 'demo' ? 'Choose a key that is unique within this workspace.' : 'Appears in project links as a lowercase address (MX5 becomes mx5). Keys must be unique within this workspace.'}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <DialogFooter className="items-center gap-2 sm:justify-between">
-              {mode === 'demo' ? <ScopeMarker kind="demo">Saved to this browser</ScopeMarker> : <span className="text-xs text-muted-foreground">Saved securely to your workspace</span>}
+            <DialogFooter className="items-center gap-2 sm:justify-end">
+              {mode === 'demo' && <ScopeMarker kind="demo" className="sm:mr-auto">Demo · session-only</ScopeMarker>}
               <div className="flex gap-2">
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} data-testid="button-cancel-create">
                   Cancel

@@ -59,7 +59,7 @@ function ReusableBody({ context }: { context: ReusableContext }) {
   return (
     <div className="mx-auto w-full max-w-[1440px] px-5 py-8 md:px-10 md:py-10" data-testid="reusable-page">
       <PageHeader
-        eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? 'Live reusable content' : 'Demo · edits last for this session only'}</ScopeMarker>}
+        eyebrow={backend ? canCreate ? undefined : <ScopeMarker kind="read-only" /> : <ScopeMarker kind="demo">Demo · session-only changes</ScopeMarker>}
         title="Reusable Content"
         description="Shared snippets and blocks for this project and workspace. Metadata and body drafts only."
         actions={<Button onClick={() => open('create')} disabled={!canCreate || pending} data-testid="reusable-new"><Plus className="mr-1.5 h-4 w-4" />New reusable content</Button>}

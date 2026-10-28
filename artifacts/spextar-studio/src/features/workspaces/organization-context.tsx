@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ErrorState } from '@/components/states';
+import { LifecycleControl } from './lifecycle-control';
 
 /** Organization context uses existing Workspaces surface; no new navigation routes. */
 export function OrganizationContext() {
@@ -37,7 +38,7 @@ export function OrganizationContext() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild><Button variant="outline" data-testid="button-create-organization">Create organization</Button></DialogTrigger>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create organization</DialogTitle><DialogDescription>Creates an organization and its owner membership in one database operation.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Create organization</DialogTitle><DialogDescription>Create a home for your workspaces and projects. You will be its owner.</DialogDescription></DialogHeader>
           <form onSubmit={onCreate} className="space-y-4">
             <div className="space-y-1.5"><Label htmlFor="organization-name">Name</Label><Input id="organization-name" required minLength={3} maxLength={80} value={name} onChange={(e) => { setName(e.target.value); setSlug(slugify(e.target.value)); }} /></div>
             <div className="space-y-1.5"><Label htmlFor="organization-slug">Slug</Label><Input id="organization-slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} value={slug} onChange={(e) => setSlug(e.target.value)} /></div>
@@ -46,6 +47,8 @@ export function OrganizationContext() {
           </form>
         </DialogContent>
       </Dialog>
+      {current.data && <LifecycleControl scope={{ kind: 'organization', id: current.data.id }} label="Manage organization"
+        disabled={current.data.role !== 'owner' && current.data.role !== 'admin'} />}
     </div>
     {list.isError && <ErrorState error={list.error} onRetry={() => void list.refetch()} />}
     {select.isError && <p role="alert" className="text-sm text-destructive">{select.error.message}</p>}

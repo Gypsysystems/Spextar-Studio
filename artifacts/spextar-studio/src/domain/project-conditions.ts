@@ -63,7 +63,7 @@ export function conditionInput<T>(schema: z.ZodType<T>, input: unknown): T {
 }
 export function parseCategory(raw: unknown, projectId: string): ConditionCategory {
   const result = categoryRow.safeParse(raw);
-  if (!result.success) throw new ServiceError('Supabase returned an unsupported or malformed condition category. No data was coerced.', 'unavailable',
+  if (!result.success) throw new ServiceError('This condition category has an unsupported format. Nothing was changed.', 'unavailable',
     result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`));
   const r = result.data;
   if (r.project_id !== projectId) throw new ServiceError('Condition category does not belong to this project.', 'forbidden');
@@ -72,7 +72,7 @@ export function parseCategory(raw: unknown, projectId: string): ConditionCategor
 }
 export function parseConditionValue(raw: unknown, categoryId: string): ConditionValue {
   const result = valueRow.safeParse(raw);
-  if (!result.success) throw new ServiceError('Supabase returned an unsupported or malformed condition value. No data was coerced.', 'unavailable',
+  if (!result.success) throw new ServiceError('This condition value has an unsupported format. Nothing was changed.', 'unavailable',
     result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`));
   const r = result.data;
   if (r.category_id !== categoryId) throw new ServiceError('Condition value does not belong to this category.', 'forbidden');

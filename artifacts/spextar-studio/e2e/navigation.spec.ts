@@ -108,10 +108,10 @@ test('unfinished features remain honest placeholders without executable workflow
   await login(page);
   for (const section of ['publish', 'style-guide', 'history', 'brand-outputs']) {
     await page.goto(projectPath + '/' + section);
-    await expect(page.getByText('Route-ready placeholder', { exact: true })).toBeVisible();
-    await expect(page.locator('main')).toContainText('not implemented');
+    await expect(page.getByText('Coming soon', { exact: true })).toBeVisible();
+    await expect(page.locator('main')).toContainText('available yet');
     await page.reload();
-    await expect(page.getByText('Route-ready placeholder', { exact: true })).toBeVisible();
+    await expect(page.getByText('Coming soon', { exact: true })).toBeVisible();
     await noOverflow(page);
   }
   expect(backend.writes).toHaveLength(0);
@@ -128,8 +128,20 @@ test('sign-in contrast and approved vectors in both themes, safe return URLs', a
   expect(colors.color).toBe('rgb(255, 255, 255)');
   await expect(page.getByTestId('spextar-vector-wordmark').filter({ visible: true }).last())
     .toHaveAttribute('src', theme === 'dark' ? /reversed/ : /primary/);
-  await expect(page.getByRole('button', { name: 'Microsoft', exact: true })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Google', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Microsoft', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Google', exact: true })).toHaveCount(0);
+  const suffix = page.getByTestId('spextar-studio-suffix').filter({ visible: true }).last();
+  await expect(suffix).toHaveCSS('font-size', '16px');
+  const difference = await suffix.evaluate(el => {
+    const wordmark = el.parentElement!.querySelector('[data-testid="spextar-vector-wordmark"]')!;
+    const baseline = document.createElement('span');
+    Object.assign(baseline.style, { display: 'inline-block', width: '0', height: '0', verticalAlign: 'baseline' });
+    el.append(baseline);
+    const distance = Math.abs(baseline.getBoundingClientRect().top - wordmark.getBoundingClientRect().bottom);
+    baseline.remove();
+    return distance;
+  });
+  expect(difference).toBeLessThanOrEqual(1);
   await noOverflow(page);
   await page.getByTestId('input-email').fill('user-a@example.test');
   await page.getByTestId('input-password').fill('synthetic-not-real');

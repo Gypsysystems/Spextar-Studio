@@ -72,7 +72,7 @@ export function validateVariableIdentity(input: unknown): VariableIdentity {
 }
 export function parseVariableRow(raw: unknown, projectId: string): ProjectVariable {
   const parsed = rowSchema.safeParse(raw);
-  if (!parsed.success) throw new ServiceError('Supabase returned a malformed or unsupported Text variable. No values were coerced.', 'unavailable',
+  if (!parsed.success) throw new ServiceError('This Text variable has an unsupported format. Nothing was changed.', 'unavailable',
     parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`));
   const row = parsed.data;
   if (row.project_id !== projectId) throw new ServiceError('Variable does not belong to this project.', 'forbidden');

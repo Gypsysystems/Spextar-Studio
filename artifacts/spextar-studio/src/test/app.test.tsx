@@ -62,8 +62,8 @@ describe('foundation routes and navigation', () => {
     render(<App services={services} />);
     expect(await screen.findByRole('heading', { name: 'Sign in to SPEXTAR' })).toBeVisible();
     expect(list).not.toHaveBeenCalled();
-    expect(screen.getByTestId('input-email')).toBeDisabled();
-    expect(screen.getByTestId('input-password')).toBeDisabled();
+    expect(screen.queryByTestId('input-email')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('input-password')).not.toBeInTheDocument();
     await userEvent.click(await screen.findByTestId('button-enter-demo'));
     expect(await screen.findByRole('heading', { name: 'Documents' })).toBeVisible();
     expect(window.location.pathname).toBe(base + '/documents');
@@ -141,7 +141,7 @@ describe('foundation routes and navigation', () => {
   it.each(['publish', 'style-guide', 'history', 'brand-outputs'])(
     'preserves the %s route as a labelled placeholder', async (section) => {
       await mount(`${base}/${section}`);
-      expect(await screen.findByText('Route-ready placeholder')).toBeVisible();
+      expect(await screen.findByText('Coming soon')).toBeVisible();
       expect(window.location.pathname).toBe(`${base}/${section}`);
     },
   );
@@ -160,7 +160,8 @@ describe('foundation routes and navigation', () => {
   it('keeps backend mode closed even with a stored demo session', async () => {
     await createDemoServices({ latencyMs: 0 }).auth.enterDemo();
     render(<App services={createSupabaseServices(supabaseDouble(null).client)} />);
-    expect(await screen.findByTestId('backend-environment')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Sign in to SPEXTAR' })).toBeVisible();
+    expect(screen.queryByTestId('backend-environment')).not.toBeInTheDocument();
     expect(screen.queryByTestId('button-enter-demo')).not.toBeInTheDocument();
     expect(screen.queryByText('Halvorsen Instruments')).not.toBeInTheDocument();
   });

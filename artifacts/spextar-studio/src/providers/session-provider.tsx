@@ -95,7 +95,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const enterDemo = useCallback(async () => {
     if (ending.current) throw new ServiceError('Sign-out is still in progress.', 'unauthorized');
-    if (services.mode !== 'demo') throw new ServiceError('Demo access is disabled in backend mode.', 'unauthorized');
+    if (services.mode !== 'demo') throw new ServiceError('This action is only available in the demo.', 'unauthorized');
     const id = ++request.current;
     const session = await services.auth.enterDemo();
     if (request.current !== id) throw new ServiceError('Session request was superseded.', 'unauthorized');

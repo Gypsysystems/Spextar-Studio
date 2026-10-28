@@ -38,7 +38,7 @@ import { demoProjectSettings } from './demo-project-settings';
 const LATENCY_MS = 260;
 const now = () => new Date().toISOString();
 const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-const backendOnly = async (): Promise<never> => { throw new ServiceError('Persistent content services are available in backend mode only. Demo body and metadata edits remain local previews.', 'unavailable'); };
+const backendOnly = async (): Promise<never> => { throw new ServiceError('Demo edits last for this session only and cannot be saved to an account.', 'unavailable'); };
 
 function persist(key: string, value: unknown) {
   if (!writeJSON(key, value)) {

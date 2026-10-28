@@ -16,7 +16,7 @@ export function supabaseConditions(client: SupabaseClient, requireProject: (id: 
   function check(error: unknown) {
     const code = (error as { code?: string } | null)?.code;
     if (code === '23505') throw new ServiceError('This name, key or order is already in use. Refresh and choose a unique value.', 'conflict');
-    if (code === '23514') throw new ServiceError('The database rejected these condition fields. Check the name, lowercase key, order and behavior.', 'validation');
+    if (code === '23514') throw new ServiceError('These condition details could not be saved. Check the name, lowercase key, order and behavior.', 'validation');
     if (error) throw backendError(error);
   }
   async function category(pid: string, cid: string) {
@@ -36,14 +36,14 @@ export function supabaseConditions(client: SupabaseClient, requireProject: (id: 
     for (let from = 0; ; from += 1000) {
       const r = await client.from(table).select(columns).eq(field, id).order(order).order('id').range(from, from + 999);
       check(r.error);
-      if (!Array.isArray(r.data)) throw new ServiceError('Supabase returned an invalid condition list.', 'unavailable');
+      if (!Array.isArray(r.data)) throw new ServiceError('The condition list could not be read. Refresh and try again.', 'unavailable');
       rows.push(...r.data);
       if (r.data.length < 1000) return rows;
     }
   }
   function uniqueIds(rows: { id: string; key: string }[]) {
     if (new Set(rows.map((r) => r.id)).size !== rows.length || new Set(rows.map((r) => r.key)).size !== rows.length)
-      throw new ServiceError('Supabase returned duplicate condition identities. Refresh or contact your project administrator.', 'unavailable');
+      throw new ServiceError('The condition list contains duplicate items. Refresh or contact your project administrator.', 'unavailable');
   }
   async function saveCategory(pid: string, id: string | null, patch: Record<string, unknown>) {
     const q = id === null ? client.from('condition_categories').insert({ ...patch, project_id: pid })

@@ -192,7 +192,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       {/* Editor canvas */}
       <section aria-label="Topic editor" className="min-h-0 overflow-y-auto bg-[hsl(var(--surface-raised))]">
         <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b bg-card px-6 py-2.5">
-          <ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? 'Draft body · autosave' : 'Session-only edits · not saved'}</ScopeMarker>
+          <ScopeMarker kind={backend ? 'status' : 'demo'}>{backend ? 'Draft body · autosave' : 'Session-only edits · not saved'}</ScopeMarker>
           {dirty && (
             <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => {
               bodies.current.clear();

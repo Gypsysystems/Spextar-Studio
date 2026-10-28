@@ -41,8 +41,7 @@ export function DeleteContentDialog({ doc, topic, onTopicDeleted }: {
       <DialogHeader><DialogTitle>{label}?</DialogTitle>
         <DialogDescription>This permanently deletes “{title}”. It cannot be undone. Unsaved local edits for this item will be discarded. Other documents and topics are not selected for deletion.</DialogDescription>
       </DialogHeader>
-      {hasDependencies ? <p role="alert" className="text-sm">{blocked}</p> : <p className="text-sm text-muted-foreground">The app refreshes access, scope, metadata and dependencies before a scoped delete request. Supabase permissions and constraints remain authoritative; no client-side dependent cleanup is attempted.</p>}
-      {!hasDependencies && <p className="text-xs text-muted-foreground">Coordinate with other authors before deleting: any dependencies added concurrently are subject to the database’s existing deletion rules.</p>}
+      {hasDependencies ? <p role="alert" className="text-sm">{blocked}</p> : <p className="text-sm text-muted-foreground">If this item is used elsewhere, deletion may be blocked. Check with your team before continuing.</p>}
       <form className="space-y-4" onSubmit={(event) => {
         event.preventDefault();
         if (confirmation !== title || hasDependencies || mutation.isPending) return;

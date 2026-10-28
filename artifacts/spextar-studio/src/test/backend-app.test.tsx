@@ -34,8 +34,8 @@ describe('connected backend application flows', () => {
     await waitFor(() => expect(screen.getByTestId('button-sign-in')).toBeEnabled());
     expect(screen.getByTestId('input-email')).toBeEnabled();
     expect(screen.getByTestId('input-password')).toBeEnabled();
-    expect(screen.getByTestId('button-microsoft')).toBeDisabled();
-    expect(screen.getByTestId('button-google')).toBeDisabled();
+    expect(screen.queryByTestId('button-microsoft')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('button-google')).not.toBeInTheDocument();
     expect(screen.queryByTestId('button-enter-demo')).not.toBeInTheDocument();
     expect(fake.raw.from).not.toHaveBeenCalled();
   });
@@ -74,6 +74,8 @@ describe('connected backend application flows', () => {
     await userEvent.click(await screen.findByRole('link', { name: /Project A/ }));
     expect(await screen.findByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('Workspace A');
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('Project A');
+    expect(await screen.findByRole('heading', { name: 'Project A' })).toBeVisible();
+    expect(screen.queryByTestId('scope-demo')).not.toBeInTheDocument();
     view.unmount();
     render(<App services={createSupabaseServices(fake.client)} />);
     expect(await screen.findByTestId('nav-documents')).toBeVisible();
@@ -88,7 +90,7 @@ describe('connected backend application flows', () => {
     await userEvent.click(screen.getByTestId('button-submit-workspace'));
     await userEvent.click(await screen.findByTestId('button-create-project'));
     await userEvent.type(await screen.findByTestId('input-project-name'), 'Persistence Project');
-    expect(screen.getByTestId('input-project-product')).toBeDisabled();
+    expect(screen.queryByTestId('input-project-product')).not.toBeInTheDocument();
     await userEvent.click(screen.getByTestId('button-submit-create-project'));
     expect(await screen.findByTestId('nav-documents')).toBeVisible();
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('Persistence Project');

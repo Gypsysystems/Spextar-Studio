@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react';
-import { AlertTriangle, Compass, FlaskConical, Plug, RotateCw, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Compass, FlaskConical, Info, LockKeyhole, RotateCw, type LucideIcon } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-type ScopeKind = 'demo' | 'placeholder' | 'not-connected' | 'connected';
+type ScopeKind = 'demo' | 'placeholder' | 'status' | 'read-only';
 
 const scopeStyles: Record<ScopeKind, { icon: LucideIcon; label: string; cls: string }> = {
   demo: { icon: FlaskConical, label: 'Demo', cls: 'border-primary/25 bg-accent text-accent-foreground' },
-  placeholder: { icon: Compass, label: 'Placeholder', cls: 'border-amber-500/30 bg-amber-50 text-amber-800 dark:bg-amber-400/10 dark:text-amber-300' },
-  'not-connected': { icon: Plug, label: 'Not connected', cls: 'border-border bg-muted text-muted-foreground' },
-  connected: { icon: Plug, label: 'Connected', cls: 'border-primary/25 bg-accent text-accent-foreground' },
+  placeholder: { icon: Compass, label: 'Coming soon', cls: 'border-amber-500/30 bg-amber-50 text-amber-800 dark:bg-amber-400/10 dark:text-amber-300' },
+  status: { icon: Info, label: 'Status', cls: 'border-border bg-muted text-muted-foreground' },
+  'read-only': { icon: LockKeyhole, label: 'Read-only', cls: 'border-border bg-muted text-muted-foreground' },
 };
 
 /** Explicit scope marker separating demo/placeholder behaviour from real functionality. */

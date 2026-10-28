@@ -13,7 +13,7 @@ export function supabaseVariables(client: SupabaseClient, requireProject: (id: s
   }
   function check(error: unknown) {
     if ((error as { code?: string } | null)?.code === '23505') throw new ServiceError('This variable key is already in use in this project. Choose another key.', 'conflict');
-    if ((error as { code?: string } | null)?.code === '23514') throw new ServiceError('The database rejected these variable values. Check the fields and key rule.', 'validation', [VARIABLE_KEY_RULE]);
+    if ((error as { code?: string } | null)?.code === '23514') throw new ServiceError('These variable values could not be saved. Check the fields and key rule.', 'validation', [VARIABLE_KEY_RULE]);
     if (error) throw backendError(error);
   }
   async function rows(projectId: string) {
@@ -23,7 +23,7 @@ export function supabaseVariables(client: SupabaseClient, requireProject: (id: s
       const page = await client.from('project_variables').select(columns).eq('project_id', projectId)
         .order('name').order('id').range(from, from + 999);
       check(page.error);
-      if (!Array.isArray(page.data)) throw new ServiceError('Supabase returned an invalid variable list.', 'unavailable');
+      if (!Array.isArray(page.data)) throw new ServiceError('The variable list could not be read. Refresh and try again.', 'unavailable');
       result.push(...page.data);
       if (page.data.length < 1000) return result;
     }

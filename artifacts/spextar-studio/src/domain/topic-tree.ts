@@ -5,7 +5,7 @@ import { ServiceError } from '@/services/contracts';
 export function orderTopics(topics: Topic[]): Topic[] {
   const ids = new Set(topics.map((t) => t.id));
   const byId = new Map(topics.map((t) => [t.id, t]));
-  if (ids.size !== topics.length) throw new ServiceError('Duplicate topic identifiers returned by Supabase.', 'unavailable');
+  if (ids.size !== topics.length) throw new ServiceError('The topic outline contains duplicate topics. Refresh and try again.', 'unavailable');
   const children = new Map<string | null, Topic[]>();
   for (const topic of topics) {
     const parent = topic.parentTopicId ?? null;
@@ -19,7 +19,7 @@ export function orderTopics(topics: Topic[]): Topic[] {
     const seen = new Set<string>();
     let current: Topic | undefined = topic;
     while (current && !complete.has(current.id)) {
-      if (seen.has(current.id)) throw new ServiceError('Invalid cyclic topic hierarchy returned by Supabase.', 'unavailable');
+      if (seen.has(current.id)) throw new ServiceError('The topic outline contains an invalid loop. Refresh and try again.', 'unavailable');
       seen.add(current.id);
       current = current.parentTopicId ? byId.get(current.parentTopicId) : undefined;
     }

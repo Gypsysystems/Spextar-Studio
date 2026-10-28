@@ -11,9 +11,12 @@ import { useOrganization, usePageTitle, useSession, useWorkspaces } from '@/hook
 import { relative } from '@/lib/format';
 import { OrganizationContext } from '@/features/workspaces/organization-context';
 import { useServices } from '@/providers/services-provider';
+import type { WorkspaceSummary } from '@/domain/types';
 
 const CreateWorkspaceDialog = createLazyDialog('Create workspace', () =>
   import('@/features/workspaces/create-workspace-dialog').then(module => ({ default: module.CreateWorkspaceDialog })));
+const ManageWorkspaceDialog = createLazyDialog('Manage workspace', () =>
+  import('@/features/workspaces/lifecycle-dialog').then(module => ({ default: module.LifecycleDialog })));
 
 export default function WorkspacesPage() {
   const { mode } = useServices();
@@ -23,11 +26,15 @@ export default function WorkspacesPage() {
   const { data: session } = useSession();
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [status, setStatus] = useState<'active' | 'archived' | 'all'>('active');
+  // Own the dialog above the filtered list so archive/restore cannot unmount it mid-save.
+  const [managedWorkspace, setManagedWorkspace] = useState<WorkspaceSummary | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (data ?? []).filter((w) => !q || w.name.toLowerCase().includes(q) || w.description.toLowerCase().includes(q));
-  }, [data, query]);
+    return (data ?? []).filter((w) => (mode !== 'backend' || status === 'all' || (w.status ?? 'active') === status)
+      && (!q || w.name.toLowerCase().includes(q) || w.description.toLowerCase().includes(q)));
+  }, [data, query, status, mode]);
 
   return (
     <AppShell crumbs={[{ label: 'Workspaces' }]}>
@@ -40,13 +47,7 @@ export default function WorkspacesPage() {
           }
           title={session ? `Good to see you, ${session.name.split(' ')[0]}` : 'Workspaces'}
           description="Each workspace holds the projects for one documentation team. Pick up where the team left off."
-          meta={
-            <>
-              <span>{org?.plan}</span>
-              <span>{org?.region}</span>
-              {!session && <ScopeMarker kind="demo">Preview without sign-in</ScopeMarker>}
-            </>
-          }
+          meta={!session ? <ScopeMarker kind="demo">Preview without sign-in</ScopeMarker> : undefined}
           actions={
             <Button onClick={() => setCreateOpen(true)} disabled={mode === 'backend' && !org} data-testid="button-create-workspace">
               <Plus className="mr-1.5 h-4 w-4" /> Create workspace
@@ -55,7 +56,7 @@ export default function WorkspacesPage() {
         />
 
         <div className="mt-6"><OrganizationContext /></div>
-        <div className="mt-6 flex items-center gap-3 fade-up fade-up-2">
+        <div className="mt-6 flex flex-wrap items-center gap-3 fade-up fade-up-2">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input
@@ -69,6 +70,13 @@ export default function WorkspacesPage() {
             />
           </div>
           {data && <span className="text-sm text-muted-foreground">{filtered.length} of {data.length}</span>}
+          {mode === 'backend' && <div className="space-y-1">
+            <label htmlFor="workspace-status" className="sr-only">Workspace status</label>
+            <select id="workspace-status" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}
+              className="h-9 max-w-full rounded-md border border-input bg-card px-2 text-sm">
+              <option value="active">Active workspaces</option><option value="archived">Archived workspaces</option><option value="all">All workspaces</option>
+            </select>
+          </div>}
         </div>
 
         <div className="mt-5 fade-up fade-up-3">
@@ -77,9 +85,9 @@ export default function WorkspacesPage() {
           ) : isError ? (
             <ErrorState error={error} onRetry={() => refetch()} />
           ) : filtered.length === 0 ? (
-            <EmptyState icon={Building2} title={query ? 'No workspaces match' : 'No workspaces yet'} body={query ? `Nothing matches "${query}".` : 'Create a workspace to start organizing projects.'}>
-              {query ? (
-                <Button variant="outline" onClick={() => setQuery('')} data-testid="button-clear-search">Clear search</Button>
+            <EmptyState icon={Building2} title={query ? 'No workspaces match' : status === 'archived' ? 'No archived workspaces' : 'No workspaces yet'} body={query ? `Nothing matches "${query}".` : status === 'archived' ? 'Archived workspaces appear here. You can restore them whenever needed.' : 'Create a workspace to start organizing projects.'}>
+              {query || status === 'archived' ? (
+                <Button variant="outline" onClick={() => { setQuery(''); setStatus('active'); }} data-testid="button-clear-search">{query ? 'Clear search' : 'Reset filters'}</Button>
               ) : (
                 <Button disabled={mode === 'backend' && !org} onClick={() => setCreateOpen(true)}>Create workspace</Button>
               )}
@@ -99,6 +107,7 @@ export default function WorkspacesPage() {
                     <span className="min-w-0">
                       <span className="flex items-center gap-2">
                         <span className="truncate text-[15.5px] font-medium">{w.name}</span>
+                        {w.status === 'archived' && <span className="text-xs text-muted-foreground">Archived</span>}
                         {w.source !== 'fixture' && w.source !== 'backend' && <ScopeMarker kind="demo">Local</ScopeMarker>}
                       </span>
                       <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{w.description || 'No description'}</span>
@@ -117,6 +126,10 @@ export default function WorkspacesPage() {
                       <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
                     </span>
                   </Link>
+                  {mode === 'backend' && <div className="flex justify-end px-5 pb-4">
+                    <Button variant="outline" size="sm" disabled={w.role !== 'admin'}
+                      onClick={() => setManagedWorkspace(w)} data-testid="button-manage-workspace">Manage workspace</Button>
+                  </div>}
                 </li>
               ))}
             </ul>
@@ -124,6 +137,8 @@ export default function WorkspacesPage() {
         </div>
       </div>
       <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
+      {managedWorkspace && <ManageWorkspaceDialog key={managedWorkspace.id} scope={{ kind: 'workspace', id: managedWorkspace.id, parentId: managedWorkspace.organizationId }}
+        open onOpenChange={(value) => { if (!value) setManagedWorkspace(null); }} />}
     </AppShell>
   );
 }

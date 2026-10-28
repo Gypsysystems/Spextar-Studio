@@ -42,7 +42,7 @@ for (const entity of ['organization', 'workspace', 'project'] as const) {
     if (entity === 'project') await page.getByTestId('input-project-key').fill('RP');
     const submit = page.getByRole('dialog').getByRole('button', { name: `Create ${entity}`, exact: true });
     await activate(page, submit);
-    await expect(page.getByText(/The required atomic database operation is unavailable/)).toBeVisible();
+    await expect(page.getByText(/This action is temporarily unavailable. Nothing was added/)).toBeVisible();
     expect(backend.writes.map(write => write.table)).toEqual([`rpc/create_${entity}`]);
     await noOverflow(page);
     backend.management.atomicFailure = false;

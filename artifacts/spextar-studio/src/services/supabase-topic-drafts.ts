@@ -14,7 +14,7 @@ const rowSchema = z.object({
 function mapRow(value: unknown, scope: DraftScope): TopicDraft {
   const result = rowSchema.safeParse(value);
   if (!result.success || result.data.topic_id !== scope.topicId) {
-    throw new ServiceError('Supabase returned an invalid or incorrectly scoped topic draft.', 'unavailable');
+    throw new ServiceError('The saved draft could not be loaded for this topic. Reload and try again.', 'unavailable');
   }
   const row = result.data;
   return { topicId: row.topic_id, content: checkedContent(row.content), revision: row.revision, updatedAt: row.updated_at, updatedBy: row.updated_by };
@@ -64,7 +64,7 @@ export function supabaseTopicDrafts(
       if (result.error) throw backendError(result.error);
       if (!result.data) throw new ServiceError('The saved revision changed or access was revoked. Nothing was overwritten. Reload the saved draft to continue.', 'conflict');
       const saved = mapRow(result.data, scope);
-      if (saved.revision <= (expectedRevision ?? 0)) throw new ServiceError('The database did not confirm an advanced revision. Reload before retrying.', 'unavailable');
+      if (saved.revision <= (expectedRevision ?? 0)) throw new ServiceError('A new saved revision could not be confirmed. Reload before retrying.', 'unavailable');
       return saved;
     },
   };

@@ -184,7 +184,7 @@ function SessionBlock({ collapsed }: { collapsed: boolean }) {
       <Link
         href="/sign-in"
         data-testid="link-enter-demo"
-        aria-label={collapsed ? 'Preview mode. Go to sign in' : undefined}
+        aria-label={collapsed ? 'Sign in' : undefined}
         className={cn(
           'flex items-center gap-2.5 rounded-md text-[12.5px] text-white/70 hover:bg-white/[0.05] hover:text-white',
           collapsed ? 'mx-auto h-10 w-10 justify-center' : 'h-10 px-3',
@@ -193,7 +193,7 @@ function SessionBlock({ collapsed }: { collapsed: boolean }) {
         <LogIn className="h-4 w-4" aria-hidden />
         {!collapsed && (
           <span>
-            Preview mode <span className="text-white/40">· Sign in</span>
+            Sign in
           </span>
         )}
       </Link>
@@ -201,7 +201,7 @@ function SessionBlock({ collapsed }: { collapsed: boolean }) {
     return collapsed ? (
       <Tooltip delayDuration={150}>
         <TooltipTrigger asChild>{link}</TooltipTrigger>
-        <TooltipContent side="right">Preview mode · Sign in</TooltipContent>
+        <TooltipContent side="right">Sign in</TooltipContent>
       </Tooltip>
     ) : (
       link
@@ -234,9 +234,7 @@ function SessionBlock({ collapsed }: { collapsed: boolean }) {
           <span className="block text-sm">{session.name}</span>
           <span className="block text-xs font-normal text-muted-foreground">{session.email}</span>
         </DropdownMenuLabel>
-        <div className="px-2 pb-2">
-          {session.mode === 'demo' ? <ScopeMarker kind="demo">Demo session</ScopeMarker> : <span className="text-xs text-muted-foreground">Supabase session</span>}
-        </div>
+        {session.mode === 'demo' && <div className="px-2 pb-2"><ScopeMarker kind="demo">Demo session</ScopeMarker></div>}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           data-testid="button-sign-out"
@@ -440,8 +438,7 @@ export function AppShell({
           <Breadcrumbs crumbs={crumbs} />
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {actions}
-            {activeSession?.mode === 'demo' ? <ScopeMarker kind="demo" className="hidden lg:inline-flex">Demo data</ScopeMarker>
-              : <span className="hidden text-xs text-muted-foreground lg:inline-flex">Backend mode</span>}
+            {activeSession?.mode === 'demo' && <ScopeMarker kind="demo" className="hidden lg:inline-flex">Demo data</ScopeMarker>}
           </div>
         </header>
         <main id="main" className="flex-1 min-w-0" tabIndex={-1}>

@@ -1,5 +1,13 @@
 # SPEXTAR Studio
 
+## Organization, workspace and project lifecycle
+
+Backend management now includes organization details and owner-only deletion,
+workspace details/archive/restore/deletion, and project deletion alongside the
+existing Project Settings metadata/archive/restore controls. See
+[LIFECYCLE.md](./LIFECYCLE.md) for permissions, archive-first safeguards,
+confirmation, cache/navigation handling and live-backend verification limits.
+
 For manual testing preparation, configuration requirements, smoke checks and remaining external readiness gaps, see [STAGING.md](STAGING.md). No staging deployment or live-data mutation is performed by the local readiness checks.
 
 Run `pnpm test:browser` from the repository root for the permanent controlled production-browser suite. See [e2e/README.md](e2e/README.md) for Chromium setup, coverage, network isolation and ignored reports.

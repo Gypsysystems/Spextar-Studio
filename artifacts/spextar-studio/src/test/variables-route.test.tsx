@@ -66,7 +66,7 @@ describe('Variables & Conditions project route', () => {
     expect(screen.getByText(/Reference tracking will become/)).toBeVisible();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.getByText(/Deletion is unavailable/i)).toBeVisible();
-    expect(screen.getByText(/variable edits last for this session only/)).toBeVisible();
+    expect(screen.getByText('Demo · session-only changes')).toBeVisible();
     await user.type(screen.getByLabelText('Search'), 'ProductVersion');
     expect(screen.getByTestId('text-variable-name')).toHaveTextContent('ProductVersion');
     expect(screen.getByTestId('text-variable-token')).toHaveTextContent('{{productversion}}');

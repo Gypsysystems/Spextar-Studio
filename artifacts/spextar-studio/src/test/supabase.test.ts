@@ -297,7 +297,7 @@ describe('strict backend/demo separation and configuration', () => {
   it('requires the configured approved project and a publishable client key', () => {
     vi.stubEnv('VITE_SUPABASE_URL', '');
     vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', '');
-    expect(() => createRuntimeServices('backend')).toThrow('approved Supabase project');
+    expect(() => createRuntimeServices('backend')).toThrow('Studio is not configured for sign-in');
     expect(createRuntimeServices('demo').mode).toBe('demo');
     vi.stubEnv('VITE_SUPABASE_URL', SUPABASE_PROJECT_URL);
     vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test-only');
@@ -308,7 +308,7 @@ describe('strict backend/demo separation and configuration', () => {
   it.each(['sb_publishable_', 'sb_publishable_with space', 'sb_publishable_bad\n', 'sb_publishable_bad\r\n'])('rejects malformed public configuration without creating services: %j', key => {
     vi.stubEnv('VITE_SUPABASE_URL', SUPABASE_PROJECT_URL);
     vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', key);
-    expect(() => createRuntimeServices('backend')).toThrow('approved Supabase project');
+    expect(() => createRuntimeServices('backend')).toThrow('Studio is not configured for sign-in');
   });
   it.each([
     [{ code: '23505' }, 'conflict'],

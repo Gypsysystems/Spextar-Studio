@@ -149,7 +149,7 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
     const result = await client.rpc(name, args);
     checked(result.error);
     if (!returnsId) return '';
-    if (typeof result.data !== 'string' || !result.data) throw new ServiceError('The database operation returned no UUID. Refresh before retrying.', 'unavailable');
+    if (typeof result.data !== 'string' || !result.data) throw new ServiceError('The new item could not be confirmed. Refresh before retrying.', 'unavailable');
     return result.data;
   }
   const docArgs = (id: string) => ({ document: id, document_id: id });

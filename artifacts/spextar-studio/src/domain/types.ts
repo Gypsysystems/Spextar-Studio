@@ -32,6 +32,7 @@ export interface Workspace {
   updatedAt: ISODate;
   source: RecordSource;
   role?: WorkspaceRole;
+  status?: 'active' | 'archived';
 }
 
 export interface WorkspaceSummary extends Workspace {

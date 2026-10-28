@@ -14,6 +14,7 @@ import {
 import { useServices } from '@/providers/services-provider';
 import { useProjectSettings, useProjectSettingsMutation, type SettingsAction } from '@/hooks/use-project-settings';
 import { projectMetadataSchema, settingsRole, type ProjectSettings, type SettingsRole, type SettingsScope } from '@/domain/project-settings';
+import { LifecycleControl } from '@/features/workspaces/lifecycle-control';
 
 const ROLES = settingsRole.options;
 const roleLabel: Record<SettingsRole, string> = { admin: 'Admin', author: 'Author', reviewer: 'Reviewer', viewer: 'Viewer' };
@@ -248,6 +249,13 @@ function SettingsBody({ scope }: { scope: SettingsScope }) {
         {!backend && <p className="mt-3 text-[12px] text-muted-foreground">Project deletion is not available.</p>}
       </Section>
 
+      {backend && <Section title="Permanent deletion" description="Permanently removes this project and may remove all related content. This cannot be undone." testId="settings-delete">
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">Archive the project first. Save or discard detail edits before continuing.</p>
+          <LifecycleControl scope={{ kind: 'project', id: scope.projectId, parentId: scope.workspaceId }}
+            label="Delete project permanently" deleteOnly disabled={!admin || !archived || pending || dirty} />
+        </div>
+      </Section>}
       <AlertDialog open={!!confirm} onOpenChange={(o) => { if (!o) setConfirm(null); }}>
         <AlertDialogContent className="z-[51] max-w-[min(32rem,calc(100vw-2rem))]" data-testid="dialog-confirm">
           <AlertDialogHeader>
@@ -274,7 +282,7 @@ export default function ProjectSettingsPage() {
       {({ workspace, project }) => (
         <div className="mx-auto w-full max-w-[1100px] px-5 py-8 md:px-10 md:py-10" data-testid="project-settings-page">
           <PageHeader
-            eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? 'Live project settings' : 'Demo · changes kept in local memory for this session only'}</ScopeMarker>}
+            eyebrow={backend ? undefined : <ScopeMarker kind="demo">Demo · session-only changes</ScopeMarker>}
             title="Project settings"
             description="Project details, membership and status."
           />

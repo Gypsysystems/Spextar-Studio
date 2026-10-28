@@ -12,11 +12,11 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
   const listeners = new Set<(event: AuthChangeEvent, session: Session | null) => void>();
   const db: Record<string, Row[]> = {
     profiles: [{ id: testUser.id, display_name: 'Technical Writer', avatar_url: null }],
-    organizations: [{ id: 'org-a', name: 'Organization A', slug: 'organization-a' }, { id: 'org-b', name: 'Organization B', slug: 'organization-b' }],
+    organizations: [{ id: 'org-a', name: 'Organization A', slug: 'organization-a', updated_at: at }, { id: 'org-b', name: 'Organization B', slug: 'organization-b', updated_at: at }],
     organization_members: [{ organization_id: 'org-a', user_id: testUser.id, role: 'owner' }],
     workspaces: [
-      { id: 'ws-a', organization_id: 'org-a', name: 'Workspace A', slug: 'workspace-a', description: '', created_at: at, updated_at: at },
-      { id: 'ws-b', organization_id: 'org-b', name: 'Workspace B', slug: 'workspace-b', description: '', created_at: at, updated_at: at },
+      { id: 'ws-a', organization_id: 'org-a', name: 'Workspace A', slug: 'workspace-a', description: '', status: 'active', created_at: at, updated_at: at },
+      { id: 'ws-b', organization_id: 'org-b', name: 'Workspace B', slug: 'workspace-b', description: '', status: 'active', created_at: at, updated_at: at },
     ],
     workspace_members: [{ workspace_id: 'ws-a', user_id: testUser.id, role: 'admin' }],
     projects: [

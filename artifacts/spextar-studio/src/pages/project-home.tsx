@@ -27,7 +27,7 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
           <>
             <KeyChip value={project.key} />
             <StatusPill status={project.status} label={PROJECT_STATUS_LABEL[project.status]} />
-            {project.source !== 'fixture' && <ScopeMarker kind="demo">{project.source === 'imported' ? 'Imported locally' : 'Created locally'}</ScopeMarker>}
+            {project.source !== 'fixture' && project.source !== 'backend' && <ScopeMarker kind="demo">{project.source === 'imported' ? 'Imported locally' : 'Created locally'}</ScopeMarker>}
           </>
         }
         title={project.name}
@@ -54,7 +54,7 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
       <section aria-labelledby="lifecycle" className="mt-8 fade-up fade-up-2">
         <div className="flex items-center justify-between">
           <h2 id="lifecycle" className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Document lifecycle</h2>
-          <ScopeMarker kind="not-connected">Workflow actions not connected</ScopeMarker>
+          <ScopeMarker kind="placeholder">Actions unavailable</ScopeMarker>
         </div>
         <ol className="mt-3 grid overflow-hidden rounded-lg border bg-card sm:grid-cols-3">
           {stages.map((s, i) => (

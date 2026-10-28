@@ -58,7 +58,11 @@ archive/restore confirmation, existing-workspace-member add/change/remove, expec
 conflicts and administration revoked after form load. Read-only cases include
 organization ownership and workspace administration without explicit Project Admin.
 The opt-in Settings wire guard rejects unscoped writes, server-owned payload fields,
-unrelated tables and project deletion. These are contract regressions, not live RLS
+unrelated tables and project deletion. The separate opt-in Lifecycle wire covers
+owner-only organization deletion, workspace administration and explicit Project
+Admin deletion, with archive-first and exact-name confirmations. Its simulated
+cascades are not a certificate of the live foreign-key behavior.
+These are contract regressions, not live RLS
 or atomic last-admin certification.
 
 ### Why this readiness slice precedes another product placeholder

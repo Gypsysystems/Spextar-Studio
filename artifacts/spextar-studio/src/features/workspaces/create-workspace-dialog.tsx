@@ -77,8 +77,8 @@ export function CreateWorkspaceDialog({ open, onOpenChange }: { open: boolean; o
                 </FormItem>
               )}
             />
-            <DialogFooter className="items-center gap-2 sm:justify-between">
-              {mode === 'demo' ? <ScopeMarker kind="demo">Saved to this browser</ScopeMarker> : <span className="text-xs text-muted-foreground">Saved securely to your organization</span>}
+            <DialogFooter className="items-center gap-2 sm:justify-end">
+              {mode === 'demo' && <ScopeMarker kind="demo" className="sm:mr-auto">Demo · session-only</ScopeMarker>}
               <div className="flex gap-2">
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} data-testid="button-cancel-workspace">
                   Cancel

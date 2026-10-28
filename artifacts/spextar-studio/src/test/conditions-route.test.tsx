@@ -231,7 +231,7 @@ describe('Conditional tags route and management', () => {
     window.history.replaceState(null, '', '/workspaces/product-docs/projects/meridian-x4-user-guide/variables-conditions');
     const user = userEvent.setup(); render(<App services={services} />); await openTab(user);
     expect(await screen.findByTestId('text-category-name')).toHaveTextContent('Audience');
-    expect(screen.getByText(/condition edits last for this session only/)).toBeVisible();
+    expect(screen.getByText('Demo · session-only changes')).toBeVisible();
     await user.click(screen.getByTestId('button-rename-category'));
     await replace(user, 'input-rename-category-name', 'DemoAudience');
     await user.click(screen.getByTestId('button-rename-category-save')); await closed();

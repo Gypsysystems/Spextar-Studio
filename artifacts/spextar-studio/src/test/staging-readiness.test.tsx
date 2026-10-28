@@ -86,7 +86,7 @@ describe('Staging authentication/navigation regression', () => {
     await screen.findByText('No projects in this workspace');
     expect(screen.getAllByRole('button', { name: 'Import project' })).toHaveLength(2);
     screen.getAllByRole('button', { name: 'Import project' }).forEach((button) => expect(button).toBeDisabled());
-    expect(screen.getByText(/Import is not available in backend mode yet/)).toBeVisible();
+    expect(screen.getByText(/Import is not available yet/)).toBeVisible();
     expect(fake.raw.rpc).not.toHaveBeenCalled();
   });
   it('keeps demo empty-state import available and clearly isolated', async () => {

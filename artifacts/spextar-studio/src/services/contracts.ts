@@ -20,6 +20,7 @@ import type { ProjectVariableService } from '@/domain/project-variables';
 import type { ProjectConditionService } from '@/domain/project-conditions';
 import type { ReusableService } from '@/domain/reusable-content';
 import type { ProjectSettingsService } from '@/domain/project-settings';
+import type { LifecycleService } from '@/domain/lifecycle';
 
 /**
  * Service seams. The UI only talks to these interfaces through `useServices()`.
@@ -95,6 +96,8 @@ export interface Services {
   conditions: ProjectConditionService;
   reusable: ReusableService;
   projectSettings: ProjectSettingsService;
+  /** Deliberately absent from demo adapters: these destructive operations are backend-only. */
+  lifecycle?: LifecycleService;
 }
 
 export interface TopicDraftService {

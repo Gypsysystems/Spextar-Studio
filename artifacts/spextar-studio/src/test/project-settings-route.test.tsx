@@ -29,7 +29,8 @@ describe('Project Settings route', () => {
     expect(screen.getByTestId('project-settings-page')).toBeVisible();
     expect(screen.getByTestId('input-slug')).toHaveValue('pa');
     expect(screen.getByTestId(`text-member-id-${testUser.id}`)).toHaveTextContent(testUser.id);
-    expect(screen.queryByRole('button', { name: /invite|delete project/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /invite/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete project permanently' })).toBeDisabled();
     expect(screen.getByTestId(`button-remove-${testUser.id}`)).toBeDisabled();
     expect(screen.getByTestId('button-save-details')).toBeDisabled();
   });

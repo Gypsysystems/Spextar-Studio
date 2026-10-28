@@ -34,7 +34,7 @@ export function Wordmark({ className, tone = 'auto' }: { className?: string; ton
     <span
       role="img"
       aria-label="SPEXTAR Studio"
-      className={cn('inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap', className)}
+      className={cn('inline-flex shrink-0 items-baseline gap-[6px] whitespace-nowrap', className)}
       data-testid="spextar-lockup"
     >
       <img
@@ -47,9 +47,10 @@ export function Wordmark({ className, tone = 'auto' }: { className?: string; ton
         data-testid="spextar-vector-wordmark"
       />
       <span
-        className={cn('text-[12px] font-medium leading-[16px]', lightInk ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]')}
+        className={cn('text-[16px] font-medium leading-[20px]', lightInk ? 'text-[#A7A7B0]' : 'text-[#5F5F6B]')}
         style={{ fontFamily: 'Inter, sans-serif' }}
         aria-hidden="true"
+        data-testid="spextar-studio-suffix"
       >
         Studio
       </span>

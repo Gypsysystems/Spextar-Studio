@@ -35,7 +35,7 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-10">
       <PageHeader
-        eyebrow={<ScopeMarker kind={backend ? 'connected' : 'demo'}>{backend ? canEdit ? 'Live documents · metadata persistence' : 'Live documents · read-only access' : 'Isolated demo · local preview'}</ScopeMarker>}
+        eyebrow={backend ? canEdit ? undefined : <ScopeMarker kind="read-only" /> : <ScopeMarker kind="demo">Demo · session-only</ScopeMarker>}
         title="Documents"
         description="Documents assemble topics into a deliverable. Expand a document to see its topic outline."
         actions={

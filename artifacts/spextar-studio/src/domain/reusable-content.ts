@@ -61,7 +61,7 @@ const row = z.object({
 });
 export function parseReusable(value: unknown, context: ReusableContext, permissions: { workspace: boolean; project: boolean }): ReusableItem {
   const r = row.safeParse(value);
-  if (!r.success) throw new ServiceError('Supabase returned malformed or unsupported reusable content. Nothing was coerced.', 'unavailable');
+  if (!r.success) throw new ServiceError('This reusable content has an unsupported format. Nothing was changed.', 'unavailable');
   const v = r.data;
   if (v.workspace_id !== context.workspaceId || (v.scope === 'workspace' ? v.project_id !== null : v.project_id !== context.projectId))
     throw new ServiceError('Reusable content is outside this workspace/project scope.', 'forbidden');
@@ -80,6 +80,6 @@ export function reusableContent(value: unknown): TopicContent {
 }
 export function parseReusableDraft(raw: unknown, id: string): ReusableDraft {
   const r = z.object({ reusable_content_id: z.literal(id), content: z.unknown(), revision: z.number().int().positive().safe(), updated_at: at, updated_by: z.string().nullable() }).safeParse(raw);
-  if (!r.success) throw new ServiceError('Supabase returned an invalid or incorrectly scoped reusable draft.', 'unavailable');
+  if (!r.success) throw new ServiceError('The saved draft could not be loaded for this reusable item. Nothing was changed.', 'unavailable');
   return { reusableContentId: id, content: reusableContent(r.data.content), revision: r.data.revision, updatedAt: r.data.updated_at, updatedBy: r.data.updated_by };
 }

@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { usePageTitle, useProjects, useWorkspace } from '@/hooks/use-studio-data';
 import { PROJECT_STATUS_LABEL, relative } from '@/lib/format';
 import { useServices } from '@/providers/services-provider';
+import { LifecycleControl } from '@/features/workspaces/lifecycle-control';
 import type { ProjectStatus } from '@/domain/types';
 import { cn } from '@/lib/utils';
 
@@ -82,9 +83,11 @@ export default function ProjectsPage() {
           eyebrow={<span className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary">Projects</span>}
           title={workspace.name}
           description={workspace.description}
+          meta={workspace.status === 'archived' ? <span>Archived workspace · content is kept until permanently deleted</span> : undefined}
           actions={
             <>
-              <Button variant="outline" disabled={mode === 'backend'} title={mode === 'backend' ? 'Document import is not part of the F0/F1 database foundation' : undefined} onClick={() => setImportOpen(true)} data-testid="button-import-project">
+              <LifecycleControl scope={{ kind: 'workspace', id: workspace.id, parentId: workspace.organizationId }} label="Manage workspace" disabled={workspace.role !== 'admin'} />
+              <Button variant="outline" disabled={mode === 'backend'} title={mode === 'backend' ? 'Project import is not available yet' : undefined} onClick={() => setImportOpen(true)} data-testid="button-import-project">
                 <FileUp className="mr-1.5 h-4 w-4" /> Import project
               </Button>
               <Button onClick={() => setCreateOpen(true)} data-testid="button-create-project">
@@ -101,14 +104,14 @@ export default function ProjectsPage() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, key or product"
+              placeholder="Search by name or key"
               aria-label="Search projects"
               className="pl-9"
               data-testid="input-search-projects"
             />
           </div>
           <div role="radiogroup" aria-label="Filter by status" className="flex gap-1 overflow-x-auto rounded-md border bg-card p-1">
-            {FILTERS.map((f) => (
+            {FILTERS.filter(f => mode === 'demo' || f.id !== 'in-review').map((f) => (
               <button
                 key={f.id}
                 type="button"
@@ -136,8 +139,8 @@ export default function ProjectsPage() {
           ) : projects.isError ? (
             <ErrorState error={projects.error} onRetry={() => projects.refetch()} />
           ) : (projects.data?.length ?? 0) === 0 ? (
-            <EmptyState icon={FolderPlus} title="No projects in this workspace" body={mode === 'backend' ? 'Create a project from scratch. Import is not available in backend mode yet.' : 'Create a project from scratch or import an existing structure from a SPEXTAR JSON file.'}>
-              <Button variant="outline" disabled={mode === 'backend'} title={mode === 'backend' ? 'Project import is not available in backend mode yet' : undefined} onClick={() => setImportOpen(true)}>Import project</Button>
+            <EmptyState icon={FolderPlus} title="No projects in this workspace" body={mode === 'backend' ? 'Create a project from scratch. Import is not available yet.' : 'Create a project from scratch or import an existing structure from a SPEXTAR JSON file.'}>
+              <Button variant="outline" disabled={mode === 'backend'} title={mode === 'backend' ? 'Project import is not available yet' : undefined} onClick={() => setImportOpen(true)}>Import project</Button>
               <Button onClick={() => setCreateOpen(true)}>Create project</Button>
             </EmptyState>
           ) : list.length === 0 ? (

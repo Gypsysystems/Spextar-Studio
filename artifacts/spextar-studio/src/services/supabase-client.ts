@@ -7,7 +7,7 @@ export function createStudioSupabaseClient() {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (url !== SUPABASE_PROJECT_URL || !/^sb_publishable_[A-Za-z0-9_-]+(?![\s\S])/.test(key ?? '')) {
-    throw new ServiceError('The approved Supabase project URL and publishable key must be configured.', 'unavailable');
+    throw new ServiceError('Studio is not configured for sign-in. Contact your administrator.', 'unavailable');
   }
   return createClient(url, key, {
     auth: {

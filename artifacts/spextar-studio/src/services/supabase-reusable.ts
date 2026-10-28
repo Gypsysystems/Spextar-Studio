@@ -40,7 +40,7 @@ export function supabaseReusable(client: SupabaseClient, authorize: (c: Reusable
     if (!r.data) throw new ServiceError('This item changed or access was revoked. Refresh the library before editing again.', 'conflict');
     const saved = parseReusable(r.data, c, original.actor);
     if (saved.id !== id || saved.scope !== original.value.scope || saved.slug !== original.value.slug)
-      throw new ServiceError('The database returned a changed reusable identity. Reload before continuing.', 'unavailable');
+      throw new ServiceError('The saved draft no longer matches this reusable item. Reload before continuing.', 'unavailable');
     return saved;
   }
   const service: ReusableService = {
@@ -54,10 +54,10 @@ export function supabaseReusable(client: SupabaseClient, authorize: (c: Reusable
           if (scope === 'project') q = q.eq('project_id', c.projectId);
           const r = await q.order('id').range(offset, offset + 999);
           check(r.error);
-          if (!Array.isArray(r.data)) throw new ServiceError('Supabase returned an invalid reusable library.', 'unavailable');
+          if (!Array.isArray(r.data)) throw new ServiceError('The reusable library could not be read. Refresh and try again.', 'unavailable');
           for (const row of r.data) {
             const mapped = parseReusable(row, c, a);
-            if (mapped.scope !== scope) throw new ServiceError('Supabase returned a foreign reusable scope.', 'forbidden');
+            if (mapped.scope !== scope) throw new ServiceError('This reusable item is not available in the selected library.', 'forbidden');
             records.push(mapped);
           }
           if (r.data.length < 1000) break;
@@ -73,7 +73,7 @@ export function supabaseReusable(client: SupabaseClient, authorize: (c: Reusable
       const r = await client.from('reusable_contents').insert({ ...reusableWrite(data), slug: data.slug, scope: data.scope,
         workspace_id: c.workspaceId, project_id: data.scope === 'project' ? c.projectId : null }).select(reusableColumns).maybeSingle();
       check(r.error);
-      if (!r.data) throw new ServiceError('The database did not confirm the new reusable item.', 'unavailable');
+      if (!r.data) throw new ServiceError('The new reusable item could not be confirmed. Refresh before retrying.', 'unavailable');
       const saved = parseReusable(r.data, c, a);
       if (saved.scope !== data.scope) throw new ServiceError('Unexpected created reusable scope.', 'unavailable');
       return saved;
@@ -103,7 +103,7 @@ export function supabaseReusable(client: SupabaseClient, authorize: (c: Reusable
       check(r.error);
       if (!r.data) throw new ServiceError('The draft revision changed or access was revoked. Nothing was overwritten. Reload to continue.', 'conflict');
       const saved = parseReusableDraft(r.data, id);
-      if (saved.revision !== (expected ?? 0) + 1) throw new ServiceError('The database did not confirm the expected revision advance. Reload before retrying.', 'unavailable');
+      if (saved.revision !== (expected ?? 0) + 1) throw new ServiceError('The expected saved revision could not be confirmed. Reload before retrying.', 'unavailable');
       return saved;
     },
     async duplicate(c, id, input) {
