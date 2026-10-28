@@ -241,3 +241,32 @@ and safe navigation, runtime-error propagation, loader reuse and sign-out during
 pending downloads for all four boundaries. These test the existing explicit
 reload policy rather than automatically reloading or resetting a cached rejected
 React.lazy import.
+
+## Rejected management download recovery
+
+`management-download-recovery.spec.ts` adds three scenarios for each of the four
+management routes in every desktop/mobile dark/light Chromium profile (48 checks):
+
+- A real HTTP 404 for the emitted route chunk renders the scoped error state
+  without automatic reload. Restoring the asset alone does not reset the cached
+  rejected import; the visible Reload action reloads the same protected route
+  and preserves the signed-in read-only/inherited role and theme.
+- An aborted network download allows Back to Documents and other management
+  routes to keep working. Returning to the failed route remains an explicit
+  error rather than an invisible retry/reload loop.
+- A first identity makes actual unsaved Author recovery through the existing
+  controller, then encounters a failed management download. Offline sign-out
+  clears its Auth storage, recovery and project caches. A different read-only
+  synthetic identity signs in in the same browser document, sees refreshed
+  project facts and no old documents/recovery, and can sign out and refresh
+  safely. Only deliberately denied synthetic draft writes occur in this case.
+
+`management-chunk-fixture.ts` resolves one exact loopback JavaScript URL from the
+production manifest at test runtime. It never intercepts wildcard assets, remote
+URLs, Auth requests or shared dependencies. Its malformed-path/manifest scope
+checks have independent unit coverage. Every other request still passes through
+the existing fail-closed backend fixture; uncaught product errors remain failures
+with no new error suppression. No live Supabase writes, accounts, keys or RLS
+certification are involved. Traces and screenshots remain in ignored generated
+output; no application runtime, dependency, budget or build configuration changes
+are needed for these tests.
