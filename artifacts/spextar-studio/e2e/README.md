@@ -168,3 +168,33 @@ Management responses are opt-in in `management-wire.ts`. Pure unit tests protect
 their fail-closed scope, expected-revision/timestamp, role and audit-field guards.
 They model existing browser service responses, not live database/RLS certification.
 No deployment or GitHub Actions is configured by this suite.
+
+### Adversarial management and saved-state coverage
+
+`management-safety.spec.ts` complements the successful Admin/Author management
+flows and read-only role matrix with the following scenarios in every configured
+desktop/mobile dark/light profile:
+
+- Variables, Conditions and Reusable Content retain an open form's edits when
+  authoring permission is revoked, leave controlled server rows unchanged, and
+  become read-only after refresh.
+- Malformed values, unsupported condition behavior and invalid reusable settings
+  fail closed; explicit retry loads the repaired backend response, never demo
+  fixtures. Management pages do not eagerly download the editor.
+- Failed/denied Topic moves preserve the entire hierarchy. Successful retry
+  invalidates the outline, preserves sibling order, and survives route reload.
+- Reusable metadata rejects a stale timestamp without overwriting a newer row;
+  explicit reload allows a fresh expected-timestamp save.
+- Output Preview reports missing required defaults even when an output has a
+  usable override, handles empty-override fallback, search and error/retry, and
+  sends no writes even for an administrator.
+- Topic recovery copies remain isolated across Topic navigation. Restoring one
+  copy clears only its matching recovery data; discarding another does not
+  modify its saved server body.
+- Review sees saved Author changes and refreshed draft revisions while remaining
+  strictly read-only, including for administrators.
+
+Project administration's successful writes, role matrix, expected-role/timestamp
+conflicts, revoked permissions and error/retry paths remain covered by
+`project-settings.spec.ts`. These tests certify controlled UI/service behavior,
+not live RLS, atomic database invariants, or submitted Review snapshots.
