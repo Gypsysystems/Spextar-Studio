@@ -33,7 +33,8 @@ describe('F3 Author integration', () => {
       { type: 'paragraph', attrs: { id: 'original' }, content: [{ type: 'text', text: 'Original' }] },
     ] };
     const { db, scope, calls, user } = setup('author', undefined, initial);
-    await screen.findByText('Saved · revision 1');
+    // Await the cold lazy editor/draft mount, not the default one-second DOM budget.
+    await screen.findByText('Saved · revision 1', {}, { timeout: 5000 });
     const body = screen.getByTestId('input-topic-body');
     const paste = (html: string, text: string) => {
       const event = new Event('paste', { bubbles: true, cancelable: true });

@@ -7,7 +7,6 @@ import { SessionProvider } from '@/providers/session-provider';
 import { SessionGate } from '@/components/session-gate';
 import { createRuntimeServices } from '@/services/runtime';
 import type { Services } from '@/services/contracts';
-import ReusableContentPage from '@/pages/reusable-content';
 import NotFound from '@/pages/not-found';
 import SignInPage from '@/pages/sign-in';
 import WorkspacesPage from '@/pages/workspaces';
@@ -15,9 +14,7 @@ import ProjectsPage from '@/pages/projects';
 import ProjectHomePage from '@/pages/project-home';
 import DocumentsPage from '@/pages/documents';
 import { AuthorRoute } from '@/routes/author-route';
-import ProjectSettingsPage from '@/pages/project-settings';
-import ReviewPage from '@/pages/review';
-import VariablesConditionsPage from '@/pages/variables-conditions';
+import { ReusableContentRoute, VariablesConditionsRoute, ProjectSettingsRoute, ReviewRoute } from '@/routes/management-routes';
 import { SectionPlaceholderPage } from '@/pages/section-placeholder';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 
@@ -44,13 +41,13 @@ function ApplicationRoutes() {
         <Route path={`${P}/documents`} component={DocumentsPage} />
         <Route path={`${P}/author`} component={AuthorRoute} />
         <Route path={`${P}/author/:documentId`} component={AuthorRoute} />
-        <Route path={`${P}/review`} component={ReviewPage} />
+        <Route path={`${P}/review`} component={ReviewRoute} />
         <Route path={`${P}/publish`}>{() => <SectionPlaceholderPage section="publish" />}</Route>
-        <Route path={`${P}/reusable-content`} component={ReusableContentPage} />
-        <Route path={`${P}/variables-conditions`} component={VariablesConditionsPage} />
+        <Route path={`${P}/reusable-content`} component={ReusableContentRoute} />
+        <Route path={`${P}/variables-conditions`} component={VariablesConditionsRoute} />
         <Route path={`${P}/style-guide`}>{() => <SectionPlaceholderPage section="style-guide" />}</Route>
         <Route path={`${P}/history`}>{() => <SectionPlaceholderPage section="history" />}</Route>
-        <Route path={`${P}/settings`} component={ProjectSettingsPage} />
+        <Route path={`${P}/settings`} component={ProjectSettingsRoute} />
         <Route path={`${P}/brand-outputs`}>{() => <SectionPlaceholderPage section="brand-outputs" />}</Route>
         <Route component={NotFound} />
       </Switch>

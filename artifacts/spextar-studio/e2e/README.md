@@ -219,3 +219,25 @@ their dependent views:
 The existing management, settings, Author persistence, Review, navigation,
 accessibility and editor specs remain part of the same full regression gate.
 All backend traffic is intercepted; these checks do not certify live RLS.
+
+## Management route download boundaries
+
+`lazy-management.spec.ts` adds five scenarios per Chromium profile (20 checks):
+
+- Sidebar navigation downloads only the requested management route, not the
+  remaining Reusable Content, Variables & Conditions, Project settings or Review
+  shell chunks. Merely displaying navigation must not preload them.
+- Each protected direct link initially displays sign-in without downloading
+  management pages. After sign-in, a controlled delayed download exposes the
+  accessible, breadcrumb-aware project loading shell.
+- The loaded route and a fresh page reload retain the selected dark/light theme
+  and fit desktop/mobile viewports. Empty reusable data and missing Review drafts
+  do not download the structured editor, Review viewer or Author route.
+- No mutation is needed by these download tests. Existing role, mutation,
+  autosave/recovery and read-only suites continue to exercise the actual pages.
+
+The unit suite independently checks delayed/rejected downloads, explicit reload
+and safe navigation, runtime-error propagation, loader reuse and sign-out during
+pending downloads for all four boundaries. These test the existing explicit
+reload policy rather than automatically reloading or resetting a cached rejected
+React.lazy import.

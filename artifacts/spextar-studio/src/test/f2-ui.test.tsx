@@ -36,7 +36,8 @@ function setup(role = 'author', route = 'author/doc-a') {
 describe('F2 UI persistence and read-only states', () => {
   it('autosaves F2 metadata separately from F3 body through refetch', async () => {
     const { user, db, calls, raw } = setup();
-    const body = await screen.findByTestId('input-topic-body');
+    // Cold Author/editor imports are no longer incidentally warmed by management imports.
+    const body = await screen.findByTestId('input-topic-body', {}, { timeout: 5000 });
     expect(screen.getByText('Draft body · autosave')).toBeVisible();
     await waitFor(() => expect(body).toHaveAttribute('contenteditable', 'true'));
     await user.type(body, 'UNSAVED BODY');
