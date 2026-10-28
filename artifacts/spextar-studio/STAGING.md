@@ -196,3 +196,11 @@ The server does not implement ranges, conditional caching, CORS or cookies.
 These are local test-server boundaries, not new requirements for a deployment
 platform. Eventual host deep-link, response-header and cache verification
 remains a separate staging acceptance gate.
+
+Documents/Topics browser acceptance uses independent creation/autosave,
+hierarchy/metadata, duplication/conservative topic deletion, and confirmed
+empty-document deletion scenarios. Later scenarios seed only their initial
+saved state in the isolated backend fixture; every operation under test still
+runs through the actual UI. This avoids consuming a single test's unchanged
+45-second deadline across unrelated journeys. Native touch, error/retry,
+saved-content, confirmation, scope and overflow assertions remain enabled.

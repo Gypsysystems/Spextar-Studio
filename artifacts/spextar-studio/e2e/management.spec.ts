@@ -1,5 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
-import { test, expect, login, activate, noOverflow, projectPath, bodyContent, type Role } from './fixture';
+import { test, expect, login, activate, noOverflow, projectPath, bodyContent, type Role, type Backend } from './fixture';
 
 test.beforeEach(({ backend }) => { backend.management.enabled = true; });
 async function submit(page: Page) { await activate(page, page.getByRole('dialog').locator('button[type=submit]')); }
@@ -16,6 +16,16 @@ const reusable = (scope = 'project') => ({
   description: null, settings: {}, status: 'draft', update_policy: 'notify', tags: [],
   created_by: 'user-a', created_at: '2026-10-27T10:00:00Z', updated_at: '2026-10-27T10:00:00Z',
 });
+
+function seedSavedDocument(backend: Backend) {
+  const doc = backend.db.documents[0];
+  doc.title = 'Acceptance document';
+  const first = backend.db.topics[0];
+  first.title = 'First topic';
+  backend.db.topics = [first];
+  backend.db.topic_drafts[0].content = bodyContent('Saved topic body');
+  return { doc, first };
+}
 
 for (const role of ['admin', 'author'] as const) {
   test(`${role}: Variables create, edit, rename and duplicate survive failures and refresh`, async ({ page, backend }) => {
@@ -158,7 +168,7 @@ for (const role of ['admin', 'author'] as const) {
     await noOverflow(page);
   });
 
-  test(`${role}: Documents and Topics create, autosave, hierarchy, duplication and confirmed safe deletion`, async ({ page, backend }) => {
+  test(`${role}: Documents and Topics create with metadata/body autosave and creation retry`, async ({ page, backend }) => {
     backend.setRole(role);
     await login(page, projectPath + '/documents');
     await activate(page, page.getByRole('button', { name: /^Create document$/i }).first());
@@ -185,6 +195,14 @@ for (const role of ['admin', 'author'] as const) {
     await expect(body).toHaveAttribute('contenteditable', 'true');
     await body.fill('Saved topic body');
     await expect(page.getByTestId('body-save-status')).toContainText('Saved · revision 1');
+    await noOverflow(page);
+    expect(backend.management.probes).toEqual(expect.arrayContaining(['create_document', 'create_topic']));
+  });
+
+  test(`${role}: Documents and Topics hierarchy, reorder, Promote/Demote and metadata autosave`, async ({ page, backend }) => {
+    backend.setRole(role);
+    const { doc, first } = seedSavedDocument(backend);
+    await login(page, projectPath + '/author/' + doc.id);
     await activate(page, page.getByRole('button', { name: /^Create topic$/i }).first());
     await page.getByLabel(/create topic title/i).fill('Second topic');
     // Author deliberately defaults new Topics beneath the selected Topic.
@@ -202,6 +220,20 @@ for (const role of ['admin', 'author'] as const) {
     await expect.poll(() => second.sort_order).toBe(0);
     await page.getByTestId('input-topic-title').fill('Renamed second');
     await expect.poll(() => second.title).toBe('Renamed second');
+    await noOverflow(page);
+    expect(backend.management.probes).toEqual(expect.arrayContaining(['create_topic', 'demote_topic', 'promote_topic', 'move_topic']));
+  });
+
+  // Keep independent user journeys within the unchanged per-test deadline.
+  // Seed only the starting saved state; every duplication/deletion still uses the UI.
+  test(`${role}: Documents and Topics duplication, copied drafts and confirmed safe deletion`, async ({ page, backend }) => {
+    backend.setRole(role);
+    const { doc, first } = seedSavedDocument(backend);
+    first.sort_order = 1;
+    const second = { ...first, id: 'topic-b', title: 'Renamed second', slug: 'renamed-second', sort_order: 0 };
+    backend.db.topics = [first, second];
+    await login(page, projectPath + '/author/' + doc.id);
+    await activate(page, page.getByTestId(`outline-topic-${second.id}`));
     await activate(page, page.getByRole('button', { name: /^Duplicate topic subtree$/i }));
     await page.getByLabel(/duplicate topic subtree title/i).fill('Topic copy');
     await save(page);
@@ -233,8 +265,13 @@ for (const role of ['admin', 'author'] as const) {
     expect(backend.db.topics.some(t => t.id === leaf.id)).toBe(false);
     expect(backend.db.topics.some(t => t.id === first.id)).toBe(true);
     await noOverflow(page);
+    expect(backend.management.probes).toEqual(expect.arrayContaining(['duplicate_topic_subtree', 'duplicate_document']));
+  });
+
+  test(`${role}: Documents and Topics empty-document deletion requires explicit confirmation`, async ({ page, backend }) => {
+    backend.setRole(role);
     // Empty-document deletion only: no test grants a cascading-delete contract.
-    await page.goto(projectPath + '/documents');
+    await login(page, projectPath + '/documents');
     await activate(page, page.getByRole('button', { name: /^Create document$/i }).first());
     await page.getByLabel(/create document title/i).fill('Disposable empty document');
     await save(page);
@@ -245,7 +282,7 @@ for (const role of ['admin', 'author'] as const) {
     await activate(page, dialog.getByRole('button', { name: /^Delete document$/i }));
     await expect(page).toHaveURL(projectPath + '/documents');
     expect(backend.db.documents.some(d => d.title === 'Disposable empty document')).toBe(false);
-    expect(backend.management.probes).toEqual(expect.arrayContaining(['create_document', 'create_topic', 'demote_topic', 'promote_topic', 'move_topic', 'duplicate_topic_subtree', 'duplicate_document']));
+    expect(backend.management.probes).toEqual(expect.arrayContaining(['create_document']));
   });
 }
 
