@@ -7,6 +7,7 @@ export async function invalidateContent(client: QueryClient, projectId: string) 
     client.invalidateQueries({ queryKey: ['document', projectId] }),
     client.invalidateQueries({ queryKey: ['project'] }),
     client.invalidateQueries({ queryKey: ['projects'] }),
+    client.invalidateQueries({ queryKey: ['reference-usage'] }),
   ]);
 }
 

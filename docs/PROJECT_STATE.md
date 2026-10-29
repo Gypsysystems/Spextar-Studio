@@ -60,15 +60,15 @@ These are source-confirmed capabilities, not a declaration of final UAT completi
 | --- | --- |
 | Organizations/workspaces/projects | Creation, navigation and lifecycle controls; scoped administration and archive/delete safeguards |
 | Documents/topics | Metadata, hierarchy/order, creation, duplication, move/promote/demote and conservative deletion |
-| Author | Structured editing, semantic callouts, advanced tables, find/replace, validated paste, heading navigation, revision saves/conflicts/recovery |
-| Variables | Text definitions, output overrides, validation and read-only output preview; insertion/references are incomplete |
-| Conditional tags | Category/value definitions; authored-content assignment/evaluation is incomplete |
-| Reusable content | Scoped metadata and structured drafts, duplication and future update-policy intent; linked insertion/propagation/where-used are incomplete |
+| Author | Structured editing, semantic callouts, advanced tables, find/replace, validated paste, heading navigation, revision saves/conflicts/recovery; owned variable/condition/linked-reusable references in Topic JSON |
+| Variables | Text definitions, output overrides, validation, output preview, and stable-ID insertion into Topics; saved-topic read-through usage |
+| Conditional tags | Category/value definitions and stable-ID assignment to supported blocks; no publishing-target content evaluation |
+| Reusable content | Scoped metadata and structured drafts, duplication and stored update-policy intent; linked Topic references preview the current draft without copying text or claiming propagation |
 | Project settings | Explicit Project Admin metadata/member administration, archive/restore and lifecycle controls |
 | Review | Read-only inspection of saved in-review content; submit/assign/comments/approve/request-changes workflow is incomplete |
 | Publish/releases/history | Publish/History routes are placeholders; no completed release execution or immutable historical-version subsystem |
 | Style Guide / Brand & Outputs | Placeholder routes; existing output-preview IDs do not define publishing/templates |
-| Reference Safety & Cross-References | Pending |
+| Reference Safety & Cross-References | Versioned semantic Topic references and read-through where-used for accessible saved drafts; definition deletion remains unavailable. Document-to-document cross-references and atomic global index/delete safety remain pending |
 | Identity/version presentation | Human-readable owners/creators/saved-by/member labels; “Unknown user” fallback and consistent “Unversioned” presentation; no invented release |
 
 ### Authoritative lifecycle versus implemented workflow

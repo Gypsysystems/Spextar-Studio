@@ -52,9 +52,9 @@ describe('Conditional tags route and management', () => {
     expect(screen.getByTestId('text-category-unassigned')).toHaveTextContent('Included (default)');
     expect(screen.getByTestId('text-category-match')).toHaveTextContent('Match any (OR)');
     expect(screen.getByText(/Different categories always combine with AND/)).toBeVisible();
-    expect(screen.getByTestId('text-condition-assignment')).toHaveTextContent('Usage counts and references are not tracked yet');
+    expect(screen.getByTestId('text-condition-assignment')).toHaveTextContent('Apply or remove values on supported blocks in Author');
     expect(screen.getByText(/Output filtering is not applied yet/)).toBeVisible();
-    expect(screen.getByText(/Deletion is unavailable until reference tracking/)).toBeVisible();
+    expect(screen.getByText(/Permanent deletion remains unavailable/)).toBeVisible();
     expect(screen.queryByRole('button', { name: /delete|publish|apply tags/i })).not.toBeInTheDocument();
     expect(screen.queryByTestId('button-validate-project')).not.toBeInTheDocument();
     expect(screen.queryByTestId('button-new-variable')).not.toBeInTheDocument();
@@ -200,7 +200,7 @@ describe('Conditional tags route and management', () => {
     expect(await screen.findByText('Condition categories did not load')).toBeVisible();
     expect(screen.queryByTestId('text-category-name')).not.toBeInTheDocument();
     fake.db.condition_categories[0].key = 'audience';
-    await user.click(screen.getByRole('button', { name: /retry/i }));
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByTestId('text-category-name')).toHaveTextContent('Audience');
   });
   it('shows a value-load error independently, disables Add, and supports retry without fake values', async () => {

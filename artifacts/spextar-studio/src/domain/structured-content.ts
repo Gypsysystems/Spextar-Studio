@@ -1,17 +1,19 @@
 import { checkedContent, type JSONValue, type TopicContent } from './topic-content';
 import { ServiceError } from '@/services/contracts';
+import { conditionedNodes, referenceAttributesIssue } from './semantic-references';
 
 /** SPEXTAR's version-1 authoring vocabulary. No editor-library types cross this boundary. */
 export const identifiedNodes = ['paragraph', 'heading', 'blockquote', 'bulletList', 'orderedList', 'listItem',
-  'codeBlock', 'horizontalRule', 'table', 'tableRow', 'tableCell', 'tableHeader', 'callout'] as const;
+  'codeBlock', 'horizontalRule', 'table', 'tableRow', 'tableCell', 'tableHeader', 'callout', 'variableReference', 'reusableReference'] as const;
 export const calloutKinds = ['note', 'tip', 'caution', 'warning'] as const;
 export type CalloutKind = typeof calloutKinds[number];
 export const calloutLabels: Record<CalloutKind, string> = { note: 'Note', tip: 'Tip', caution: 'Caution', warning: 'Warning' };
 type ObjectJSON = { [key: string]: JSONValue };
 const object = (value: JSONValue | undefined): value is ObjectJSON => !!value && typeof value === 'object' && !Array.isArray(value);
-const inline = new Set(['text', 'hardBreak']);
-const blocks = new Set<string>(identifiedNodes.filter((name) => !['listItem', 'tableRow', 'tableCell', 'tableHeader'].includes(name)));
+const inline = new Set(['text', 'hardBreak', 'variableReference']);
+const blocks = new Set<string>(identifiedNodes.filter((name) => !['listItem', 'tableRow', 'tableCell', 'tableHeader', 'variableReference'].includes(name)));
 const attributes: Record<string, string[]> = {
+  variableReference: ['targetId', 'refVersion'], reusableReference: ['targetId', 'refVersion'],
   callout: ['kind'],
   heading: ['level'], orderedList: ['start', 'type'], codeBlock: ['language'],
   tableCell: ['colspan', 'rowspan', 'colwidth', 'align'], tableHeader: ['colspan', 'rowspan', 'colwidth', 'align'],
@@ -35,7 +37,7 @@ export function structuredContentIssue(input: TopicContent): string | null {
     const type = value.type;
     if (!inline.has(type) && !identifiedNodes.includes(type as typeof identifiedNodes[number])) return `Unsupported node: ${type}.`;
     if (Object.keys(value).some((key) => !['type', ...(type === 'text' ? ['text', 'marks'] :
-      type === 'hardBreak' ? ['marks'] : ['attrs', 'content'])].includes(key))) return `Unsupported ${type} properties.`;
+      type === 'hardBreak' ? ['marks'] : type === 'variableReference' ? ['attrs', 'marks'] : ['attrs', 'content'])].includes(key))) return `Unsupported ${type} properties.`;
     const allowedChild = parent === 'doc' || parent === 'callout' || parent === 'blockquote' || parent === 'listItem' || parent === 'tableCell' || parent === 'tableHeader'
       ? blocks.has(type) : parent === 'paragraph' || parent === 'heading' ? inline.has(type)
         : parent === 'codeBlock' ? type === 'text' : parent === 'bulletList' || parent === 'orderedList' ? type === 'listItem'
@@ -60,9 +62,11 @@ export function structuredContentIssue(input: TopicContent): string | null {
       if (seen.has('code') && seen.size > 1) return 'Inline code cannot contain other marks.';
     }
     const attrs = value.attrs;
-    if (attrs !== undefined && (!object(attrs) || Object.keys(attrs).some((key) => !['id', ...(attributes[type] ?? [])].includes(key))))
+    if (attrs !== undefined && (!object(attrs) || Object.keys(attrs).some((key) => !['id', ...((conditionedNodes as readonly string[]).includes(type) ? ['conditions'] : []), ...(attributes[type] ?? [])].includes(key))))
       return `Unsupported ${type} attributes.`;
     if (object(attrs)) {
+      const issue = referenceAttributesIssue(type, attrs);
+      if (issue) return issue;
       if (attrs.id !== undefined && attrs.id !== null && (typeof attrs.id !== 'string' || !/^[\w.:-]{1,200}$/.test(attrs.id))) return 'Invalid node identity.';
       if (type === 'callout' && !(calloutKinds as readonly unknown[]).includes(attrs.kind)) return 'Unsupported callout kind.';
       if (type === 'heading' && ![1, 2, 3].includes(attrs.level as number)) return 'Only heading levels 1–3 are supported.';
@@ -76,10 +80,11 @@ export function structuredContentIssue(input: TopicContent): string | null {
           || attrs.colwidth.length !== (attrs.colspan ?? 1) || attrs.colwidth.some((width) => !positive(width) || (width as number) > 10000))) return 'Invalid table column widths.';
       }
     } else if (type === 'heading') return 'Missing heading level.';
+    if (['variableReference', 'reusableReference'].includes(type) && !object(attrs)) return 'Missing semantic reference identity.';
     if (type === 'callout' && !object(attrs)) return 'Missing callout kind.';
     const children = value.content ?? [];
     if (!Array.isArray(children)) return 'Invalid node children.';
-    if (['text', 'hardBreak', 'horizontalRule'].includes(type) && children.length) return 'Unexpected leaf-node children.';
+    if (['text', 'hardBreak', 'horizontalRule', 'variableReference', 'reusableReference'].includes(type) && children.length) return 'Unexpected leaf-node children.';
     // A row can contain no own cells when preceding rowspans cover its entire
     // width. The containing table's grid check proves that coverage below.
     if (['callout', 'blockquote', 'bulletList', 'orderedList', 'listItem', 'table', 'tableCell', 'tableHeader'].includes(type) && !children.length) return 'Empty structural container.';
@@ -140,5 +145,15 @@ export function mergeEditorDocument(base: TopicContent, json: unknown): TopicCon
   const engine = checkedContent(json);
   if (engine.type !== 'doc' || Object.keys(engine).some((key) => !['type', 'content'].includes(key)))
     throw new ServiceError('The editing engine returned an unsupported document envelope.', 'validation');
-  return ensureNodeIds({ ...base, type: 'doc', content: engine.content });
+  // The engine supplies null defaults. Absence means unassigned in SPEXTAR JSON;
+  // do not rewrite every legacy paragraph merely because this extension exists.
+  const children = structuredClone(engine.content);
+  const omitDefaults = (value: JSONValue) => {
+    if (!value || typeof value !== 'object') return;
+    if (Array.isArray(value)) { value.forEach(omitDefaults); return; }
+    if (object(value.attrs) && value.attrs.conditions === null) delete value.attrs.conditions;
+    if (Array.isArray(value.content)) value.content.forEach(omitDefaults);
+  };
+  omitDefaults(children);
+  return ensureNodeIds({ ...base, type: 'doc', content: children });
 }

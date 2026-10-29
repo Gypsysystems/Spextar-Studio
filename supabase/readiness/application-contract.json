@@ -195,12 +195,11 @@
     "returns": "F2 creators/duplicators require a nonempty UUID string. Move/promote/demote do not consume a return value. Atomic F0/F1 create accepts string or id/entity_id record, then verifies bootstrap membership."
   },
   "unresolved": [
-    "All 18 applied versions/names and exact original SQL from the authoritative migration ledger",
-    "Exact constraints, indexes, FK ON DELETE actions, triggers, private helpers and grants/policy definitions",
-    "Installed atomic RPC security-definer configuration and authenticated-only execution grants (F0/F1 callable names/parameters confirmed)",
+    "Live schema/security drift from the 21 recovered original migrations has not been independently audited in this issue",
     "Live multi-identity RLS coverage for all management/draft tables; fixtures are not live certification",
     "Atomic last-project-admin and dependency-delete protections under concurrent sessions",
     "General project reader accepts legacy in_review/in-review; this does not expand the active/archived writable database contract",
-    "No confirmed persisted reference, comments/approval, release/history, brand/output or publishing contract"
+    "Semantic reference version 1 is application-owned topic JSON; read-through where-used is not an atomic/global deletion-safety certificate",
+    "No implemented comments/approval, release/history, brand/output or publishing persistence contract"
   ]
 }

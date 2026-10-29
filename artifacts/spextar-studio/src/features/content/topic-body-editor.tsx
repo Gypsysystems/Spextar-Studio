@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import type { DocumentRecord, Topic } from '@/domain/types';
 import { supportsStructuredEditing } from '@/domain/structured-content';
 import { contentStatistics, type ContentStatistics } from '@/domain/content-statistics';
@@ -19,6 +20,7 @@ export function TopicBodyEditor({ doc, topic, onBody, onStatistics }: {
   const services = useServices();
   const { data: session } = useStudioSession();
   const client = useQueryClient();
+  const { workspaceId } = useParams<{ workspaceId?: string }>();
   const canEdit = doc.canEdit === true;
   const userId = session?.mode === 'backend' ? session.userId : '';
   const entry = useMemo(() => draftEntry(client, JSON.stringify([userId, doc.projectId, doc.id, topic.id, canEdit]), () => new TopicDraftController(
@@ -28,6 +30,10 @@ export function TopicBodyEditor({ doc, topic, onBody, onStatistics }: {
   )), [services, userId, doc.projectId, doc.id, topic.id, canEdit, client]);
   const { controller } = entry;
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
+  useEffect(() => {
+    if (services.mode === 'demo' && state.loaded) client.setQueryData(['semantic-demo-draft', doc.projectId, doc.id, topic.id],
+      { projectId: doc.projectId, documentId: doc.id, topicId: topic.id, content: state.content });
+  }, [services.mode, state.loaded, state.content, client, doc.projectId, doc.id, topic.id]);
   const onBodyRef = useRef(onBody);
   onBodyRef.current = onBody;
   const statisticsRef = useRef(onStatistics);
@@ -73,6 +79,7 @@ export function TopicBodyEditor({ doc, topic, onBody, onStatistics }: {
         </div>
       </div>}
       <StructuredEditor content={state.content} editable={controller.editable()} loading={!state.loaded || state.status === 'loading'}
+        semanticContext={workspaceId ? { workspaceId, projectId: doc.projectId } : undefined}
         onChange={controller.changeDocument} />
     </div>
   );

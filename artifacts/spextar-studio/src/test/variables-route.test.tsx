@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import App from '@/App';
 import { createDemoServices } from '@/services/demo-adapter';
 import { createSupabaseServices } from '@/services/supabase-adapter';
@@ -9,6 +9,9 @@ import { supabaseDouble } from './supabase-double';
 import { VARIABLE_KEY_RULE } from '@/domain/project-variables';
 
 const demoPath = '/workspaces/product-docs/projects/meridian-x4-user-guide/variables-conditions';
+// These are form tests, not cold-chunk timing tests (the browser suite covers
+// that boundary). Await module transformation without extending UI deadlines.
+beforeAll(async () => { await import('@/pages/variables-conditions'); });
 const backendPath = '/workspaces/ws-a/projects/project-a/variables-conditions';
 const at = '2026-10-27T10:00:00Z';
 const row = (patch: Record<string, unknown> = {}) => ({
@@ -63,9 +66,9 @@ describe('Variables & Conditions project route', () => {
     const { user } = await demo();
     expect(await screen.findByRole('heading', { name: 'Variables & Conditions' })).toBeVisible();
     await screen.findByText('ProductName', { selector: 'button p' });
-    expect(screen.getByText(/Reference tracking will become/)).toBeVisible();
+    expect(screen.getByTestId('text-where-used')).toHaveTextContent(/session-only|saved drafts/i);
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/Deletion is unavailable/i)).toBeVisible();
+    expect(screen.getByText(/Permanent deletion remains unavailable/i)).toBeVisible();
     expect(screen.getByText('Demo · session-only changes')).toBeVisible();
     await user.type(screen.getByLabelText('Search'), 'ProductVersion');
     expect(screen.getByTestId('text-variable-name')).toHaveTextContent('ProductVersion');

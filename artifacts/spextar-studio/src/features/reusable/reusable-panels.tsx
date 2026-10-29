@@ -1,4 +1,5 @@
 import { UserIdentity } from '@/components/user-identity';
+import { ReferenceUsage } from '@/features/content/reference-usage';
 import { Search, Plus, Layers, Info, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -165,16 +166,13 @@ export function ReusableRail({ item }: { item: ReusableItem }) {
     <aside aria-label="Where used and linked updates" className="min-w-0 space-y-4" data-testid="reusable-rail">
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Link2 className="h-4 w-4 text-muted-foreground" aria-hidden />Where used</h3>
-        <ScopeMarker kind="placeholder" className="mt-2">Coming next</ScopeMarker>
-        <p className="mt-2 text-[12.5px] text-muted-foreground" data-testid="reusable-where-used">
-          Reference tracking is not available yet. No usage count is shown because none is recorded. Inserting this content into topics is not offered here.
-        </p>
+        <div data-testid="reusable-where-used"><ReferenceUsage kind="reusable" id={item.id} /></div>
       </div>
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Info className="h-4 w-4 text-muted-foreground" aria-hidden />Linked-update policy</h3>
         <p className="mt-2 break-words text-[13.5px] font-medium" data-testid="reusable-rail-policy">{policyLabels[item.updatePolicy]}</p>
         <p className="mt-1 text-[12.5px] text-muted-foreground">{policyHelp[item.updatePolicy]}</p>
-        <p className="mt-2 text-[12px] text-muted-foreground" data-testid="reusable-policy-note">This records future intent only. Saving changes here does not notify, update or propagate to any topic or output.</p>
+        <p className="mt-2 text-[12px] text-muted-foreground" data-testid="reusable-policy-note">Linked references preview the current saved draft. This policy does not create notifications, snapshots, propagation history or published output.</p>
       </div>
     </aside>
   );

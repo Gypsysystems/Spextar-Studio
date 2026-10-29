@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react';
 import {
   Bold, Code, Heading1, Heading2, Heading3, Italic, Link2, List, ListOrdered, Minus, Pilcrow,
@@ -12,15 +12,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import './structured-editor.css';
+import './semantic-styles.css';
 import { TopicSearchPanel } from './topic-search-panel';
 import { TableToolbar } from './table-toolbar';
 import { pasteNoticeEvent, type PasteNotice, applySafePaste, focusBody } from './paste-safety';
 import { DocumentNavigation } from './document-navigation';
 import { Fragment, Slice } from '@tiptap/pm/model';
+import type { SemanticCatalog, SemanticContext } from '@/domain/semantic-references';
+import { SemanticTools } from './semantic-tools';
 
-type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean; deferRender?: boolean };
+type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean; deferRender?: boolean; semanticContext?: SemanticContext };
 
-export function StructuredEditor({ content, editable, onChange, loading = false, deferRender = false }: Props) {
+export function StructuredEditor({ content, editable, onChange, loading = false, deferRender = false, semanticContext }: Props) {
+  const catalog = useRef<SemanticCatalog | undefined>(undefined);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const baseRef = useRef(content);
@@ -43,7 +47,7 @@ export function StructuredEditor({ content, editable, onChange, loading = false,
     // Lazy read-only viewers may be rendered speculatively under Suspense.
     // Construct their engine after commit, not in an abandoned render.
     immediatelyRender: !deferRender,
-    extensions: studioExtensions(),
+    extensions: studioExtensions(() => catalog.current),
     content: initial.doc,
     editable: false,
     enableContentCheck: true,
@@ -76,6 +80,10 @@ export function StructuredEditor({ content, editable, onChange, loading = false,
     },
   }, []);
 
+  const updateCatalog = useCallback((next?: SemanticCatalog) => {
+    catalog.current = next;
+    if (editor && !editor.isDestroyed) editor.view.dispatch(editor.state.tr.setMeta('skipTrailingNode', true).setMeta('addToHistory', false));
+  }, [editor]);
   useEffect(() => {
     if (!editor) return;
     const onNotice = (event: Event) => setPasteNotice((event as CustomEvent<PasteNotice>).detail);
@@ -134,6 +142,7 @@ export function StructuredEditor({ content, editable, onChange, loading = false,
   return (
     <div className="se-root mt-4">
       {editor && <Toolbar editor={editor} enabled={canEdit} />}
+      {editor && semanticContext && <SemanticTools editor={editor} context={semanticContext} editable={canEdit} onCatalog={updateCatalog} />}
       {editor && <DocumentNavigation editor={editor} />}
       {pasteNotice && <div className="se-paste-notice" role="alert">
         <p>{pasteNotice.message}</p>

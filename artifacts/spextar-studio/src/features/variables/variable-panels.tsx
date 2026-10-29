@@ -1,5 +1,6 @@
 import { Search, Variable as VariableIcon, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ReferenceUsage } from '@/features/content/reference-usage';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -105,7 +106,7 @@ export function VariableDetails({ variable, canEdit, pending, onEdit, onRename, 
       </div>
       <div className="rounded-lg border bg-card p-4">
         <h3 className="text-[14px] font-semibold">Safe changes</h3>
-        <p className="mt-0.5 text-[12.5px] text-muted-foreground">Rename is supported. Deletion is unavailable until reference tracking exists.</p>
+        <p className="mt-0.5 text-[12.5px] text-muted-foreground">Rename preserves saved references. Permanent deletion remains unavailable.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onRename} disabled={disabled} data-testid="button-rename-variable">Rename</Button>
           <Button variant="outline" size="sm" onClick={onDuplicate} disabled={disabled} data-testid="button-duplicate-variable">Duplicate</Button>
@@ -120,7 +121,7 @@ export function VariableRail({ variable, output, onOutput }: { variable: Project
     <aside aria-label="Variable usage and preview" className="min-w-0 space-y-4" data-testid="panel-variable-rail">
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Link2 className="h-4 w-4 text-muted-foreground" aria-hidden />Where used</h3>
-        <p className="mt-1.5 text-[12.5px] text-muted-foreground" data-testid="text-where-used">Reference tracking will become available when variable insertion is implemented.</p>
+        <div data-testid="text-where-used"><ReferenceUsage kind="variable" id={variable.id} /></div>
       </div>
       <div className="rounded-lg border bg-card p-4">
         <h3 className="text-[14px] font-semibold">Resolved preview</h3>

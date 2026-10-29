@@ -18,6 +18,8 @@ export function clipboardIssue(html: string): string | null {
   if (html.length > maxClipboardSize) return 'The clipboard is too large to paste safely.';
   const document = new DOMParser().parseFromString(html, 'text/html');
   for (const element of document.body.querySelectorAll('*')) {
+    if (Array.from(element.attributes).some(attr => attr.name.startsWith('data-semantic-')) || element.hasAttribute('data-condition-assignments'))
+      return 'The clipboard contains semantic references. Insert them from this project instead; the original content was not changed.';
     const tag = element.tagName.toLowerCase();
     if (!supportedTags.has(tag)) return `The clipboard contains unsupported ${tag} content.`;
     if (element.hasAttribute('data-type') && element.getAttribute('data-type') !== 'callout')

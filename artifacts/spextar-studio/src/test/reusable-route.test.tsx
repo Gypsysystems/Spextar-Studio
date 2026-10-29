@@ -30,8 +30,8 @@ describe('Reusable management route and interactions', () => {
   it('renders real scoped data, searches/filters/selects, and reports reference tracking honestly', async () => {
     const { user } = await mount(); await ready();
     expect(screen.getByTestId('reusable-name')).toHaveTextContent('Product introduction');
-    expect(screen.getByTestId('reusable-where-used')).toHaveTextContent(/not available yet/i);
-    expect(screen.getByTestId('reusable-policy-note')).toHaveTextContent(/does not notify, update or propagate/i);
+    expect(screen.getByTestId('reusable-where-used')).toHaveTextContent(/Deletion remains unavailable|Permanent definition deletion remains unavailable/i);
+    expect(screen.getByTestId('reusable-policy-note')).toHaveTextContent(/does not create notifications, snapshots, propagation history/i);
     expect(screen.queryByText(/used in \d+|affected documents|\d+ references/i)).not.toBeInTheDocument();
     await user.type(screen.getByTestId('reusable-search'), 'Shared');
     expect(screen.queryByTestId('reusable-card-reuse-a')).not.toBeInTheDocument();

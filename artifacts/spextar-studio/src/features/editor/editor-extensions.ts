@@ -10,6 +10,8 @@ import { Callout } from './callout-extension';
 import { TopicSearch } from './topic-search';
 import { TechnicalTable, TechnicalTableTools } from './table-tools';
 import { SafePaste } from './paste-safety';
+import { semanticExtensions } from './semantic-extensions';
+import type { SemanticCatalog } from '@/domain/semantic-references';
 
 /** SPEXTAR-owned node identity, independent of hosted/proprietary editor extensions. */
 const NodeIdentity = Extension.create({
@@ -94,8 +96,9 @@ const ExactHistoryCommands = Extension.create({
   },
 });
 
-export function studioExtensions() {
+export function studioExtensions(catalog: () => SemanticCatalog | undefined = () => undefined) {
   return [
+    ...semanticExtensions(catalog),
     SafePaste,
     TopicSearch,
     Callout,
