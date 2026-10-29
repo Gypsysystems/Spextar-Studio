@@ -337,7 +337,7 @@ History, Style Guide and AI remain outside this implementation.
 
 ### Issue #9 executed validation and handoff status
 
-Executable source: `IMPLEMENTATION_SHA` (the final evidence update changes docs
+Executable source: `5ac00a5d6247aca0cacb35ea51bcda89c49d739e` (the final evidence update changes docs
 only). Full commands and results are retained in [ISSUE9_VALIDATION.md](ISSUE9_VALIDATION.md).
 
 - Final Issue #9 unit/service/migration contracts: **80 passed, 4 files**.
@@ -355,7 +355,7 @@ only). Full commands and results are retained in [ISSUE9_VALIDATION.md](ISSUE9_V
 - Workspace typecheck, both production builds, bundle guard and static asset scan:
   **passed**. Initial JS **734,058 / 975,000 bytes**; lazy boundaries preserved.
 - Historical migration source integrity: **21 exact files passed**. New migration
-  remains unapplied. Git whitespace/staged-scope check: `GIT_CHECK_RESULT`.
+  remains unapplied. Git whitespace/staged-scope check: `Passed; staged scope excludes historical SQL, lockfiles, generated output and the unrelated publishing drafts`.
 
 Technical validation is **not fully green**. Keep the PR draft and unmerged.
 Supported-environment regression/branding verification, authorized disposable

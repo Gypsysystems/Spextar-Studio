@@ -5,7 +5,7 @@ acceptance, migration execution, live RLS certification or deployment approval.
 
 Branch: `codex/feature-review-lifecycle-2`, created directly from accepted main
 `70ffe3be130164e8d5ac42fa9adc17355ca538e3`. The unsuffixed branch already existed.
-Executable source tested here was committed as `IMPLEMENTATION_SHA`; the final
+Executable source tested here was committed as `5ac00a5d6247aca0cacb35ea51bcda89c49d739e`; the final
 PR also contains a documentation-only evidence update. No main commit was made.
 
 **Validation remains incomplete.** New lifecycle checks pass, but the complete
@@ -172,7 +172,7 @@ third-party annotation, large-chunk and color-environment warnings remain nonfat
 The candidate intentionally uses demo build configuration; this does not pass or
 substitute for the separate backend-candidate readiness gate.
 
-Git whitespace/staged-scope check: `GIT_CHECK_RESULT`.
+Git whitespace/staged-scope check: `Passed; staged scope excludes historical SQL, lockfiles, generated output and the unrelated publishing drafts`.
 
 ## Explicitly unrun and unchanged
 
