@@ -6,7 +6,7 @@ acceptance, migration execution, live RLS certification or deployment approval.
 Branch: `codex/feature-review-lifecycle-2`, created directly from accepted main
 `70ffe3be130164e8d5ac42fa9adc17355ca538e3`. The unsuffixed branch already existed.
 Executable source tested here was committed as `5ac00a5d6247aca0cacb35ea51bcda89c49d739e`; the final
-PR also contains a documentation-only evidence update. No main commit was made.
+PR also contains a documentation-only evidence update and reconciliation of accepted main documentation/CI; application and test source remain unchanged. No main commit was made.
 
 **Validation remains incomplete.** New lifecycle checks pass, but the complete
 unit/browser gates are not green on this Windows host. Keep the PR draft and
@@ -187,3 +187,16 @@ publishing, domain/DNS or production/staging infrastructure changes occurred.**
 No service/private credential entered browser source or reports. Publishing,
 assignments/quorum, threaded comments, notifications, global History UI, Style
 Guide enforcement and AI remain outside this PR.
+
+## Concurrent main changes
+
+After the fresh branch was created, accepted main advanced through documentation
+PR #11 and CI-only PR #12 to `64c292c6653f87903e32e55d954f2d15f20e4ce8`.
+The feature branch merges that main update and resolves PROJECT_STATE.md by
+preserving both records. No application/test source changes are introduced by
+that reconciliation. The existing main quality workflow is inherited unchanged;
+its hosted checks are separate from the Codex-run local results above.
+
+Colliding local publishing draft copies were preserved in ignored
+`generated-artifacts/preserved-publishing-drafts/` before merging main's tracked
+versions. These copies and their contents are not included in the PR diff.
