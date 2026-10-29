@@ -200,3 +200,23 @@ its hosted checks are separate from the Codex-run local results above.
 Colliding local publishing draft copies were preserved in ignored
 `generated-artifacts/preserved-publishing-drafts/` before merging main's tracked
 versions. These copies and their contents are not included in the PR diff.
+
+## Independent GitHub-hosted follow-up
+
+[Quality run 40911708209](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40911708209)
+on head `bf98464649158f2ceb8fdfdadb61cd761597c774` completed successfully on
+Ubuntu 24.04 with Node 24 and pnpm 10.34.9:
+
+- `unit-type-build`: **54 files, 1,095 tests passed**; typecheck, both production
+  builds, bundle guard and tracked-file integrity also passed.
+- `migration-integrity`: **passed**, checking the recovered manifest without
+  executing SQL.
+- Initial JavaScript: **734,058 / 975,000 bytes**.
+
+These results were read from GitHub check diagnostics/logs and are **not Codex-run
+local tests**. The subsequent commit only records this evidence; application and
+test source remain identical. The original Windows failures above are retained,
+but lack of supported-environment full-unit evidence is now resolved. This CI
+workflow does not run browsers, SQL replay, live Auth/RLS, UAT or deployment.
+The Windows browser alignment failure and separate database/live acceptance
+limits remain; keep PR #18 draft and unmerged.

@@ -401,3 +401,20 @@ local tests. No workflow or publishing-design changes are authored by Issue #9.
 The two colliding local publishing draft copies were preserved byte-for-byte
 under ignored `generated-artifacts/preserved-publishing-drafts/` before bringing
 in main's tracked versions. Those local copies are not part of this PR.
+
+### Independent hosted quality result — not a Codex-local run
+
+The existing GitHub-hosted [quality run 40911708209](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40911708209)
+completed successfully for feature head `bf98464649158f2ceb8fdfdadb61cd761597c774`.
+On Ubuntu 24.04 / Node 24 / pnpm 10.34.9, `unit-type-build` passed **54 files,
+1,095 tests**, typecheck, both production builds, bundle guard and tracked-file
+integrity. The separate `migration-integrity` job passed the recovered manifest
+checks without executing SQL. The log reports **734,058 / 975,000** initial JS bytes.
+These are independently observed GitHub CI results, not additional Codex-local
+runs. Application/test source is unchanged by the subsequent evidence-only commit.
+
+This resolves the missing supported-environment full-unit evidence. The Windows
+failures above remain accurately recorded. Linux browser/visual verification,
+authorized database/function/RLS/race execution and product acceptance remain
+unrun; no migration was applied and no live/backend/deployment action occurred.
+The PR remains draft and unmerged.
