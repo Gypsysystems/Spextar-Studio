@@ -1,0 +1,1 @@
+create index topics_parent_document_idx on public.topics(parent_topic_id, document_id);

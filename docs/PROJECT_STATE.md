@@ -4,10 +4,10 @@ Recorded: 2026-10-29. Refresh this document when code, backend provenance, stagi
 
 ## Evidence and authority
 
-- Repository inspected: `Gypsysystems/Spextar-Studio`, GitHub `main` at `cbe5b4dce31e5b03da5acbad489bb4609f3e41bd` (`Fix readable user identities and unversioned document labels`). The remote SHA was checked during onboarding; verify it again before future work.
-- Onboarding documentation is prepared on `codex/setup`, based on that commit. No application functionality, dependency declarations, lockfiles, database state or deployment was changed.
+- Recovery base: `Gypsysystems/Spextar-Studio`, accepted GitHub `main` at `ee3788b6719adbc0a04269e8cafdeacccf60391d`, verified before work on `codex/migration-recovery-2`. The earlier onboarding application baseline was `cbe5b4dce31e5b03da5acbad489bb4609f3e41bd` (`Fix readable user identities and unversioned document labels`). Verify remote HEADs again before future work.
+- [Issue #2](https://github.com/Gypsysystems/Spextar-Studio/issues/2) authorizes source-control recovery of the exact migration history. This branch adds original SQL and a provenance manifest and updates recovery documentation. No application functionality, dependency declarations, lockfiles, live database state or deployment was changed.
 - User-provided `SPEXTAR_Codex_Onboarding_Handoff_v2.md` governs onboarding. The later authoritative current-state addendum governs product lifecycle, operating/acceptance roles, migration recovery, staging restrictions and confirmed live state. It updates the earlier ZIP where stated.
-- Source inspection and executed checks establish code/technical behavior. User-confirmed live state is accepted as handoff authority but was not independently re-audited against Supabase/Replit in this session. Historical reports and synthetic tests are labeled separately below.
+- Source inspection and executed checks establish code/technical behavior. The migration ledger and original stored SQL were independently read and checksum-verified on 2026-10-29; this was not a live schema/security audit or Replit inspection. Other user-confirmed live state remains handoff authority. Historical reports and synthetic tests are labeled separately below.
 
 ## Handoff inventory and continuity
 
@@ -19,7 +19,7 @@ Recorded: 2026-10-29. Refresh this document when code, backend provenance, stagi
 | `supabase_migration_manifest.csv` | 21 unique ordered migration identities, stored-statement counts and MD5 metadata, reported exported from the live ledger |
 | `20261028234310_align_authenticated_content_write_grants.sql` | Exact supplied latest SQL, granting authenticated INSERT/UPDATE on the six content/draft tables |
 
-The latest SQL's exact-byte MD5 matches its manifest entry (`fa15d85d89ac2782b815ee55d5a628e4`). This proves internal bundle consistency, not current live parity. The prior 20 original SQL bodies are absent. The ZIP was inventoried/read without executing its SQL or scripts, and was not copied into Git.
+The latest SQL's exact-byte MD5 matches its manifest entry (`fa15d85d89ac2782b815ee55d5a628e4`). The prior 20 original SQL bodies are absent from the ZIP. Issue #2 subsequently recovered all 21 bodies directly from the live ledger and verified the latest against this retained original. The ZIP was inventoried/read without executing its SQL or scripts, and was not copied into Git.
 
 Incorporated context: current implemented areas and pending references/workflows, exact migration-recovery constraints, reported rollback-based database UAT, brand continuity, merged identity/version presentation, and the Codex/GitHub/Replit/Supabase operating split. The addendum confirms the current handoff checkpoint and separates technical testing from product acceptance.
 
@@ -48,7 +48,7 @@ The final integrity pass searched the inspected application tree, optional sandb
 | Content Blueprints | Historical onboarding context only; no implementation, partial service/model, route, dedicated UI placeholder or feature flag found |
 | AI-assisted content generation | Historical onboarding context only; no provider integration, model abstraction, prompt-template/generation/rewrite pipeline or disabled implementation found |
 
-Supporting evidence: `src/App.tsx` and `src/features/project/sections.ts` contain no corresponding routes or placeholders; planned Style Guide checks explicitly say non-AI. The 15 tables in `supabase/readiness/application-contract.json` contain no corresponding AI/prompt models, and local migration source contains only a README. Manifests/lockfile contain no AI-provider/model-framework integration dependencies; runtime configuration selects demo/backend without an AI flag. No matching dormant implementation or tracked archive/legacy tree was found. A `generation` counter in `supabase-adapter.ts` cancels superseded authentication work; sample “reference settings” in `src/fixtures/demo-data.ts` describes spectrometer methods. Neither is AI functionality, and reusable content/output preview is not a prompt system.
+Supporting evidence: `src/App.tsx` and `src/features/project/sections.ts` contain no corresponding routes or placeholders; planned Style Guide checks explicitly say non-AI. The 15 tables in `supabase/readiness/application-contract.json` contain no corresponding AI/prompt models; local migration source contained only a README during onboarding, before the recovery below. Manifests/lockfile contain no AI-provider/model-framework integration dependencies; runtime configuration selects demo/backend without an AI flag. No matching dormant implementation or tracked archive/legacy tree was found. A `generation` counter in `supabase-adapter.ts` cancels superseded authentication work; sample “reference settings” in `src/fixtures/demo-data.ts` describes spectrometer methods. Neither is AI functionality, and reusable content/output preview is not a prompt system.
 
 The named capabilities appear in supplied `SPEXTAR_Codex_Onboarding_Handoff_v2.md` (product narrative around lines 53, 82–87 and AI guidance around 460–469), not in the ZIP's three files or the authoritative current-state addendum. Thus they are absent from the current implementation, including partial/UI-only forms; they are not merely hidden behind a flag. This conclusion is scoped to the inspected repository and supplied materials, not an assertion about another project or undocumented live database objects. No capability was created.
 
@@ -75,7 +75,7 @@ These are source-confirmed capabilities, not a declaration of final UAT completi
 
 The addendum defines Draft → In Review → Approved → Published and Changes Requested → Draft. Editing approved content must create a new Draft; publishing must create a Release.
 
-The source currently models four document statuses (`draft`, `in-review`, `approved`, `published`), with `in_review` in backend storage. It does not model Changes Requested or a Release entity/workflow. `supabase-topic-drafts.ts` updates the topic's current revision after role/scope checks; that path does not inspect approval status or create a separate approved-content Draft. A complete automatic fork-on-approved-edit mechanism was not found. Missing live SQL prevents any claim about additional database enforcement. These are implementation/verification gaps against the authoritative product rules, not permission to change the rules or implement them during onboarding.
+The source currently models four document statuses (`draft`, `in-review`, `approved`, `published`), with `in_review` in backend storage. It does not model Changes Requested or a Release entity/workflow. `supabase-topic-drafts.ts` updates the topic's current revision after role/scope checks; that path does not inspect approval status or create a separate approved-content Draft. A complete automatic fork-on-approved-edit mechanism was not found. Original migration SQL is now available for review, but recovery did not audit lifecycle enforcement or perform replay, so no additional database enforcement is claimed. These are implementation/verification gaps against the authoritative product rules, not permission to change the rules or implement them during onboarding or recovery.
 
 ## Supabase, authentication and security
 
@@ -87,13 +87,15 @@ Explicit Project Admin/Author may author; Reviewer/Viewer are read-only. Explici
 
 **Verified current security warning — leaked-password protection:** The live Supabase security advisor independently reported `Leaked Password Protection Disabled` on 2026-10-29, as confirmed in the [product-owner review on PR #1](https://github.com/Gypsysystems/Spextar-Studio/pull/1#issuecomment-6485446888). This is a verified current warning and remains an open security follow-up. No Auth configuration was queried or changed during this documentation correction.
 
-**Other security considerations:** Browser session tokens and local recovery content are sensitive; preserve account isolation and avoid logging/storage exports. Missing original migrations block independent review/replay of exact RLS/grants, security-definer/search-path details, triggers, constraints and foreign-key behavior. Client preflights alone do not prove transaction guarantees. No full manual UAT or current live multi-account audit was performed here.
+**Other security considerations:** Browser session tokens and local recovery content are sensitive; preserve account isolation and avoid logging/storage exports. The recovered originals make exact historical RLS/grants, security-definer/search-path details, triggers, constraints and foreign-key definitions available for review; source recovery alone does not certify current enforcement or replay. Client preflights alone do not prove transaction guarantees. No full manual UAT or current live multi-account audit was performed here.
 
-### Migration recovery is the first housekeeping priority
+### Migration source-control recovery
 
-User-confirmed handoff ledger: **21 migrations**, latest `20261028234310_align_authenticated_content_write_grants`. Git still contains only `supabase/migrations/README.md`, with a stale reported count of 18 and nine partial identities. The latest exact SQL is in the upload, not committed; the prior 20 exact bodies still need an authoritative export/original source.
+Issue #2 recovered **21 exact migrations**, latest `20261028234310_align_authenticated_content_write_grants`, into `supabase/migrations/` on `codex/migration-recovery-2`. Authorized read-only Supabase migration listing and `SELECT` queries read the original `supabase_migrations.schema_migrations` rows. Each row has one stored statement; its UTF-8 bytes were transported as base64 and written without formatting or newline changes. All 21 unique ordered versions/names, stored-statement counts and MD5s matched the live ledger, product-owner audit and retained handoff manifest. The latest file also matches the retained original byte for byte, with MD5 `fa15d85d89ac2782b815ee55d5a628e4`.
 
-After separate task approval, obtain original ordered SQL and compare identities, versions, names, ordering and available checksums before committing exact files. Live access must remain read-only. Do not replay, reset, repair, apply, rerun or roll back migrations, change the live database, weaken RLS or perform destructive SQL. If originals cannot be recovered, document available evidence and missing bodies, propose a safe reconstruction method, and wait for approval before making assumptions. Do not fabricate checksum equivalence. This task was recommended, not begun.
+`supabase/migrations/migration-manifest.json` records source provenance, capture date, exact filenames, byte counts and checksums. The migration README provides an offline integrity check and supersedes the stale 18-entry/partial-history status in earlier readiness snapshots. Application-contract flags and semantic digests remain unchanged; those artifacts are application expectations, not the migration recovery authority.
+
+No SQL was applied or reconstructed, and no live database write occurred. Schema, RLS, grants, Auth, functions, triggers, tables, data and migration-ledger entries were not modified. Do not replay, reset, repair, apply, rerun or roll back migrations on the live project. Replay and live schema/security validation remain separate tasks; any replay needs explicit authorization for an isolated disposable environment. Source recovery is complete for these 21 entries, subject to product-owner PR review; it does not establish replay certification or UAT.
 
 ## Environment and runtime/deployment
 
@@ -127,13 +129,13 @@ Private staging, confirmed by the user: `https://spextar-studio.replit.app`. The
 | --- | --- |
 | Onboarding narrative describes substantial AI/eLearning/prompt/blueprint/TOC/history systems | Current code is the non-AI structured-authoring foundation; treat broader claims as product context |
 | ZIP calls Owner/Unversioned work pending | Source at `cbe5b4d` includes it; the addendum confirms it merged |
-| Migration docs report 18 / partial identities | User confirms 21; ZIP has 21 metadata entries and only the latest SQL; source-control gap remains |
+| Migration docs report 18 / partial identities | Issue #2 recovered all 21 original bodies from the live ledger with exact MD5 parity; the new migration manifest supersedes historical status |
 | Older docs leave last-admin protection/grant fixes unresolved | Addendum confirms protection implemented and clean audit at handoff; preserve controls, do not confuse historical documentation with current authority |
 | ZIP's staging build predates the latest UI work | Addendum confirms GitHub/Replit synchronized at `cbe5b4d`; current running deployment not independently checked here |
 | Old README slice prose says full member IDs/no project deletion | Current identity presentation and lifecycle code supersede those descriptions; documentation reconciliation remains follow-up work |
 | Product lifecycle requires new Draft on approved edit and Release on publish | Complete workflow/fork/release implementation is absent from source; authoritative requirements remain unchanged |
 
-## Technical baseline
+## Historical onboarding technical baseline
 
 All commands were run on the inspected `cbe5b4d` source with Node 24.19.0, pnpm 10.34.9 and installed Chromium. No application fixes or assertion changes were made.
 
@@ -154,10 +156,26 @@ Non-failing build warnings include sourcemap/third-party annotation and large-en
 
 Technical checks do not establish final UAT. The user's applicable-entity create/view/edit/duplicate/archive/restore/delete, safeguards, permissions, validation, empty/error and navigation matrix remains an acceptance standard. The active draft configuration already records reusable installation and server startup; it has not been published by these analysis/documentation changes.
 
-The final integrity pass changed documentation only. It rechecked the AI classifications, warning provenance, credential patterns, operating/approval guardrails and commit file scope. Application tests/builds were not rerun because executable inputs were unchanged; the successful baseline above remains applicable. Migration recovery, live database/Auth changes, staging changes and deployment were not performed.
+The onboarding final integrity pass changed documentation only. It rechecked the AI classifications, warning provenance, credential patterns, operating/approval guardrails and commit file scope. Application tests/builds were not rerun for that pass because executable inputs were unchanged. Migration recovery, live database/Auth changes, staging changes and deployment were not performed during onboarding; the later Issue #2 recovery is recorded separately above.
+
+## Issue #2 recovery verification — 2026-10-29
+
+Run on `codex/migration-recovery-2` from accepted `ee3788b` with Node 24.19.0 and pnpm 10.34.9. No application code, test assertions, dependency declarations or configuration were changed.
+
+| Check | Result |
+| --- | --- |
+| Exact-source integrity | **Passed:** 21 unique ordered versions/names, exactly 21 SQL files, every stored-statement count/UTF-8 byte count/MD5 matches the live export and retained manifest; staged bytes also match. Latest SQL matches the retained original byte for byte. No missing entries. |
+| Final read-only ledger comparison | **Passed:** all 21 identities, counts, byte counts and MD5s unchanged from the initial read |
+| Migration README offline integrity recipe; `git diff --check` | **Passed** |
+| `pnpm test --maxWorkers=1` | **Passed:** 50 files, 1,059 tests |
+| `PORT=5173 BASE_PATH=/ VITE_STUDIO_MODE=demo pnpm run build` | **Passed:** workspace type checks and both production builds |
+| `pnpm --filter @workspace/spextar-studio check:bundle` | **Passed:** initial JavaScript 950,898 / 975,000 bytes; lazy boundaries preserved |
+| `pnpm --filter @workspace/spextar-studio test:browser e2e/navigation.spec.ts e2e/identity-version.spec.ts --project=desktop-dark --workers=1` | **Passed:** 7 controlled browser tests; synthetic credentials and intercepted backend requests |
+
+The first unit-test attempt in the default execution sandbox exited before Vitest initialized; the same command passed with explicit execution network permission. No assertions, retries or configuration were changed to obtain the passing result. Non-failing build annotation/chunk-size and browser color-environment warnings remain. Full browser profiles, backend-candidate readiness, migration replay, live schema/security UAT and deployment were not run. Supabase access consisted only of migration listing and `SELECT` queries; no live database write occurred.
 
 ## Next step and unresolved matters
 
-Recommend approving a small **Supabase migration source-control recovery** task first, using the read-only/exact-provenance restrictions above. Do not start feature development or database recovery until that task is approved.
+Review the Issue #2 migration recovery PR before merge. Exact historical SQL is now available; replay validation and any live schema/security audit require separately approved scope. No application feature work, database changes or deployment is authorized by this recovery.
 
-No product decision blocks completion of this documentation-only onboarding. Future work needs authoritative access to the missing SQL, external UAT/release acceptance, relevant missing design frames when fidelity is required, and explicit approval for any lifecycle/AI/hosting/production work. Do not replace these decisions with assumptions or treat incomplete modules as permanent prohibitions.
+Remaining matters include the verified leaked-password-protection warning, external UAT/release acceptance, relevant missing design frames when fidelity is required, and explicit approval for lifecycle/AI/hosting/production work. Do not replace these decisions with assumptions or treat incomplete modules as permanent prohibitions.
