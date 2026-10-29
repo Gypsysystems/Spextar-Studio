@@ -181,6 +181,55 @@ describe('versioned semantic references', () => {
     expect(change).not.toHaveBeenCalled();
     expect(f.calls.filter((c) => c.patch || c.insert || c.deleted)).toEqual([]);
   });
+  it.each(['bulletList', 'orderedList'] as const)(
+    'keeps tagged %s containers semantically valid in linked read-only previews',
+    async (type) => {
+      const f = seeded();
+      const draft: TopicContent = {
+        type: 'doc',
+        version: 1,
+        content: [
+          {
+            type,
+            attrs: {
+              id: 'tagged-list',
+              ...(type === 'orderedList' ? { start: 4, type: 'I' } : {}),
+              conditions: { version: 1, values: [{ categoryId: 'cat-a', valueId: 'val-a' }] },
+            },
+            content: ['First tagged item', 'Second tagged item'].map((text, i) => ({
+              type: 'listItem',
+              attrs: { id: `item-${i}` },
+              content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+            })),
+          },
+        ],
+      };
+      f.db.reusable_content_drafts[0].content = draft;
+      const before = structuredClone(draft);
+      const { change } = mount(body, false, f);
+      const area = await screen.findByRole('textbox', { name: 'Topic body' });
+      await waitFor(() => expect(area).toHaveTextContent('First tagged item'));
+      const preview = area.querySelector('.se-linked-body')!;
+      await waitFor(() => expect(preview).toHaveTextContent('Audience: Developer'));
+      const list = within(preview as HTMLElement).getByRole('list');
+      expect(Array.from(list.children).map((n) => n.tagName)).toEqual(['LI', 'LI']);
+      expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+      expect(list).not.toHaveTextContent('Audience: Developer');
+      expect(list.previousElementSibling).toHaveTextContent('Audience: Developer');
+      if (type === 'orderedList') {
+        expect(list).toHaveAttribute('start', '4');
+        expect(list).toHaveAttribute('type', 'I');
+      }
+      expect(preview.textContent).not.toMatch(/cat-a|val-a|tagged-list|item-0|reuse-a/);
+      expect(f.db.reusable_content_drafts[0].content).toEqual(before);
+      expect(collectSemanticReferences(draft)).toEqual([
+        { kind: 'condition', definitionId: 'val-a', categoryId: 'cat-a', nodeId: 'tagged-list' },
+      ]);
+      expect(area).toHaveAttribute('contenteditable', 'false');
+      expect(change).not.toHaveBeenCalled();
+      expect(f.calls.filter((c) => c.patch || c.insert || c.deleted)).toEqual([]);
+    },
+  );
   it('uses the selected output override when an output context is explicit', async () => {
     const f = seeded();
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

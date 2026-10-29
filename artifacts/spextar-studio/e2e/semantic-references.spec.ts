@@ -164,7 +164,7 @@ test('loading a topic body preserves document action positions for touch input',
   await expect(page.getByTestId('body-save-status')).toContainText('Loading saved body');
   const button = page.getByRole('button', { name: 'Duplicate document', exact: true });
   await expect(button).toBeVisible();
-  const position = () => button.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
+  const position = () => button.evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
   const before = await position();
   release();
   await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 3');
@@ -173,3 +173,56 @@ test('loading a topic body preserves document action positions for touch input',
   await expect(page.getByLabel(/duplicate document title/i)).toBeVisible();
   expect(backend.writes).toEqual([]);
 });
+
+for (const type of ['bulletList', 'orderedList'] as const)
+  test(`${type} container conditions preserve list semantics and accessibility in linked read-only preview`, async ({
+    page,
+    backend,
+  }) => {
+    seed(backend);
+    backend.setRole('viewer');
+    const draft = {
+      type: 'doc',
+      version: 1,
+      content: [
+        {
+          type,
+          attrs: {
+            id: 'tagged-list',
+            ...(type === 'orderedList' ? { start: 4, type: 'I' } : {}),
+            conditions: { version: 1, values: [{ categoryId: 'cat-a', valueId: 'val-a' }] },
+          },
+          content: ['First tagged item', 'Second tagged item'].map((text, i) => ({
+            type: 'listItem',
+            attrs: { id: `item-${i}` },
+            content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+          })),
+        },
+      ],
+    };
+    backend.db.reusable_content_drafts[0].content = draft;
+    backend.db.topic_drafts[0].content = linkedBody();
+    const savedDraft = structuredClone(backend.db.reusable_content_drafts[0]);
+    const savedTopic = structuredClone(backend.db.topic_drafts[0]);
+    await login(page, projectPath + '/review');
+    const body = page.getByRole('textbox', { name: 'Topic body' });
+    const preview = body.locator('.se-linked-body');
+    await expect(preview).toContainText('Audience: Developer');
+    const list = preview.getByRole('list');
+    await expect(list).toHaveCount(1);
+    expect(await list.evaluate((el) => Array.from(el.children).map((n) => n.tagName))).toEqual(['LI', 'LI']);
+    await expect(list.getByRole('listitem')).toHaveText(['First tagged item', 'Second tagged item']);
+    await expect(list).not.toContainText('Audience: Developer');
+    expect(await list.evaluate((el) => el.previousElementSibling?.textContent)).toBe('Audience: Developer');
+    if (type === 'orderedList') {
+      await expect(list).toHaveAttribute('start', '4');
+      await expect(list).toHaveAttribute('type', 'I');
+    }
+    await expect(body).toHaveAttribute('contenteditable', 'false');
+    expect(await body.innerText()).not.toMatch(/cat-a|val-a|tagged-list|item-0|reuse-a/);
+    await accessible(page);
+    await noOverflow(page);
+    expect(backend.db.reusable_content_drafts[0]).toEqual(savedDraft);
+    expect(backend.db.topic_drafts[0]).toEqual(savedTopic);
+    expect(backend.writes).toEqual([]);
+  });

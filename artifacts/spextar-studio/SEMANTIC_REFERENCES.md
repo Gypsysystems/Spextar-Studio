@@ -37,7 +37,9 @@ mounted Author session and are explicitly excluded from saved usage counts.
 Variables resolve their default value in Author/Review because neither surface
 has an active publishing-output context. The resolver also supports the existing
 explicit output IDs and non-empty override/default fallback. Conditions display
-category/value labels and remain visible; no publishing-target filtering is
+category/value labels and remain visible; list-container badges sit outside
+`ul`/`ol` so only list items are direct children and ordered `start`/`type` are
+retained. No publishing-target filtering is
 invented. Linked reusable previews fetch the current saved accessible draft when
 opened/refreshed, including recursive links, capped at eight levels with cycle
 protection. Missing, inaccessible, unsupported or failed references are visible;

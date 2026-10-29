@@ -251,6 +251,39 @@ Product UAT, live multi-account RLS, migration replay and backend-candidate
 readiness remain external to these controlled checks. No live DB validation is
 claimed.
 
+## PR #8 list-container acceptance correction — 2026-10-29
+
+Addressed the [product-owner review](https://github.com/Gypsysystems/Spextar-Studio/pull/8#issuecomment-6489169622)
+on base `67617fa` on the existing `codex/feature-semantic-references-2` branch.
+`ReferenceBody` now places list-container condition badges in a surrounding div,
+outside both bullet and ordered lists. Only list items remain direct children of
+ul/ol; ordered start/type, saved assignments, neutral visibility, supported
+condition nodes and the persisted JSON contract remain unchanged. The renderer
+reuses existing ConditionLabels, tokens and branding without a new visual style.
+
+New unit cases first reproduced both invalid structures (SPAN, LI, LI), then
+passed after the fix. Linked reusable/read-only tests assert list DOM semantics,
+visible human-readable badges, preserved start/type, unchanged saved bodies,
+zero writes and no surfaced internal IDs. Browser cases additionally run axe and
+responsive overflow checks on the read-only Review surface.
+
+Sequential verification on the correction:
+
+| Command | Result |
+| --- | --- |
+| `pnpm --filter @workspace/spextar-studio test src/test/semantic-references.test.tsx src/test/structured-content.test.ts --maxWorkers=1` | Passed: 2 files, 50 tests |
+| `PORT=5173 BASE_PATH=/ VITE_STUDIO_MODE=demo pnpm run build` | Passed: workspace type checks and both production builds |
+| `pnpm --filter @workspace/spextar-studio check:bundle` | Passed: 953,652 / 975,000 initial JavaScript bytes; lazy boundaries intact |
+| `pnpm test:browser e2e/semantic-references.spec.ts --workers=1` | Passed: 28 tests across desktop-dark, desktop-light, mobile-dark and mobile-light, including both conditioned list types and axe |
+| `git diff --check` | Passed |
+
+The full unit/browser suites were not repeated for this bounded renderer change,
+as permitted by the review; prior broad verification remains recorded above.
+Non-failing existing build annotation/sourcemap/chunk and color-environment
+warnings remain. No live Supabase access, schema/migration/security change,
+Replit configuration change, merge, deployment or publication was performed.
+Manual UAT and live RLS certification are not claimed.
+
 ## Next step and unresolved matters
 
 Review PR #8 against Issue #4 for Engineering Handoff. Keep it unmerged and undeployed. Exact historical SQL is available; migration replay and live schema/security validation remain separately authorized tasks.

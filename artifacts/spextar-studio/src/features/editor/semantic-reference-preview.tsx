@@ -226,8 +226,6 @@ export function ReferenceBody({ content, trail = [] }: { content: TopicContent; 
       paragraph: 'p',
       heading: `h${a.level ?? 2}`,
       blockquote: 'blockquote',
-      bulletList: 'ul',
-      orderedList: 'ol',
       listItem: 'li',
       codeBlock: 'pre',
       table: 'table',
@@ -280,12 +278,18 @@ export function ReferenceBody({ content, trail = [] }: { content: TopicContent; 
         </Cell>
       );
     }
-    if (n.type === 'orderedList')
+    if (n.type === 'bulletList' || n.type === 'orderedList')
       return (
-        <ol key={key} start={Number(a.start ?? 1)} type={(a.type ?? '1') as '1' | 'a' | 'A' | 'i' | 'I'}>
+        <div key={key}>
           {conditions}
-          {child}
-        </ol>
+          {n.type === 'orderedList' ? (
+            <ol start={Number(a.start ?? 1)} type={(a.type ?? '1') as '1' | 'a' | 'A' | 'i' | 'I'}>
+              {child}
+            </ol>
+          ) : (
+            <ul>{child}</ul>
+          )}
+        </div>
       );
     return (
       <Tag key={key}>
