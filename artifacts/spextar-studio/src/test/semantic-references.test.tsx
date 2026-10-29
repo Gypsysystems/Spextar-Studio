@@ -281,7 +281,7 @@ describe('versioned semantic references', () => {
     await user.selectOptions(await screen.findByLabelText('Variable', { exact: true }), 'var-a');
     await user.click(screen.getByRole('button', { name: 'Insert reference' }));
     await waitFor(() => expect(area).toHaveTextContent('AResolved productB'));
-    expect(document.activeElement).toBe(area);
+    await waitFor(() => expect(document.activeElement).toBe(area));
     const saved = change.mock.lastCall![0] as TopicContent;
     expect(collectSemanticReferences(saved)).toMatchObject([{ kind: 'variable', definitionId: 'var-a' }]);
     await user.click(screen.getByRole('button', { name: 'Conditional tags' }));

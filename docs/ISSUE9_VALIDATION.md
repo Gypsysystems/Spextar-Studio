@@ -220,3 +220,16 @@ but lack of supported-environment full-unit evidence is now resolved. This CI
 workflow does not run browsers, SQL replay, live Auth/RLS, UAT or deployment.
 The Windows browser alignment failure and separate database/live acceptance
 limits remain; keep PR #18 draft and unmerged.
+
+### Subsequent focus assertion correction
+
+Run 40912766304 on documentation-only head `8f350110` passed migration
+integrity but failed one semantic-reference focus assertion (1,094 tests passed,
+1 failed). Content insertion completed before the scheduled editor focus return.
+The assertion now uses the existing `waitFor` timeout to require that same focus
+outcome; no assertion, timeout, or product behavior was weakened.
+
+Codex ran `pnpm --filter @workspace/spextar-studio test
+src/test/semantic-references.test.tsx --maxWorkers=1`: **20 tests passed**.
+The following source commit requires a fresh hosted CI result; the prior green
+run above remains evidence for its recorded head only.
