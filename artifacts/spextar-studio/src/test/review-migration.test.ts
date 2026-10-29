@@ -15,7 +15,7 @@ describe('Source-only review migration contract (no database replay)', () => {
       expect(body.length).toBe(entry.byte_count);
       expect(createHash('md5').update(body).digest('hex')).toBe(entry.md5);
     }
-    expect(readdirSync(root).filter(f => f.endsWith('.sql'))).toHaveLength(22);
+    expect(readdirSync(root).filter(f => f.endsWith('.sql'))).toHaveLength(23);
   });
   it('enforces immutable evidence and one active review with restrictive evidence FKs', () => {
     expect(sql).toContain("where status = 'in_review'");

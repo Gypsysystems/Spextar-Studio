@@ -55,6 +55,40 @@ describe('Project settings validation and authenticated boundaries', () => {
     expect(f.db.projects[0].updated_at).not.toBe(before.updatedAt);
     expect(f.db.projects[1].name).toBe('Project B');
   });
+  it.each(['workspace', 'organization'] as const)('keeps inherited %s Admin reads without project mutation authority', async parent => {
+    const f = settingsDouble(null);
+    f.db.organization_members[0].role = parent === 'organization' ? 'admin' : 'member';
+    f.db.workspace_members[0].role = parent === 'workspace' ? 'admin' : 'member';
+    const state = await f.services.projectSettings.get(settingsScope);
+    expect(state.canAdminister).toBe(false);
+    const project = await f.services.projects.getProject('ws-a', 'project-a');
+    expect(project?.canEditContent).toBe(false);
+    expect(project?.id).toBe('project-a');
+    await expect(f.services.projectSettings.update(settingsScope, metadata, state.updatedAt)).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(f.services.projectSettings.addMember(settingsScope, 'existing-workspace-user', 'admin')).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(f.services.projectSettings.changeRole(settingsScope, testUser.id, 'admin', 'viewer')).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(f.services.projectSettings.removeMember(settingsScope, testUser.id, 'viewer')).rejects.toMatchObject({ code: 'forbidden' });
+    f.db.projects[0].status = 'archived';
+    const scope = { kind: 'project' as const, id: 'project-a', parentId: 'ws-a' };
+    const lifecycle = await f.services.lifecycle!.get(scope);
+    expect(lifecycle.canDelete).toBe(false);
+    await expect(f.services.lifecycle!.remove(scope, { name: lifecycle.name, acknowledged: true }, lifecycle)).rejects.toMatchObject({ code: 'forbidden' });
+    expect(writes(f)).toHaveLength(0);
+  });
+  it.each(['author', 'viewer', null])('rejects stale Admin state after revocation/demotion to %s, including the creator', async role => {
+    const f = settingsDouble();
+    const before = await f.services.projectSettings.get(settingsScope);
+    f.db.project_members = role ? [{ project_id: 'project-a', user_id: testUser.id, role }] : [];
+    await expect(f.services.projectSettings.update(settingsScope, metadata, before.updatedAt)).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(f.services.projectSettings.addMember(settingsScope, 'existing-workspace-user', 'admin')).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(f.services.projectSettings.changeRole(settingsScope, testUser.id, 'admin', 'admin')).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(f.services.projectSettings.removeMember(settingsScope, testUser.id, 'admin')).rejects.toMatchObject({ code: 'forbidden' });
+    expect(writes(f)).toHaveLength(0);
+  });
+  it.each(['admin', 'author', 'reviewer', 'viewer'])('preserves explicit %s content-authoring mapping', async role => {
+    const f = settingsDouble(role);
+    expect((await f.services.projects.getProject('ws-a', 'project-a'))?.canEditContent).toBe(['admin', 'author'].includes(role));
+  });
   it('archives/restores by metadata status alone; does not delete or call publishing RPCs', async () => {
     const f = settingsDouble(); const svc = f.services.projectSettings;
     let state = await svc.get(settingsScope);

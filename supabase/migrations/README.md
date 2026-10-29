@@ -55,7 +55,10 @@ assert len({entry['name'] for entry in entries}) == 21
 assert entries == sorted(entries, key=lambda entry: entry['version'])
 assert {path.relative_to(root).as_posix() for path in root.rglob('*.sql')} == {
     entry['file'] for entry in entries
-} | {'20261029140601_review_lifecycle_foundation.sql'}
+} | {
+    '20261029140601_review_lifecycle_foundation.sql',
+    '20261029172250_enforce_explicit_project_admin_management.sql',
+}
 for entry in entries:
     assert entry['file'] == f"{entry['version']}_{entry['name']}.sql"
     assert entry['statement_count'] == 1
@@ -108,3 +111,39 @@ The new migration adds immutable document review evidence, transactional role-
 and expected-state-checked lifecycle functions and working-content locks. See
 [`REVIEW_LIFECYCLE.md`](../../artifacts/spextar-studio/REVIEW_LIFECYCLE.md). It has
 not been applied or replayed. There is no live validation or deployment claim.
+
+## Issue #17 source migration
+
+`20261029172250_enforce_explicit_project_admin_management.sql` follows Review
+and narrows `app_private.is_project_admin(uuid)` to current explicit Admin
+membership. Every existing consumer was audited: only `projects_update_admin`,
+`projects_delete_admin`, `project_members_insert_admin_or_bootstrap`,
+`project_members_update_admin` and `project_members_delete_admin` use it.
+There are no read, parent-management, authoring or Review function consumers,
+so replacing this helper is smaller than introducing a parallel management
+helper and rewriting all five policies. Both UPDATE policies already check
+old and proposed project authority. Other helpers/policies remain unchanged.
+
+The INSERT policy uses the new private `can_bootstrap_project_admin(uuid)`
+only for the creator's initial self-Admin row in a project with no memberships.
+This preserves the invoker `create_project()` RPC and prevents a revoked or
+demoted creator from self-elevating in an established project. The unchanged
+last-admin trigger retains at least one Admin and its project lock/cascade
+exception. Organization-owner protection and Review's restrictive evidence FKs
+are unchanged. Parent organization/workspace delete cascades remain accepted
+parent-management behavior; this correction governs direct project mutations.
+
+Both privileged helpers have an empty search path, qualified references,
+postgres ownership and authenticated-only EXECUTE (PUBLIC/anon revoked).
+They query membership rather than cached client/JWT roles. Ordinary statement
+visibility applies; this does not certify concurrent revocation serialization.
+The manifest still records exactly the 21 recovered originals, not either
+pending migration. All historical SQL and the Review migration remain unchanged.
+
+Focused source assertions and adapter tests are offline evidence. Direct
+PostgreSQL tests must separately verify direct UPDATE/DELETE and membership
+INSERT/UPDATE/DELETE for explicit Admin, inherited Org/Workspace Admin,
+revoked/demoted creator and foreign tenant identities; initial bootstrap,
+last-admin races/cascades, parent reads, content authoring and all Review roles
+also require disposable database acceptance. No replay/application or live
+Supabase, Replit, deployment or domain changes are authorized by this source PR.

@@ -4,6 +4,7 @@ Recorded: 2026-10-29. Refresh this document when code, backend provenance, stagi
 
 ## Evidence and authority
 
+- Issue #17 implementation base: current GitHub `main` verified at `078a10b8f565fc311a5500a6a7dd5fa19e4ffea0`; branch `codex/fix-project-admin-rls`. This supersedes older implementation checkpoints for this task only. Review PR #18 is present, including `20261029140601_review_lifecycle_foundation.sql`. See the Issue #17 evidence below; neither pending migration was applied.
 - Recovery base: `Gypsysystems/Spextar-Studio`, accepted GitHub `main` at `ee3788b6719adbc0a04269e8cafdeacccf60391d`, verified before work on `codex/migration-recovery-2`. The earlier onboarding application baseline was `cbe5b4dce31e5b03da5acbad489bb4609f3e41bd` (`Fix readable user identities and unversioned document labels`). Verify remote HEADs again before future work.
 - [Issue #2](https://github.com/Gypsysystems/Spextar-Studio/issues/2) authorizes source-control recovery of the exact migration history. This branch adds original SQL and a provenance manifest and updates recovery documentation. No application functionality, dependency declarations, lockfiles, live database state or deployment was changed.
 - User-provided `SPEXTAR_Codex_Onboarding_Handoff_v2.md` governs onboarding. The later authoritative current-state addendum governs product lifecycle, operating/acceptance roles, migration recovery, staging restrictions and confirmed live state. It updates the earlier ZIP where stated.
@@ -418,3 +419,52 @@ failures above remain accurately recorded. Linux browser/visual verification,
 authorized database/function/RLS/race execution and product acceptance remain
 unrun; no migration was applied and no live/backend/deployment action occurred.
 The PR remains draft and unmerged.
+
+## Issue #17 — explicit project-management authority
+
+Source-only forward migration
+`20261029172250_enforce_explicit_project_admin_management.sql` narrows
+`app_private.is_project_admin(uuid)` to the signed-in identity's current explicit
+`project_members.role = 'admin'` in the exact project. Audited every consumer:
+only projects UPDATE/DELETE and project_members INSERT/UPDATE/DELETE policies
+use it. A shared-helper correction therefore avoids five parallel policy
+rewrites. Parent administration, inherited project reads, explicit Admin/Author
+content writes and Review submit/decide/start-Draft roles are separate and
+unchanged. The four existing UPDATE/DELETE policies retain their definitions;
+UPDATE checks both source and destination project authority.
+
+The membership INSERT policy retains creator self-Admin bootstrap only while
+the project has no memberships, using the new private
+`can_bootstrap_project_admin(uuid)` definer lookup. This preserves the atomic
+invoker create_project RPC but prevents removed/demoted creators from regaining
+Admin through the historical creator exception. The existing last-admin trigger
+still serializes Admin removal and handles project-delete cascades; organization
+owner protections and Review evidence restrictions remain unchanged.
+Both management helpers have empty search_path, postgres ownership and only
+authenticated EXECUTE beyond their owner. No new table grants or client/runtime
+changes. Adapter/domain source-review digests are intentionally unchanged;
+the reviewed application contract records the pending source correction.
+
+The 21 recovered originals/manifest and merged Review migration are byte-for-byte
+unchanged. There are now 23 source SQL migrations: 21 recovered applied entries
+and two pending source migrations. No fresh ledger/schema inspection was made.
+Tests are offline source assertions and adapter doubles, not PostgreSQL/RLS
+execution. Committed revocations are read from membership rather than JWT/client
+roles; no new claim of concurrent revocation serialization is made. Existing
+parent-delete cascades and target-user eligibility rules are not redesigned.
+Disposable database role/tenant/direct-write/bootstrap/last-admin concurrency
+acceptance, live parity and final product acceptance remain external gates.
+
+No UI/branding changes. No live Supabase, Replit, deployment, domain or DNS
+changes. No Publishing, History, Style Guide, Brand Outputs or AI implementation.
+The PR must remain unmerged for product-owner/security review.
+
+Issue #17 local verification (Windows, Node 24.22.1 / pnpm 10.34.9): focused
+Settings/lifecycle/backend-contract/migration suite **138 passed**; additional
+Review lifecycle, Settings-wire and Supabase adapter regression **99 passed**.
+Workspace typecheck and both demo production builds passed. Bundle guard passed
+at **734,058 / 975,000** initial JavaScript bytes, with lazy boundaries intact.
+All 21 historical MD5s and Git blobs, the provenance manifest and merged Review
+SQL match the verified main base. Build emitted existing non-failing sourcemap
+notices. No local full-unit/browser sweep or PostgreSQL execution was performed;
+hosted CI results must be read separately from the actual PR/head checks.
