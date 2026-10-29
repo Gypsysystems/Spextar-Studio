@@ -27,6 +27,7 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     documents: [],
     topics: [],
     topic_drafts: [],
+    document_reviews: [],
     project_variables: [],
     condition_categories: [],
     condition_values: [],
@@ -50,6 +51,7 @@ export function supabaseDouble(initialSession: Session | null = testSession) {
     select(columns: string) { this.columns = columns; return this; }
     eq(column: string, value: unknown) { this.filters.push([column, value]); return this; }
     in(column: string, values: unknown[]) { this.filters.push([column, values]); return this; }
+    limit(count: number) { this.bounds = [0, count - 1]; return this; }
     order() { return this; }
     range(from: number, to: number) { this.bounds = [from, to]; return this; }
     update(patch: Row) { this.patch = patch; return this; }

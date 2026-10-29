@@ -217,3 +217,11 @@ The import dialog also has an **Example file** download.
 9. Review inspects saved drafts of In-review documents with no workflow writes. Publish remains a placeholder listing approved documents with disabled actions.
 10. `/workspaces/nope/projects`, an unknown project, `…/author/unknown` and `/random` all show not-found.
 11. `/sign-in` → Enter demo → account menu → Sign out returns you to `/sign-in`.
+
+## Review & Approval foundation
+
+Issue #9 adds explicit submission, immutable document review snapshots,
+Reviewer/Admin decisions and starting a new Draft from Approved. Author is
+read-only In Review and Approved; status fields no longer bypass the lifecycle.
+See [REVIEW_LIFECYCLE.md](REVIEW_LIFECYCLE.md). Publishing/releases are not
+implemented. The new migration is source-only and has not been applied.

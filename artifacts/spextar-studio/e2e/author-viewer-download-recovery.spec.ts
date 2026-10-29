@@ -117,12 +117,12 @@ for (const role of ['admin', 'author', 'reviewer', 'viewer', null] satisfies Rol
     const fault = await rejectAuthoringChunk(page, 'reviewViewer', role === 'admin' || role === 'author' ? 'missing' : 'network');
     try {
       // The Review shell and missing-draft state must work without fetching the viewer.
-      backend.db.topic_drafts = [];
+      backend.db.topic_drafts = []; backend.captureReview();
       await login(page, `${projectPath}/review`);
       await expect(page.getByTestId('review-draft-missing')).toBeVisible();
       expect(fault.attempts).toBe(0);
       expect(backend.scripts.some(url => /\/(?:author|structured-editor|review-draft-viewer)-/.test(url))).toBe(false);
-      backend.db.topic_drafts = structuredClone(saved);
+      backend.db.topic_drafts = structuredClone(saved); backend.captureReview();
       const origin = await page.evaluate(() => performance.timeOrigin);
       await activate(page, page.getByTestId('button-refresh'));
       const failed = page.getByTestId('review-viewer-error');

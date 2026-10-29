@@ -2,18 +2,19 @@ import { documentVersionLabel } from '@/lib/presentation';
 import { UserIdentity } from '@/components/user-identity';
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
 import { useParams } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+
 import { AlertTriangle, FileSearch, FileText, RefreshCw, RotateCw } from 'lucide-react';
 import { ProjectScope, PageHeader } from '@/features/project/project-scope';
 import { EmptyState, ErrorState, ListSkeleton, ScopeMarker } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useServices } from '@/providers/services-provider';
-import { useStudioSession } from '@/providers/session-provider';
+
 import { useDocuments } from '@/hooks/use-studio-data';
 import type { DocumentRecord, Topic } from '@/domain/types';
 import type { TopicContent } from '@/domain/topic-content';
 import { cn } from '@/lib/utils';
+import { SubmittedReview } from '@/features/review/submitted-review';
 
 const fmt = (iso?: string) => {
   if (!iso) return 'Not recorded';
@@ -73,53 +74,14 @@ function Meta({ k, v, testId }: { k: string; v: ReactNode; testId?: string }) {
   );
 }
 
-function DraftPanel({ projectId, doc, topic, refreshKey }: { projectId: string; doc: DocumentRecord; topic: Topic; refreshKey: number }) {
-  const services = useServices();
-  const session = useStudioSession();
-  const backend = services.mode === 'backend';
-  const userId = session.data?.mode === 'backend' ? session.data.userId : '';
-  const draft = useQuery({
-    queryKey: ['review-draft', userId, projectId, doc.id, topic.id, refreshKey],
-    queryFn: () => services.topicDrafts.get({ userId, projectId, documentId: doc.id, topicId: topic.id }),
-    enabled: backend && !!userId,
-    staleTime: 0,
-    retry: false,
-  });
-
-  if (!backend) {
-    return (
-      <div className="space-y-3">
-        <p className="rounded-md border border-primary/25 bg-accent px-3 py-2 text-[12.5px] text-accent-foreground" data-testid="review-demo-note">
-          Demo sample: paragraphs from this topic's demo body, shown read-only. Not a saved draft, no revision exists, and nothing is stored.
-        </p>
-        <ReviewDraftViewer key={`demo-${topic.id}`} content={sampleContent(topic)} />
-      </div>
-    );
-  }
-  if (!userId) return <p role="alert" className="text-sm text-destructive">No signed-in session is available to read this draft.</p>;
-  if (draft.isLoading) return <ViewerLoading />;
-  if (draft.isError) return <ErrorState error={draft.error} onRetry={() => void draft.refetch()} title="Current draft did not load" />;
-  const d = draft.data;
-  if (!d) {
-    return (
-      <div className="rounded-lg border border-dashed px-5 py-8 text-center" data-testid="review-draft-missing">
-        <p className="font-medium">No current draft for this topic</p>
-        <p className="mt-1 text-sm text-muted-foreground">Nothing has been saved to this topic's draft yet.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-3">
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Meta k="Draft revision" v={d.revision} testId="review-draft-revision" />
-        <Meta k="Saved" v={fmt(d.updatedAt)} testId="text-draft-updated" />
-        <Meta k="Saved by" v={<UserIdentity userId={d.updatedBy} />} testId="text-draft-updated-by" />
-      </dl>
-      <ReviewDraftViewer key={`${d.topicId}-${d.revision}-${d.updatedAt}`} content={d.content} />
-    </div>
-  );
+function DraftPanel({ topic }: { projectId: string; doc: DocumentRecord; topic: Topic; refreshKey: number }) {
+  return <div className="space-y-3">
+    <p className="rounded-md border border-primary/25 bg-accent px-3 py-2 text-[12.5px] text-accent-foreground" data-testid="review-demo-note">
+      Demo sample: paragraphs from this topic's demo body, shown read-only. Not a saved draft, no revision exists, and nothing is stored.
+    </p>
+    <ReviewDraftViewer key={`demo-${topic.id}`} content={sampleContent(topic)} />
+  </div>;
 }
-
 function ReviewBody({ projectId, onDoc }: { projectId: string; onDoc: (d: DocumentRecord | null) => void }) {
   const docs = useDocuments(projectId);
   const [docId, setDocId] = useState<string | null>(null);
@@ -235,12 +197,12 @@ export default function ReviewPage() {
       {({ project }) => (
         <div className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-10 md:py-10" data-testid="review-page">
           <PageHeader
-            eyebrow={backend ? <ScopeMarker kind="read-only">Read-only · current drafts</ScopeMarker>
+            eyebrow={backend ? <ScopeMarker kind="read-only">Submitted reviews</ScopeMarker>
               : <ScopeMarker kind="demo">Read-only · sample content</ScopeMarker>}
             title="Review"
-            description="Inspect the current draft of documents marked In review. Nothing on this page can change content."
+            description={backend ? 'Inspect immutable submitted content and record a review decision.' : 'Inspect sample content read-only. Demo reviews are not persisted.'}
           />
-          <ReviewBody key={project.id} projectId={project.id} onDoc={onDoc} />
+          {backend ? <SubmittedReview key={project.id} project={project} Viewer={ReviewDraftViewer} onDoc={onDoc} /> : <ReviewBody key={project.id} projectId={project.id} onDoc={onDoc} />}
         </div>
       )}
     </ProjectScope>

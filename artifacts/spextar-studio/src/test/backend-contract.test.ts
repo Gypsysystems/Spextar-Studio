@@ -15,7 +15,7 @@ const review = JSON.parse(readFileSync(resolve(repositoryRoot, 'supabase/readine
 };
 const tables = contract as BackendContract;
 const adapter = (file: string) => `${serviceDirectory}/supabase-${file}.ts`;
-const reviewedDomains = ['project-variables', 'project-conditions', 'reusable-content', 'project-settings', 'topic-content', 'structured-content', 'semantic-references']
+const reviewedDomains = ['project-variables', 'project-conditions', 'reusable-content', 'project-settings', 'topic-content', 'structured-content', 'semantic-references', 'reviews']
   .map(name => `${domainDirectory}/${name}.ts`);
 
 describe('offline backend contract readiness (not live migration/RLS certification)', () => {
@@ -83,6 +83,7 @@ describe('offline backend contract readiness (not live migration/RLS certificati
   it('matches authoritative atomic and document/topic RPC contracts to actual adapter declarations', () => {
     expect(declarationValue(adapter('atomic'), 'rpcNames')).toEqual(contract.rpcs.atomicNames);
     expect(declarationValue(adapter('documents'), 'rpcParameters')).toEqual(contract.rpcs.documentTopicOperations);
+    expect(declarationValue(adapter('reviews'), 'reviewRpcParameters')).toEqual(contract.rpcs.reviewOperations);
     const source = readSource(adapter('documents'));
     expect(source).not.toContain('__spextar_signature_probe__');
     expect(source).not.toContain('PGRST202');
@@ -122,7 +123,7 @@ describe('offline backend contract readiness (not live migration/RLS certificati
   );
 
   it('never represents local checks as exact live migration parity', () => {
-    expect(contract.migrationHistory).toMatchObject({ verifiedFromLiveLedger: false, exactSqlAvailable: false, replayCertified: false });
+    expect(contract.migrationHistory).toMatchObject({ verifiedFromLiveLedger: false, exactSqlAvailable: true, replayCertified: false });
     expect(contract.unresolved.length).toBeGreaterThan(0);
   });
 });

@@ -14,7 +14,7 @@ import { contentStatistics, type ContentStatistics } from '@/domain/content-stat
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDocument, useDocuments } from '@/hooks/use-studio-data';
+import { useDocument, useDocuments, useProject } from '@/hooks/use-studio-data';
 import { DOC_STATUS_LABEL, DOC_TYPE_LABEL, relative } from '@/lib/format';
 import type { DocumentRecord, ProjectSummary, Topic } from '@/domain/types';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,7 @@ import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
 import { MetadataEditor, type TopicMetadataControls } from '@/features/content/metadata-editor';
 import { useContentMutation } from '@/hooks/use-content-mutation';
 import { TopicBodyEditor } from '@/features/content/topic-body-editor';
+import { ReviewActions } from '@/features/content/review-actions';
 
 const KIND_STYLE: Record<Topic['kind'], string> = {
   concept: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-400/10 dark:border-sky-400/25',
@@ -38,6 +39,12 @@ function numbering(topics: Topic[]): string[] {
     counters.length = t.level;
     return counters.slice(0, t.level).map((n) => Math.max(n, 1)).join('.');
   });
+}
+
+function AuthorReviewActions({ doc }: { doc: DocumentRecord }) {
+  const { workspaceId = '' } = useParams<{ workspaceId: string }>();
+  const project = useProject(workspaceId, doc.projectId);
+  return <ReviewActions doc={doc} canAct={project.data?.canEditContent === true} />;
 }
 
 function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
@@ -195,7 +202,8 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
       {/* Editor canvas */}
       <section aria-label="Topic editor" className="min-h-0 overflow-y-auto bg-[hsl(var(--surface-raised))]">
         <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b bg-card px-6 py-2.5">
-          <ScopeMarker kind={backend ? 'status' : 'demo'}>{backend ? 'Draft body · autosave' : 'Session-only edits · not saved'}</ScopeMarker>
+          <ScopeMarker kind={backend ? 'status' : 'demo'}>{backend ? doc.status === 'draft' ? 'Draft body · autosave' : `${DOC_STATUS_LABEL[doc.status]} · Read-only` : 'Session-only edits · not saved'}</ScopeMarker>
+          {backend && <AuthorReviewActions doc={doc} />}
           {dirty && (
             <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => {
               bodies.current.clear();

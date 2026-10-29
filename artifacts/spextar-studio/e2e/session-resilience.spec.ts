@@ -163,12 +163,12 @@ test('Review permission denial retries safely; role upgrades never enable mutati
   await login(page, projectPath + '/review');
   const body = bodyOf(page);
   await expect(body).toHaveAttribute('contenteditable', 'false');
-  backend.failures.add('topic_drafts');
+  backend.failures.add('document_reviews');
   await activate(page, page.getByRole('button', { name: 'Refresh', exact: true }));
-  await expect(page.getByText('Current draft did not load', { exact: true })).toBeVisible();
+  await expect(page.getByText('Submitted review did not load', { exact: true })).toBeVisible();
   await expect(body).toHaveCount(0);
   backend.setRole('admin');
-  backend.failures.delete('topic_drafts');
+  backend.failures.delete('document_reviews');
   await activate(page, page.getByRole('button', { name: 'Retry', exact: true }));
   await expect(body).toHaveAttribute('contenteditable', 'false');
   await body.focus(); await page.keyboard.type('BLOCKED');

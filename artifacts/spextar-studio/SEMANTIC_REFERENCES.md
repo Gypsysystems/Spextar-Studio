@@ -87,3 +87,11 @@ transactional server guard covering all uses before it can be enabled.
 No live Supabase state or deployment was read or changed for this implementation.
 Offline source/contract tests and controlled intercepted browser tests are not
 live RLS, migration replay, manual UAT or release acceptance.
+
+## Review snapshots
+
+Review now renders submitted immutable topic JSON, not current `topic_drafts`.
+Semantic references remain stored by ID; read-only labels and linked reusable
+previews use the existing safe current-definition resolution. See
+[REVIEW_LIFECYCLE.md](REVIEW_LIFECYCLE.md). Starting a new Draft copies Approved
+snapshot JSON without flattening references or resetting revision safeguards.

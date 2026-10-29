@@ -63,6 +63,7 @@ export interface ProjectSummary extends Project {
   topicCount: number;
   /** Explicit project membership, not inherited workspace administration. */
   canEditContent?: boolean;
+  canReview?: boolean;
 }
 
 export type DocumentStatus = 'draft' | 'in-review' | 'approved' | 'published';

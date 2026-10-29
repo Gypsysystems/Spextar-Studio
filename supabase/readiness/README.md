@@ -176,3 +176,14 @@ No table/RPC/migration is added or applied. Source review additionally inventori
 the reference validator and service composition, plus paginated project/member
 reads needed for complete workspace-shared scans. This is offline contract review,
 not new live schema/security evidence.
+
+## Review & Approval source contract — Issue #9
+
+The source-reviewed contract now includes `document_reviews` (SELECT only) and
+four explicit review lifecycle RPCs. See the application
+[Review contract](../../artifacts/spextar-studio/REVIEW_LIFECYCLE.md) for immutable
+JSON snapshots, roles, transaction/concurrency behavior, write locks, recovery,
+UI semantics and the exact signatures. The new forward-only migration remains
+unapplied. The 21 historical SQL files remain exact; no migration replay or live
+schema/Auth/RLS/data validation was performed. Offline inventory/digests describe
+source only, and do not certify deployed behavior.

@@ -2,6 +2,13 @@
   "formatVersion": 1,
   "authority": "Application expectations derived from source and established product behavior; NOT a live schema export or executable migration baseline.",
   "schema": "public",
+  "reviewLifecycle": {
+    "authority": "Issue #9; source-reviewed only",
+    "snapshot": "Document metadata and ordered topic graph with nullable persisted revision/content; JSONB is copied without resolving references.",
+    "transitions": "Admin/Author submits Draft or starts new Draft from latest Approved; Reviewer/Admin decides expected active review. Changes requested requires note.",
+    "enforcement": "One document row lock per transition; working-write triggers serialize direct/tree/body writes. Explicit project role checked under membership row lock. Private definer implementation, empty search_path, postgres owner, authenticated EXECUTE only; invoker public wrappers. Browser must not send raw lifecycle status changes.",
+    "limits": "No migration application/replay, live RLS/Auth/multi-session validation or deployment performed. Restrictive review FKs preserve evidence and can block parent deletion."
+  },
   "publicClientConfiguration": {
     "requiredModeForBackendStaging": "backend",
     "projectUrl": "https://luyyxblmtupmugtazgbr.supabase.co",
@@ -11,12 +18,44 @@
     "authority": "Application initialization guard only; key validity, live RLS and provider settings are not certified."
   },
   "migrationHistory": {
-    "reportedAppliedCount": 18,
+    "reportedAppliedCount": 21,
     "verifiedFromLiveLedger": false,
-    "exactSqlAvailable": false,
-    "replayCertified": false
+    "exactSqlAvailable": true,
+    "replayCertified": false,
+    "sourceRecoveredCount": 21,
+    "pendingSourceCount": 1,
+    "authority": "Issue #2 recovered manifest; no fresh live inspection in Issue #9"
   },
   "tables": {
+    "document_reviews": {
+      "columns": [
+        "id",
+        "project_id",
+        "document_id",
+        "sequence",
+        "status",
+        "submitted_by",
+        "submitted_at",
+        "decided_by",
+        "decided_at",
+        "decision_note",
+        "document_snapshot",
+        "topics_snapshot"
+      ],
+      "operations": [
+        "select"
+      ],
+      "scope": [
+        "project_id",
+        "document_id"
+      ],
+      "authorization": "Project members may read immutable evidence through tenant-safe RLS; no authenticated direct writes. Source-only Issue #9 migration; not live certified.",
+      "concurrency": [
+        "id",
+        "sequence",
+        "status"
+      ]
+    },
     "profiles": {
       "columns": ["id", "display_name", "avatar_url"],
       "operations": ["select"],
@@ -75,7 +114,7 @@
       "columns": ["id", "project_id", "title", "slug", "description", "status", "settings", "created_by", "created_at", "updated_at"],
       "operations": ["select", "update", "delete"],
       "scope": ["project_id", "id"],
-      "authorization": "Project access for reads; explicit Project Admin/Author for mutation; create/duplicate via existing RPCs.",
+      "authorization": "Project access for reads; explicit Project Admin/Author may mutate Draft only. Lifecycle transitions use checked review RPCs; metadata cannot advance status. Create/duplicate use existing RPCs. New database guards are source-only.",
       "insertFields": [],
       "updateFields": ["title", "slug", "description", "status", "settings"],
       "concurrency": ["project_id", "id", "updated_at"],
@@ -85,7 +124,7 @@
       "columns": ["id", "document_id", "parent_topic_id", "title", "slug", "status", "sort_order", "settings", "created_by", "created_at", "updated_at"],
       "operations": ["select", "update", "delete"],
       "scope": ["document_id", "id"],
-      "authorization": "Project access through document; explicit Project Admin/Author for mutation. Tree operations and creation/duplication use RPCs.",
+      "authorization": "Project access through document; explicit Project Admin/Author may mutate only while the document is Draft. Review transitions set topic statuses atomically. Tree operations and creation/duplication use RPCs; new lock triggers are source-only.",
       "insertFields": [],
       "updateFields": ["title", "slug", "status", "settings"],
       "concurrency": ["document_id", "id", "updated_at"],
@@ -95,7 +134,7 @@
       "columns": ["topic_id", "content", "revision", "updated_at", "updated_by"],
       "operations": ["select", "insert", "update"],
       "scope": ["topic_id"],
-      "authorization": "Authenticated identity and document/topic/project checked; explicit Project Admin/Author writes. Review is read-only in UI.",
+      "authorization": "Authenticated identity and document/topic/project/status checked; explicit Project Admin/Author writes only in Draft. Review reads immutable evidence, never this table. New database write locks remain source-only.",
       "insertFields": ["topic_id", "content", "updated_by"],
       "updateFields": ["content", "updated_by"],
       "concurrency": ["topic_id", "revision"],
@@ -170,6 +209,31 @@
     "stableKeyPattern": "^[a-z][a-z0-9_]{0,79}(?![\\s\\S])"
   },
   "rpcs": {
+    "reviewOperations": {
+      "submit_document_review": [
+        "p_project_id",
+        "p_document_id",
+        "p_expected_updated_at"
+      ],
+      "approve_document_review": [
+        "p_project_id",
+        "p_document_id",
+        "p_review_id",
+        "p_note"
+      ],
+      "request_document_changes": [
+        "p_project_id",
+        "p_document_id",
+        "p_review_id",
+        "p_note"
+      ],
+      "start_document_draft": [
+        "p_project_id",
+        "p_document_id",
+        "p_review_id",
+        "p_expected_updated_at"
+      ]
+    },
     "atomicNames": {
       "organization": "create_organization",
       "workspace": "create_workspace",
@@ -191,7 +255,7 @@
     },
     "atomicInvocation": "Authoritative live F0/F1 names and named parameters, one authenticated RPC POST only. Workspace/project description is optional and sent as null when omitted. No signature discovery, aliases, direct entity inserts or client membership inserts.",
     "documentTopicInvocation": "Verified named parameters, one authenticated RPC POST per action. No signature discovery, hint parsing, aliases, retries or direct insert fallback. Existing project/document/topic scope and authoring-role checks precede writes.",
-    "authority": "Atomic F0/F1 and document/topic callable names and named parameters are confirmed by the supplied authoritative live contracts; this does not certify exact migration SQL or live RLS implementation.",
+    "authority": "Atomic F0/F1 and document/topic callable names and named parameters are confirmed by the supplied authoritative live contracts; this does not certify current live SQL/RLS implementation. Review lifecycle RPCs are new source-only contracts, not applied or live-certified.",
     "returns": "F2 creators/duplicators require a nonempty UUID string. Move/promote/demote do not consume a return value. Atomic F0/F1 create accepts string or id/entity_id record, then verifies bootstrap membership."
   },
   "semanticReferences": {
@@ -206,12 +270,12 @@
     "authority": "Source-reviewed application behavior; no live DB changes or live RLS certification. See artifacts/spextar-studio/SEMANTIC_REFERENCES.md"
   },
   "unresolved": [
-    "All 18 applied versions/names and exact original SQL from the authoritative migration ledger",
+    "21 historical originals were recovered in Issue #2; replay/current live parity and application of the new review migration remain uncertified",
     "Exact constraints, indexes, FK ON DELETE actions, triggers, private helpers and grants/policy definitions",
     "Installed atomic RPC security-definer configuration and authenticated-only execution grants (F0/F1 callable names/parameters confirmed)",
     "Live multi-identity RLS coverage for all management/draft tables; fixtures are not live certification",
     "Atomic last-project-admin and dependency-delete protections under concurrent sessions",
     "General project reader accepts legacy in_review/in-review; this does not expand the active/archived writable database contract",
-    "No comments/approval, release/history, brand/output or publishing execution contract; semantic references now use the source-reviewed version-1 body contract"
+    "No threaded comments, release/global History, brand/output or publishing execution contract; bounded review/approval is source-only and unapplied; semantic references use the version-1 body contract"
   ]
 }

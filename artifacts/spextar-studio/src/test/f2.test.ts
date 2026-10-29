@@ -28,7 +28,7 @@ const rpcParameters: Record<string, string[]> = {
 
 export function f2Setup(role = 'admin') {
   const fake = supabaseDouble();
-  fake.db.documents.push({ ...f2Document });
+  fake.db.documents.push({ ...f2Document, status: 'draft' });
   fake.db.topics.push(f2Topic('root-b', null, 10), f2Topic('child', 'root-a', 0), f2Topic('root-a', null, 0));
   fake.db.project_members[0].role = role;
   fake.raw.rpc.mockImplementation(async (name, args, options) => {
@@ -102,15 +102,16 @@ describe('F2 permission and mutation boundaries', () => {
     await expect(fake.services.documents.updateTopic('project-a', 'doc-a', 'root-a', { title: 'No' })).rejects.toMatchObject({ code: 'forbidden' });
     expect(fake.raw.rpc).not.toHaveBeenCalled();
   });
-  it('persists only whitelisted metadata, including underscore statuses and JSON settings', async () => {
+  it('persists only whitelisted metadata, including JSON settings, and blocks lifecycle bypass', async () => {
     const { services, calls } = f2Setup();
-    await services.documents.updateDocument('project-a', 'doc-a', { description: null, status: 'in-review' });
-    await services.documents.updateTopic('project-a', 'doc-a', 'root-a', { title: 'Changed', settings: { kind: 'reference', custom: true }, status: 'published' });
+    await services.documents.updateDocument('project-a', 'doc-a', { description: null, status: 'draft' });
+    await services.documents.updateTopic('project-a', 'doc-a', 'root-a', { title: 'Changed', settings: { kind: 'reference', custom: true }, status: 'draft' });
     const writes = calls.filter((c) => c.patch);
-    expect(writes[0].patch).toEqual({ description: null, status: 'in_review' });
-    expect(writes[1].patch).toEqual({ title: 'Changed', settings: { kind: 'reference', custom: true }, status: 'published' });
+    expect(writes[0].patch).toEqual({ description: null, status: 'draft' });
+    expect(writes[1].patch).toEqual({ title: 'Changed', settings: { kind: 'reference', custom: true }, status: 'draft' });
     await expect(services.documents.updateTopic('project-a', 'doc-a', 'root-a', { body: ['never persist'] } as never)).rejects.toMatchObject({ code: 'validation' });
     await expect(services.documents.updateTopic('project-a', 'doc-a', 'root-a', { settings: { content: 'never persist' } })).rejects.toMatchObject({ code: 'validation' });
+    await expect(services.documents.updateDocument('project-a', 'doc-a', { status: 'approved' })).rejects.toMatchObject({ code: 'forbidden' });
     expect(calls.filter((c) => c.patch)).toHaveLength(2);
   });
   it('maps all tree and duplication operations to the existing RPCs, without direct hierarchy updates', async () => {

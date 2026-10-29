@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { invalidateContent } from './use-content-mutation';
 import { toast } from './use-toast';
 import { metadataDeletionState, type DeleteTarget } from './use-content-deletion';
+import { markMetadataPending } from '@/features/content/topic-draft-registry';
 
 /** Debounced and serialized per mounted entity. A failed write is never labelled saved. */
 export function useMetadataAutosave<T extends object>(server: T, save: (value: T) => Promise<void>, projectId: string, target?: Pick<DeleteTarget, 'documentId' | 'topicId'>) {
@@ -17,6 +18,7 @@ export function useMetadataAutosave<T extends object>(server: T, save: (value: T
   const saveRef = useRef(save);
   saveRef.current = save;
   const client = useQueryClient();
+  const pendingKey = JSON.stringify([projectId, target?.documentId, target?.topicId]);
   const serverJSON = JSON.stringify(server);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export function useMetadataAutosave<T extends object>(server: T, save: (value: T
 
   function suspendForDeletion() {
     const deleting = target && metadataDeletionState(client, projectId, target);
-    if (deleting === 'deleted') { pending.current = null; failed.current = null; return true; }
+    if (deleting === 'deleted') { pending.current = null; failed.current = null; markMetadataPending(client, pendingKey, false); return true; }
     if (deleting === 'pending') { timer.current = setTimeout(() => void flush(), 100); return true; }
     return false;
   }
@@ -56,11 +58,13 @@ export function useMetadataAutosave<T extends object>(server: T, save: (value: T
           return;
         }
       }
+      markMetadataPending(client, pendingKey, false);
       if (mounted.current) setState('saved');
     } finally { running.current = false; }
   }
 
   function change(value: T) {
+    markMetadataPending(client, pendingKey, true);
     setDraft(value); pending.current = value; failed.current = null;
     setState('pending'); setError(null);
     clearTimeout(timer.current);

@@ -44,9 +44,9 @@ describe('F2 UI persistence and read-only states', () => {
     const title = screen.getByTestId('input-topic-title');
     await user.clear(title);
     await user.type(title, 'Updated installation');
-    await user.selectOptions(screen.getByLabelText('Topic status'), 'in-review');
+    expect(screen.getByLabelText('Topic status')).toBeDisabled();
     await waitFor(() => expect(db.topics[0].title).toBe('Updated installation'), { timeout: 4000 });
-    await waitFor(() => expect(db.topics[0].status).toBe('in_review'), { timeout: 4000 });
+    await waitFor(() => expect(db.topics[0].status).toBe('draft'), { timeout: 4000 });
     await waitFor(() => expect(screen.getByText('Metadata saved')).toBeVisible());
     expect(screen.getByTestId('input-topic-body')).toHaveTextContent('UNSAVED BODY');
     expect(calls.filter((call) => call.patch && call.table !== 'topic_drafts').every((call) => !JSON.stringify(call.patch).includes('UNSAVED BODY'))).toBe(true);
@@ -162,10 +162,10 @@ describe('F2 destructive confirmation and navigation', () => {
     await screen.findByTestId('input-topic-body');
     await user.click(screen.getByTestId('outline-topic-topic-b'));
     await waitFor(() => expect(screen.getByTestId('input-topic-body')).toHaveAttribute('contenteditable', 'true'));
-    await user.type(screen.getByTestId('input-topic-body'), 'KEEP LOCAL DRAFT');
+    await user.click(screen.getByTestId('input-topic-body')); await user.paste('KEEP LOCAL DRAFT');
     await user.click(screen.getByTestId('outline-topic-topic-a'));
     await waitFor(() => expect(screen.getByTestId('input-topic-body')).toHaveAttribute('contenteditable', 'true'));
-    await user.type(screen.getByTestId('input-topic-body'), 'DISCARD DELETED DRAFT');
+    await user.click(screen.getByTestId('input-topic-body')); await user.paste('DISCARD DELETED DRAFT');
     await user.click(screen.getByRole('button', { name: 'Delete topic' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText('Title to confirm deletion'), 'Install');

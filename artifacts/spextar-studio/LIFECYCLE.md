@@ -55,3 +55,12 @@ environment before destructive actions are certified for production.
 
 The readiness contract records the expected workspace status column and
 parent-delete behavior rather than reconstructing or applying database SQL.
+
+## Document review lifecycle
+
+Document status is controlled by the explicit Review & Approval operations, not
+metadata dropdowns. In Review and Approved authoring is read-only. Approved edits
+require Admin/Author to start a new Draft. See [REVIEW_LIFECYCLE.md](REVIEW_LIFECYCLE.md)
+for permissions, immutable evidence, recovery and source-only migration limits.
+Parent deletion may be rejected by restrictive review-evidence foreign keys.
+Publishing/releases remain outside this foundation.

@@ -53,7 +53,7 @@ describe('pre-deploy build isolation and client exposure checks', () => {
     await mkdir(path.join(root, 'assets'));
     await writeFile(path.join(root, 'index.html'), '<div>safe</div>');
     await writeFile(path.join(root, 'assets/lazy.js.map'), JSON.stringify({ source: privateCanary }));
-    expect(await scanClient(root)).toEqual([{ file: 'assets/lazy.js.map', categories: ['private canary'] }]);
+    expect(await scanClient(root)).toEqual([{ file: path.join('assets', 'lazy.js.map'), categories: ['private canary'] }]);
   });
   it('rejects symlinks rather than reading outside the emitted build', async () => {
     const root = await mkdtemp(path.join(tmpdir(), 'spextar-exposure-')); dirs.push(root);

@@ -31,7 +31,7 @@ Studio is a browser React/TypeScript SPA under `artifacts/spextar-studio/`. `src
 
 Stack: Node 24, pnpm 10, TypeScript 5.9, React 19.1, Vite 7, Wouter, TanStack Query, Tailwind 4, shadcn/Radix, Lucide, Zod, Tiptap 3/ProseMirror, Supabase JS 2; Vitest/jsdom/Testing Library and Playwright/Chromium/axe. The lockfile/workspace catalog controls exact versions. `artifacts/mockup-sandbox` is optional component-preview tooling; root `scripts` contains workspace utilities.
 
-Tenant hierarchy: organization → workspace → project → document → topic. The reviewed backend contract consumes profiles, organizations/memberships, workspaces/memberships, projects/memberships, documents, topics, topic drafts, variables, condition categories/values, reusable metadata and reusable drafts (15 tables). See `supabase/readiness/application-contract.json`; it is an application expectation, not authoritative SQL.
+Tenant hierarchy: organization → workspace → project → document → topic. The reviewed backend contract consumes profiles, organizations/memberships, workspaces/memberships, projects/memberships, documents, topics, topic drafts, variables, condition categories/values, reusable metadata and reusable drafts (15 historical tables plus the new, unapplied `document_reviews` source contract). See `supabase/readiness/application-contract.json`; it is an application expectation, not authoritative SQL.
 
 Persisted bodies use SPEXTAR-owned versioned structured JSON with stable content-scoped node IDs. Tiptap is the editing engine. Topic/reusable draft saves have expected-revision conflict handling and identity-scoped recovery; some metadata uses expected timestamps/roles. Other metadata/variable/condition writes do not have universal CAS. Reusable duplication is a two-step metadata/body copy with explicit partial-copy reporting.
 
@@ -65,8 +65,8 @@ These are source-confirmed capabilities, not a declaration of final UAT completi
 | Conditional tags | Category/value definitions, block apply/remove with saved assignments and category/value where-used; neutral preview preserves tagged content without publishing filters |
 | Reusable content | Scoped metadata/drafts/duplication, linked Author insertion, current saved draft previews and accessible saved where-used; notification/snapshot policies remain future intent |
 | Project settings | Explicit Project Admin metadata/member administration, archive/restore and lifecycle controls |
-| Review | Read-only inspection of saved in-review content; submit/assign/comments/approve/request-changes workflow is incomplete |
-| Publish/releases/history | Publish/History routes are placeholders; no completed release execution or immutable historical-version subsystem |
+| Review | Source implements immutable submitted document snapshots, Admin/Author submit/new Draft and Reviewer/Admin approve/request changes; new source migration remains unapplied |
+| Publish/releases/history | Publish/History routes are placeholders; no completed release execution or global History browser; Issue #9 adds scoped immutable review evidence |
 | Style Guide / Brand & Outputs | Placeholder routes; existing output-preview IDs do not define publishing/templates |
 | Reference Safety & Cross-References | Versioned semantic IDs, visible missing/unsupported reference states, rename integrity and conservative definition-delete blocking; general topic cross-links/replacement workflows remain outside Issue #4 |
 | Identity/version presentation | Human-readable owners/creators/saved-by/member labels; “Unknown user” fallback and consistent “Unversioned” presentation; no invented release |
@@ -75,7 +75,7 @@ These are source-confirmed capabilities, not a declaration of final UAT completi
 
 The addendum defines Draft → In Review → Approved → Published and Changes Requested → Draft. Editing approved content must create a new Draft; publishing must create a Release.
 
-The source currently models four document statuses (`draft`, `in-review`, `approved`, `published`), with `in_review` in backend storage. It does not model Changes Requested or a Release entity/workflow. `supabase-topic-drafts.ts` updates the topic's current revision after role/scope checks; that path does not inspect approval status or create a separate approved-content Draft. A complete automatic fork-on-approved-edit mechanism was not found. Original migration SQL is now available for review, but recovery did not audit lifecycle enforcement or perform replay, so no additional database enforcement is claimed. These are implementation/verification gaps against the authoritative product rules, not permission to change the rules or implement them during onboarding or recovery.
+Document statuses remain `draft`, `in-review`, `approved`, `published` (`in_review` in storage). Issue #9 now adds review outcomes `in_review`, `approved`, `changes_requested` in immutable review evidence. Changes requested returns the working document/topics to Draft. Approved editing requires an explicit new Draft from the latest Approved snapshot. Both client controls and source migration guards enforce read-only In Review/Approved; existing revision/conflict/recovery remains the Draft save path. This is source-reviewed implementation, not deployed or replay-certified behavior. Publishing/releases remain absent. See `artifacts/spextar-studio/REVIEW_LIFECYCLE.md`.
 
 ## Supabase, authentication and security
 
@@ -286,6 +286,80 @@ Manual UAT and live RLS certification are not claimed.
 
 ## Next step and unresolved matters
 
-Review PR #8 against Issue #4 for Engineering Handoff. Keep it unmerged and undeployed. Exact historical SQL is available; migration replay and live schema/security validation remain separately authorized tasks.
+PR #8 was merged to main as `70ffe3be130164e8d5ac42fa9adc17355ca538e3`. Issue #9 is the active Review & Approval engineering task; its PR must remain unmerged and undeployed for Engineering Handoff and product-owner acceptance. Exact historical SQL is available; migration replay and live schema/security validation remain separately authorized tasks.
 
-Remaining matters include the verified leaked-password-protection warning, external UAT/release acceptance, relevant missing design frames when fidelity is required, and explicit approval for lifecycle/AI/hosting/production work. Do not replace these decisions with assumptions or treat incomplete modules as permanent prohibitions.
+Remaining matters include the verified leaked-password-protection warning, external UAT/release acceptance, relevant missing design frames when fidelity is required, and separate approval for migration application, AI, hosting and production work. Do not replace these decisions with assumptions or treat incomplete modules as permanent prohibitions.
+
+
+
+## Issue #9 Review & Approval foundation — 2026-10-29
+
+Authoritative scope: [Issue #9](https://github.com/Gypsysystems/Spextar-Studio/issues/9).
+Fresh branch `codex/feature-review-lifecycle-2` starts at accepted main
+`70ffe3be130164e8d5ac42fa9adc17355ca538e3`; the unsuffixed branch already existed.
+No old semantic-reference branch was used and no implementation was committed to
+main. The resulting PR remains unmerged for Engineering Handoff and independent
+product-owner acceptance.
+
+Source implements document-level immutable submitted metadata/outline/body JSONB,
+explicit Admin/Author submission/new Draft, Reviewer/Admin approve/request changes,
+mandatory changes notes, stale-state rejection, Author locks, and submitted-snapshot
+Review rendering. Semantic references remain unflattened; existing read-only
+resolution and lazy viewer/editor boundaries are reused. New Draft reloads the
+approved baseline at newly advanced revisions while retaining browser recovery
+for explicit restore. Submit checks pending/error/conflict/loading controllers,
+metadata saves and document-scoped browser recovery before one expected-time RPC.
+
+The new forward-only migration is
+`20261029140601_review_lifecycle_foundation.sql`: one SELECT-only evidence table,
+one-active-review uniqueness, immutable evidence trigger, working-write guards,
+a private checked transition implementation and four authenticated invoker RPCs.
+It follows the recovered 21 originals, whose exact bytes/checksums are unchanged.
+The private definer function is required to change document/topic status for
+Reviewers without granting content writes. It has an empty search path, explicit
+postgres ownership and identity/scope/explicit-project-role checks. Document and
+membership locks serialize transitions and concurrent content/role changes.
+Restrictive evidence FKs may block parent deletion rather than destroy approvals.
+
+See `artifacts/spextar-studio/REVIEW_LIFECYCLE.md`, backend readiness README,
+application contract and source-review inventory for the consumed schema, exact
+signatures, role/tenant/concurrency behavior and limitations. `.gitattributes`
+protects exact SQL/SVG bytes against Windows checkout conversion. UI reuses
+Button, Dialog, Textarea, existing shell/outline/read-only viewer, semantic tokens,
+local Inter and approved Signature X assets; no parallel design system is added.
+Native selection and Radix confirmations preserve keyboard/focus behavior.
+
+No migration application/replay, live Supabase/Auth/RLS/data change, Replit change,
+deployment, publication, domain/DNS or infrastructure action occurred. No live
+security certification, migration parity, manual UAT or product acceptance is
+claimed. Publishing/releases, assignments/quorum, comments, notifications, global
+History, Style Guide and AI remain outside this implementation.
+
+### Issue #9 executed validation and handoff status
+
+Executable source: `IMPLEMENTATION_SHA` (the final evidence update changes docs
+only). Full commands and results are retained in [ISSUE9_VALIDATION.md](ISSUE9_VALIDATION.md).
+
+- Final Issue #9 unit/service/migration contracts: **80 passed, 4 files**.
+- Final lifecycle browser checks, pinned Chromium, all four profiles: **20 passed**,
+  including stale confirmations, keyboard/focus/axe and immutable Approved content.
+- Final targeted regression: **242 passed, 2 existing five-second UI timeouts**.
+- Latest full unit run: **1,029 passed, 6 failed; 54 blocked by symlink setup**.
+  An accepted-main control reproduced five Windows UI failures, including the
+  same autosave/paste cases. These are reported failures, not passing gates.
+- Broad browser sweep: **616 passed, 16 failed / 632**. Corrected fixture/error
+  flows were rechecked across all profiles. Pinned-browser recheck: **56 passed,
+  4 unchanged branding metric failures** (one pixel versus maximum 0.5 pixels).
+  Both browser versions reproduce the metric on Windows; vectors/brand code and
+  assertions are unchanged. The full sweep was not repeated after bounded fixes.
+- Workspace typecheck, both production builds, bundle guard and static asset scan:
+  **passed**. Initial JS **734,058 / 975,000 bytes**; lazy boundaries preserved.
+- Historical migration source integrity: **21 exact files passed**. New migration
+  remains unapplied. Git whitespace/staged-scope check: `GIT_CHECK_RESULT`.
+
+Technical validation is **not fully green**. Keep the PR draft and unmerged.
+Supported-environment regression/branding verification, authorized disposable
+SQL/RLS/concurrency execution and independent product-owner acceptance remain
+external gates. No tests were skipped or assertions/timeouts weakened to obtain
+passing results. No live backend, Replit or production/staging infrastructure
+change was performed.

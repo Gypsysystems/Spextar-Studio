@@ -32,9 +32,10 @@ export function supabaseTopicDrafts(
     await assertIdentity(scope);
     const project = await requireProject(scope.projectId);
     if (write && project.canEditContent !== true) throw new ServiceError('Only Project Admin and Author may edit topic bodies.', 'forbidden');
-    const doc = await client.from('documents').select('id,project_id').eq('id', scope.documentId).eq('project_id', scope.projectId).maybeSingle();
+    const doc = await client.from('documents').select('id,project_id,status').eq('id', scope.documentId).eq('project_id', scope.projectId).maybeSingle();
     if (doc.error) throw backendError(doc.error);
     if (!doc.data || doc.data.project_id !== scope.projectId) throw new ServiceError('Document is not accessible in this project.', 'not-found');
+    if (write && doc.data.status !== 'draft') throw new ServiceError('This document is read-only. Return to a new draft before editing.', 'forbidden');
     const topic = await client.from('topics').select('id,document_id').eq('id', scope.topicId).eq('document_id', scope.documentId).maybeSingle();
     if (topic.error) throw backendError(topic.error);
     if (!topic.data || topic.data.document_id !== scope.documentId) throw new ServiceError('Topic is not accessible in this document.', 'not-found');

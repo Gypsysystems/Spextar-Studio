@@ -4,6 +4,24 @@ import type { StructuredDraftController } from './topic-draft-controller';
 interface Entry { controller: StructuredDraftController; mounts: number; unsubscribe: () => void; kind: 'topic' | 'reusable' }
 interface Registry { entries: Map<string, Entry>; guard: (event: BeforeUnloadEvent) => void }
 const registries = new WeakMap<QueryClient, Registry>();
+const metadataPending = new WeakMap<QueryClient, Map<string, boolean>>();
+export function markMetadataPending(client: QueryClient, key: string, pending: boolean) {
+  let map = metadataPending.get(client);
+  if (!map) { map = new Map(); metadataPending.set(client, map); }
+  if (pending) map.set(key, true); else map.delete(key);
+}
+export function documentDraftsReady(client: QueryClient, projectId: string, documentId: string) {
+  for (const [key, entry] of registries.get(client)?.entries ?? []) {
+    if (entry.kind !== 'topic') continue;
+    const [, project, document] = JSON.parse(key) as string[];
+    const state = entry.controller.getSnapshot();
+    if (project === projectId && document === documentId && (state.status !== 'saved' || state.recovery.length)) return false;
+  }
+  return ![...metadataPending.get(client)?.keys() ?? []].some(key => {
+    const [project, document] = JSON.parse(key) as string[];
+    return project === projectId && document === documentId;
+  });
+}
 
 /** Pending saves survive ordinary topic/route changes, but not an identity-cache teardown.
  * Clean, unobserved controllers are evicted instead of retaining whole bodies indefinitely.
@@ -50,6 +68,7 @@ export function draftEntry(client: QueryClient, key: string, create: () => Struc
   };
 }
 export function disposeTopicDrafts(client: QueryClient) {
+  metadataPending.delete(client);
   const registry = registries.get(client);
   if (!registry) return;
   registry.entries.forEach((entry) => { entry.unsubscribe(); entry.controller.stop(); });

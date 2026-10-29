@@ -8,20 +8,22 @@
     "artifacts/spextar-studio/src/domain/reusable-content.ts": "b0728a01c97665888f042e3e23b5d0e770b7e12b530b7a8e09c6e9d019d02880",
     "artifacts/spextar-studio/src/domain/structured-content.ts": "89b8dd36d7fdb8f3c301c7670793f7e8138704855ba1dbf29413e44d435b9e39",
     "artifacts/spextar-studio/src/domain/topic-content.ts": "5155d0270d223cc638e80dbdbfb179d4e22bd2f92572ec047d3b3696652ec731",
-    "artifacts/spextar-studio/src/services/supabase-adapter.ts": "479924603d60cf2963f9b98adff26fb947aad956d4f5c36458bcfe8ea37a8950",
+    "artifacts/spextar-studio/src/services/supabase-adapter.ts": "362a0a349151dc7dc8c3b8ea6efcf40c590ffbc46e16bcab6892240e3f573af4",
     "artifacts/spextar-studio/src/services/supabase-atomic.ts": "b96bb0cc62daca79df708c32e9304785a714d8b5c15a985a50977e72a86f0156",
     "artifacts/spextar-studio/src/services/supabase-client.ts": "3ba484fd1f41d20b50c29b77f133a1590cbe793f8c8fe1d8cd5c240c88f00ae6",
     "artifacts/spextar-studio/src/services/supabase-conditions.ts": "f66f07dc6a6c9170f2004b920c1f679a78280a1cfb15414e6fdd11776e72a204",
-    "artifacts/spextar-studio/src/services/supabase-documents.ts": "2374d6930d97064ce3916e19f583ddd302016ba07ac2813441fc1c6589cf894b",
+    "artifacts/spextar-studio/src/services/supabase-documents.ts": "1e05bc86c8fc9445b3490534272e67a5ea5a6e44a2566c1e35dabaf7c68a40aa",
     "artifacts/spextar-studio/src/services/supabase-identities.ts": "03cc8ba0b295af9981b1a2c0283b7a491e42dfa05fc5821e1d2c219166ccd575",
     "artifacts/spextar-studio/src/services/supabase-errors.ts": "1685e6bdb88a8c9f74deec8ef382ab6c7ebe57af19cab207c7cfc030ada28d95",
     "artifacts/spextar-studio/src/services/supabase-lifecycle.ts": "8885c0941c5dc7d4da64e857daceba1f8be91db2e93d68b86503dde4c0cd96e1",
     "artifacts/spextar-studio/src/services/supabase-project-settings.ts": "f74c4b8af94a29761acfc78705937b39002d3057717d35b61b57b7e906d4cb90",
     "artifacts/spextar-studio/src/services/supabase-reusable.ts": "97551e5db9edff5a271feb9ccb28b8d997f88d4492b91b4b518286c31b2bb4fc",
-    "artifacts/spextar-studio/src/services/supabase-topic-drafts.ts": "aa4e9fa0b62eb967a2d0d623aa82d0ed52f24415c55f81b16d78dd1f45d35d60",
+    "artifacts/spextar-studio/src/services/supabase-topic-drafts.ts": "ad678da405feffb92408b19947bcc80d8649e08a46ac53094b7b7c83528689ea",
     "artifacts/spextar-studio/src/services/supabase-variables.ts": "6ae7b3a0bfa51c93d6b21e145f175af1436140a31adfbd200bbc1f855dbd59ee",
     "artifacts/spextar-studio/src/services/validation.ts": "89f7033a3a6b3ba7936c8f42d8a8ba88b22f95d0d7137906e622e2cadac5fb5a",
     "artifacts/spextar-studio/src/domain/semantic-references.ts": "d640f04e4bb27957a2de3dc01efaffd7664cad68d2a2db217631ac2c10b5b8b8",
-    "artifacts/spextar-studio/src/services/semantic-references.ts": "c6bcac7d3c0cf76b7715ec94bc33c98a118eda17698ddfe5d72c63c28fd08615"
+    "artifacts/spextar-studio/src/services/semantic-references.ts": "c6bcac7d3c0cf76b7715ec94bc33c98a118eda17698ddfe5d72c63c28fd08615",
+    "artifacts/spextar-studio/src/domain/reviews.ts": "89fef6983002abe4f916a200acaf81735cc540cd499ab8805dcdf3ba243c7638",
+    "artifacts/spextar-studio/src/services/supabase-reviews.ts": "b977db57dc8a3fc2be08a4e14a0ebc4f2f0da7b0672da0f6ac7cea462c790435"
   }
 }

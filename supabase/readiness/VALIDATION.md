@@ -36,3 +36,15 @@ imports or dependencies and does not treat that warning as editor leakage.
   last-admin/dependency guarantees or database-trigger implementation was tested.
 - No deployment or publishing occurred; host-specific staging behavior is not
   certified by local build/browser checks.
+
+## Current Issue #9 source-review boundary
+
+The original evidence above is historical. Current Review source reads immutable
+submissions and supports explicit lifecycle decisions through four checked RPCs;
+it does not inspect mutable topic drafts as submitted content. See
+[REVIEW_LIFECYCLE.md](../../artifacts/spextar-studio/REVIEW_LIFECYCLE.md) and
+[PROJECT_STATE.md](../../docs/PROJECT_STATE.md) for current commands/results and
+remaining Windows/browser and external database-validation limits. The 21 recovered
+original migrations remain unchanged; the additional review migration is unapplied.
+No migration replay, live Supabase/Auth/RLS/data, Replit, deployment or production/
+staging infrastructure change was performed in this engineering task.

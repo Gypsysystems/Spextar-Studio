@@ -37,6 +37,7 @@ test('variable edits invalidate an already visited Output Preview without reload
 });
 
 test('create and conservative delete refresh Project Home counts and Documents hierarchy in the same session', async ({ page, backend }) => {
+  backend.db.documents[0].status = 'in_review';
   await login(page, projectPath);
   await expect(page.getByTestId('text-doc-count')).toHaveText('1');
   const summary = page.getByRole('complementary', { name: 'Project summary' });

@@ -85,6 +85,7 @@ export interface DocumentMetadata { title?: string; slug?: string; description?:
 export interface TopicMetadata { title?: string; slug?: string; status?: DocumentStatus; settings?: Record<string, unknown> }
 
 export interface Services {
+  reviews?: import('@/domain/reviews').ReviewService;
   readonly mode: StudioMode;
   identities?: { resolve(ids: string[]): Promise<Record<string, string>> };
   auth: AuthService;
