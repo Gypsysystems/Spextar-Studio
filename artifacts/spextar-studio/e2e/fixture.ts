@@ -10,6 +10,7 @@ export const recoveryPrefix = 'spextar.backend.luyyxblmtupmugtazgbr.topic-recove
 const backendOrigin = 'https://luyyxblmtupmugtazgbr.supabase.co';
 const at = '2026-10-27T10:00:00Z';
 export type Role = 'admin' | 'author' | 'reviewer' | 'viewer' | null;
+import { capturedReview, reviewTransition } from './review-wire';
 type Row = Record<string, unknown>;
 export function bodyContent(text = 'Current saved QA topic') {
   return { type: 'doc', version: 1, ownerMetadata: { preserved: true }, content: [
@@ -45,7 +46,8 @@ export class Backend {
     workspace_members: [{ workspace_id: 'ws-a', user_id: 'user-a', role: 'member' }],
     projects: [{ id: 'project-a', workspace_id: 'ws-a', name: 'Project A', slug: 'pa', description: '', status: 'active', created_by: 'user-a', created_at: at, updated_at: at }],
     project_members: [{ project_id: 'project-a', user_id: 'user-a', role: 'author' }],
-    documents: [{ id: 'doc-a', project_id: 'project-a', title: 'QA document', slug: 'qa-document', description: 'Controlled test only', status: 'in_review', settings: {}, created_by: 'user-a', created_at: at, updated_at: at }],
+    documents: [{ id: 'doc-a', project_id: 'project-a', title: 'QA document', slug: 'qa-document', description: 'Controlled test only', status: 'draft', settings: {}, created_by: 'user-a', created_at: at, updated_at: at }],
+    document_reviews: [],
     topics: [
       { id: 'topic-a', document_id: 'doc-a', parent_topic_id: null, title: 'QA topic', slug: 'qa-topic', status: 'draft', sort_order: 0, settings: { kind: 'task' }, created_by: 'user-a', created_at: at, updated_at: at },
       { id: 'topic-b', document_id: 'doc-a', parent_topic_id: 'topic-a', title: 'Child topic', slug: 'child-topic', status: 'draft', sort_order: 0, settings: {}, created_by: 'user-a', created_at: at, updated_at: at },
@@ -60,6 +62,9 @@ export class Backend {
     this.role = role;
     this.db.project_members = role ? [{ project_id: 'project-a', user_id: this.identity, role }] : [];
     this.db.workspace_members[0].role = role === null ? 'admin' : 'member';
+  }
+  captureReview() {
+    this.db.document_reviews = [capturedReview(this.db, this.identity)];
   }
   setIdentity(id: string) {
     this.identity = id;
@@ -76,6 +81,7 @@ export class Backend {
   }
   dispose() { this.releases.forEach(release => release()); }
   async install(context: BrowserContext, appOrigins = ['http://127.0.0.1:4181']) {
+    if (!this.db.document_reviews.length) this.captureReview();
     const local = localFixtureOrigins(appOrigins);
     await context.route('**/*', route => this.handle(route, local));
   }
@@ -110,6 +116,12 @@ export class Backend {
     }
     if (url.pathname === '/auth/v1/logout' && request.method() === 'POST') return send(this.offlineLogout ? 503 : 200, this.offlineLogout ? { message: 'Controlled offline logout' } : {});
     const table = url.pathname.startsWith('/rest/v1/rpc/') ? 'rpc/' + url.pathname.split('/').pop()! : url.pathname.split('/').pop()!;
+    if (/^rpc\/(submit_document_review|approve_document_review|request_document_changes|start_document_draft)$/.test(table)) {
+      const body = request.postDataJSON() as Row;
+      this.writes.push({ table, method: request.method(), query: url.search, body });
+      const result = reviewTransition(table.slice(4), body, this.db, this.role, this.identity);
+      return send(result.status, result.data);
+    }
     if (this.sessionExpired) return send(401, { code: 'PGRST301', message: 'Controlled expired session' });
     if (table.startsWith('rpc/') || !['GET', 'HEAD'].includes(request.method()) && managedTables.includes(table)
       && (table !== 'topic_drafts' || this.management.enabled)) {
@@ -126,7 +138,7 @@ export class Backend {
     }
     if (['GET', 'HEAD'].includes(request.method())) {
       const scopedField: Record<string, string> = {
-        documents: 'project_id', topics: 'document_id', topic_drafts: 'topic_id',
+        documents: 'project_id', topics: 'document_id', topic_drafts: 'topic_id', document_reviews: 'document_id',
         project_variables: 'project_id', condition_categories: 'project_id', condition_values: 'category_id',
         reusable_contents: 'workspace_id', reusable_content_drafts: 'reusable_content_id',
       };

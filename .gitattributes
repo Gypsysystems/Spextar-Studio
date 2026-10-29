@@ -1,0 +1,2 @@
+supabase/migrations/*.sql -text
+*.svg -text

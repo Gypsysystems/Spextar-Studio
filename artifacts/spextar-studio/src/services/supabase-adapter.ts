@@ -16,6 +16,7 @@ import { supabaseConditions } from './supabase-conditions';
 import { supabaseReusable } from './supabase-reusable';
 import { supabaseProjectSettings } from './supabase-project-settings';
 import { supabaseLifecycle } from './supabase-lifecycle';
+import { supabaseReviews } from './supabase-reviews';
 
 const orgRole = z.enum(['owner', 'admin', 'member']);
 const workspaceRole = z.enum(['admin', 'member', 'viewer']);
@@ -150,7 +151,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       description: row.description ?? '', product: '', owner: row.created_by === identity?.userId ? identity.name : '', ownerId: row.created_by ?? undefined,
       status: row.status === 'in_review' ? 'in-review' : row.status,
       createdAt: row.created_at, updatedAt: row.updated_at, source: 'backend', role,
-      documentCount: 0, topicCount: 0, canEditContent: contentRole === 'admin' || contentRole === 'author',
+      documentCount: 0, topicCount: 0, canEditContent: contentRole === 'admin' || contentRole === 'author', canReview: contentRole === 'admin' || contentRole === 'reviewer',
     };
   }
   async function getProject(workspaceId: string, projectId: string, includeContentCounts = true): Promise<ProjectSummary | null> {
@@ -190,6 +191,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       if (before.userId !== after.userId) throw new ServiceError('The signed-in identity changed.', 'unauthorized');
       return { userId: after.userId, workspace: workspace.role === 'admin', project: project.canEditContent === true };
     }),
+    reviews: supabaseReviews(client),
     topicDrafts: supabaseTopicDrafts(client, () => context(false), requireProject),
     auth: {
       getSession: restore,

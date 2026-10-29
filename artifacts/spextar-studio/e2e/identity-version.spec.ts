@@ -9,7 +9,7 @@ test('owners, creators, saved-by identities and unset versions are readable acro
   backend.db.projects[0].created_by = creator;
   backend.db.documents[0].created_by = creator;
   backend.db.documents[0].settings = { version: '—' };
-  backend.db.topic_drafts[0].updated_by = creator;
+  backend.db.topic_drafts[0].updated_by = creator; backend.captureReview(); backend.db.document_reviews[0].submitted_by = creator;
   backend.db.reusable_contents.push({
     id: 'reuse-a', workspace_id: 'ws-a', project_id: 'project-a', scope: 'project',
     name: 'QA reusable', slug: 'qa-reusable', description: null, settings: {},

@@ -7,7 +7,7 @@ import { managementPages, rejectManagementChunk } from './management-chunk-fixtu
 for (const item of managementPages) {
   test(`${item.title}: missing chunk requires explicit reload, then restores the same read-only session`, async ({ page, backend, theme }) => {
     backend.setRole(item.slug === 'variables-conditions' ? null : 'viewer');
-    backend.db.topic_drafts = [];
+    backend.db.topic_drafts = []; backend.captureReview();
     const fault = await rejectManagementChunk(page, item, 'missing');
     try {
       await login(page, projectPath);
@@ -42,7 +42,7 @@ for (const item of managementPages) {
   });
 
   test(`${item.title}: rejected network download allows safe navigation; returning stays explicit and never loops`, async ({ page, backend, theme }) => {
-    backend.db.topic_drafts = [];
+    backend.db.topic_drafts = []; backend.captureReview();
     const fault = await rejectManagementChunk(page, item, 'network');
     try {
       await login(page, projectPath);
@@ -99,7 +99,7 @@ for (const item of managementPages) {
       backend.db.projects[0].name = 'Second identity project';
       backend.db.documents = [];
       backend.db.topics = [];
-      backend.db.topic_drafts = [];
+      backend.db.topic_drafts = []; backend.captureReview();
       // Same document login is essential: a page.goto would accidentally clear the query cache.
       await page.getByTestId('input-email').fill('user-b@example.test');
       await page.getByTestId('input-password').fill('synthetic-password-not-a-real-credential');

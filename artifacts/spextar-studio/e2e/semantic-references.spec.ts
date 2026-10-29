@@ -118,6 +118,7 @@ for (const role of ['reviewer', 'viewer'] as const)
       version: 1,
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated safety notice' }] }],
     };
+    backend.captureReview();
     await page.goto(projectPath + '/review');
     await expect(body).toContainText('Updated product');
     await expect(body).toContainText('Updated safety notice');
@@ -204,6 +205,7 @@ for (const type of ['bulletList', 'orderedList'] as const)
     backend.db.topic_drafts[0].content = linkedBody();
     const savedDraft = structuredClone(backend.db.reusable_content_drafts[0]);
     const savedTopic = structuredClone(backend.db.topic_drafts[0]);
+    backend.captureReview();
     await login(page, projectPath + '/review');
     const body = page.getByRole('textbox', { name: 'Topic body' });
     const preview = body.locator('.se-linked-body');

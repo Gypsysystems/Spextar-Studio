@@ -55,7 +55,7 @@ assert len({entry['name'] for entry in entries}) == 21
 assert entries == sorted(entries, key=lambda entry: entry['version'])
 assert {path.relative_to(root).as_posix() for path in root.rglob('*.sql')} == {
     entry['file'] for entry in entries
-}
+} | {'20261029140601_review_lifecycle_foundation.sql'}
 for entry in entries:
     assert entry['file'] == f"{entry['version']}_{entry['name']}.sql"
     assert entry['statement_count'] == 1
@@ -94,3 +94,17 @@ be applied as a database definition. Repository regression, typecheck/build,
 bundle and controlled browser checks support technical verification; they do
 not execute these migrations or certify live database behavior. Review the
 recovery PR before merge; deployment and replay remain separate decisions.
+
+## Issue #9 source migration
+
+`20261029140601_review_lifecycle_foundation.sql` is the new, unapplied forward-only
+Review & Approval migration after the 21 exact historical entries. The manifest
+continues to describe only the recovered history; do not add pending SQL to that
+live-provenance manifest. Offline integrity checks should compare the manifest's
+21 files byte for byte and separately expect the new source migration. SQL files
+are marked `-text` in `.gitattributes` to avoid Windows checkout conversion.
+
+The new migration adds immutable document review evidence, transactional role-
+and expected-state-checked lifecycle functions and working-content locks. See
+[`REVIEW_LIFECYCLE.md`](../../artifacts/spextar-studio/REVIEW_LIFECYCLE.md). It has
+not been applied or replayed. There is no live validation or deployment claim.

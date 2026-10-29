@@ -88,7 +88,7 @@ export function mapDocument(raw: unknown, rawTopics: unknown[], canEdit: boolean
   const type = ['guide', 'procedure', 'reference', 'release-notes'].includes(String(row.settings.type)) ? row.settings.type as DocumentType : 'guide';
   return { id: row.id, projectId: row.project_id, title: row.title, slug: row.slug, summary: row.description ?? '',
     status: toStatus(row.status), settings: row.settings, type, version: typeof row.settings.version === 'string' ? row.settings.version : '—',
-    owner: '', ownerId: row.created_by, updatedAt: row.updated_at, topics: orderTopics(topics), canEdit };
+    owner: '', ownerId: row.created_by, updatedAt: row.updated_at, topics: orderTopics(topics), canEdit: canEdit && row.status === 'draft' };
 }
 
 export function supabaseDocuments(client: SupabaseClient, requireProject: (id: string) => Promise<ProjectSummary>): DocumentService {
@@ -151,6 +151,7 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
     async updateDocument(projectId, documentId, patch) {
       await scoped(projectId, documentId);
       const data = validate(metadata.extend({ description: z.string().nullable().optional() }).strict(), patch);
+      if (data.status && data.status !== 'draft') throw new ServiceError('Use the review actions to change document status.', 'forbidden');
       validateSettings(data.settings);
       const result = await client.from('documents').update({ ...data, ...(data.status ? { status: toDatabaseStatus(data.status) } : {}) })
         .eq('project_id', projectId).eq('id', documentId).select('id').maybeSingle();
@@ -166,6 +167,7 @@ export function supabaseDocuments(client: SupabaseClient, requireProject: (id: s
     async updateTopic(projectId, documentId, topicId, patch) {
       await scoped(projectId, documentId, topicId);
       const data = validate(metadata, patch);
+      if (data.status && data.status !== 'draft') throw new ServiceError('Use the review actions to change document status.', 'forbidden');
       validateSettings(data.settings);
       const result = await client.from('topics').update({ ...data, ...(data.status ? { status: toDatabaseStatus(data.status) } : {}) })
         .eq('document_id', documentId).eq('id', topicId).select('id').maybeSingle();

@@ -217,7 +217,7 @@ test('Topic recovery is isolated across navigation and clears only the restored 
   await noOverflow(page);
 });
 
-test('Review refreshes currently saved Author content and revisions without permitting any review write', async ({ page, backend }) => {
+test('Review keeps submitted content and revisions after working content changes', async ({ page, backend }) => {
   backend.setRole('admin');
   await login(page, projectPath + '/author/doc-a');
   const body = page.getByRole('textbox', { name: 'Topic body', exact: true });
@@ -226,6 +226,7 @@ test('Review refreshes currently saved Author content and revisions without perm
   await page.keyboard.type(' persisted for inspection');
   await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 4');
   expect(backend.writes).toHaveLength(1);
+  backend.captureReview();
   await page.goto(projectPath + '/review');
   await expect(body).toContainText('persisted for inspection');
   await expect(body).toHaveAttribute('contenteditable', 'false');
@@ -237,8 +238,8 @@ test('Review refreshes currently saved Author content and revisions without perm
     content: bodyContent('Latest saved inspection body'), revision: 5, updated_at: '2026-10-28T00:00:00Z',
   });
   await activate(page, page.getByRole('button', { name: 'Refresh', exact: true }));
-  await expect(body).toContainText('Latest saved inspection body');
-  await expect(page.getByTestId('review-draft-revision')).toHaveText('5');
+  await expect(body).toContainText('persisted for inspection');
+  await expect(page.getByTestId('review-draft-revision')).toHaveText('4');
   await activate(page, page.getByTestId('review-topic-topic-b'));
   await expect(page.getByTestId('review-draft-missing')).toBeVisible();
   await expect(page.getByTestId('review-draft-revision')).toHaveCount(0);

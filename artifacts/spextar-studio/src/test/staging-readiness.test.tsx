@@ -45,7 +45,7 @@ describe('Staging authentication/navigation regression', () => {
     await user.type(screen.getByTestId('input-email'), 'writer@example.test');
     await user.type(screen.getByTestId('input-password'), 'test-only-password');
     await user.click(screen.getByTestId('button-sign-in'));
-    expect(await screen.findByText('No documents in review')).toBeVisible();
+    expect(await screen.findByText('No documents to review')).toBeVisible();
     expect(window.location.pathname).toBe(base + '/review');
   });
   it('preserves deep links in isolated demo entry too', async () => {
@@ -70,7 +70,7 @@ describe('Staging authentication/navigation regression', () => {
     const services = createSupabaseServices(fake.client);
     window.history.replaceState(null, '', base + '/review');
     render(<App services={services} />);
-    await screen.findByText('No documents in review');
+    await screen.findByText('No documents to review');
     const user = userEvent.setup();
     await user.click(screen.getByTestId('button-account'));
     await user.click(screen.getByTestId('button-sign-out'));
@@ -108,7 +108,7 @@ describe('Staging authentication/navigation regression', () => {
     expect(screen.queryByTestId('review-page')).not.toBeInTheDocument();
     scoped.mockImplementation(read);
     await userEvent.setup().click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('No documents in review')).toBeVisible();
+    expect(await screen.findByText('No documents to review')).toBeVisible();
     expect(fake.calls.filter((c) => c.insert || c.patch || c.deleted)).toHaveLength(0);
   });
 });

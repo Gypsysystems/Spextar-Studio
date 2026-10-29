@@ -29,7 +29,7 @@ export function MetadataEditor({ projectId, doc, topic, controls }: { projectId:
       {!controls && <label className="block text-xs">Title<Input aria-label={topic ? 'Persisted topic title' : 'Document title'} value={save.draft.title} disabled={disabled} onChange={(e) => update({ title: e.target.value })} /></label>}
       <label className="block text-xs">Slug<Input aria-label={topic ? 'Topic slug' : 'Document slug'} value={save.draft.slug} disabled={disabled} onChange={(e) => update({ slug: e.target.value })} /></label>
       <label className="block text-xs">Status
-        <select className="mt-1 h-9 w-full rounded-md border bg-background px-2" aria-label={topic ? 'Topic status' : 'Document status'} disabled={disabled} value={save.draft.status} onChange={(e) => update({ status: e.target.value as DocumentStatus })}>
+        <select className="mt-1 h-9 w-full rounded-md border bg-background px-2" aria-label={topic ? 'Topic status' : 'Document status'} disabled value={save.draft.status}>
           {Object.entries(DOC_STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </label>
@@ -55,7 +55,7 @@ export function MetadataEditor({ projectId, doc, topic, controls }: { projectId:
         {jsonError ? 'Settings not saved' : save.state === 'saved' ? 'Metadata saved' : save.state === 'pending' ? 'Unsaved metadata…' : save.state === 'saving' ? 'Saving metadata…' : 'Metadata not saved'}
       </div>}
       {save.error && <div role="alert" className="text-xs text-destructive">{save.error.message} <Button size="sm" variant="outline" onClick={save.retry}>Retry metadata save</Button></div>}
-      {disabled && <p className="text-xs text-muted-foreground">Read-only · project admins and authors can edit metadata.</p>}
+      {disabled && <p className="text-xs text-muted-foreground">{doc.status === 'draft' ? 'Read-only · project admins and authors can edit metadata.' : `Read-only · ${DOC_STATUS_LABEL[doc.status]}. Return to Draft through the review actions before editing.`}</p>}
     </div>
   );
 }

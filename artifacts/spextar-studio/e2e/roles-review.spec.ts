@@ -44,29 +44,29 @@ test('Review saved hierarchy, error/retry, lossless unsupported content and empt
   await expect(body).toContainText('Current saved QA topic');
   const topicLabels = await page.locator('[data-testid^="review-topic-"]').allTextContents();
   expect(topicLabels.join(' ')).toMatch(/QA topic.*Child topic/);
-  backend.failures.add('topic_drafts');
+  backend.failures.add('document_reviews');
   await page.reload();
-  await expect(page.getByText('Current draft did not load', { exact: true })).toBeVisible();
+  await expect(page.getByText('Submitted review did not load', { exact: true })).toBeVisible();
   await expect(body).toHaveCount(0);
-  backend.failures.delete('topic_drafts');
+  backend.failures.delete('document_reviews');
   await activate(page, page.getByRole('button', { name: 'Retry', exact: true }));
   await expect(body).toContainText('Current saved QA topic');
   const unknown = { ...bodyContent(), content: [{ type: 'futureModule', attrs: { opaque: 'never flatten' } }] };
-  backend.db.topic_drafts[0].content = unknown;
+  (backend.db.document_reviews[0].topics_snapshot as Record<string, unknown>[])[0].content = unknown;
   await page.reload();
   await expect(body).toHaveAttribute('aria-readonly', 'true');
   expect(await body.evaluate(el => el.tagName)).toBe('PRE');
   expect(JSON.parse(await body.textContent() ?? '')).toEqual(unknown);
   await noOverflow(page);
-  backend.db.documents[0].status = 'draft';
+  backend.db.documents = [];
   await page.reload();
-  await expect(page.getByText('No documents in review', { exact: true })).toBeVisible();
+  await expect(page.getByText('No documents to review', { exact: true })).toBeVisible();
   await expect(body).toHaveCount(0);
   expect(backend.writes).toHaveLength(0);
 });
 
 test('initial graph excludes Author/editor; Review defers viewer until a saved draft exists; direct Author refresh works', async ({ page, backend }) => {
-  backend.db.topic_drafts = [];
+  backend.db.topic_drafts = []; backend.captureReview();
   await login(page);
   await expect(page.getByTestId('card-workspace-ws-a')).toBeVisible();
   expect(backend.scripts.some(url => /\/(?:author|structured-editor|review-draft-viewer)-/.test(url))).toBe(false);
@@ -74,6 +74,7 @@ test('initial graph excludes Author/editor; Review defers viewer until a saved d
   await expect(page.getByTestId('review-draft-missing')).toBeVisible();
   expect(backend.scripts.some(url => /\/(?:author|structured-editor|review-draft-viewer)-/.test(url))).toBe(false);
   backend.db.topic_drafts.push({ topic_id: 'topic-a', content: bodyContent(), revision: 3, updated_at: '2026-10-27T10:00:00Z', updated_by: 'user-a' });
+  backend.captureReview();
   await activate(page, page.getByRole('button', { name: 'Refresh', exact: true }));
   await expect(page.getByRole('textbox', { name: 'Topic body' })).toBeVisible();
   expect(backend.scripts.some(url => /\/review-draft-viewer-/.test(url))).toBe(true);
