@@ -328,3 +328,14 @@ response, not an application auth bypass or timer/deadline relaxation.
   data.
 
 These are isolated regression checks, not live Supabase Auth/RLS certification.
+
+## Semantic references (Issue #4)
+
+`semantic-references.spec.ts` checks Variable and linked Reusable Content
+insertion, conditional apply/remove, saved JSON/reopen, where-used, stable rename,
+current linked previews, missing definitions, Reviewer/Viewer read-only behavior,
+keyboard cancellation/focus and axe accessibility in all four profiles. A held
+draft request also verifies stable document-action positions while the topic body
+loads, followed by a native interaction opening Duplicate document. Existing
+management duplication/deletion assertions remain unchanged. All traffic uses the
+existing intercepted fixture; no reference-index RPC or live database is used.

@@ -156,3 +156,20 @@ test('reference picker keyboard focus, cancellation, tags and linked preview mee
   await noOverflow(page);
   expect(backend.writes).toEqual([]);
 });
+
+test('loading a topic body preserves document action positions for touch input', async ({ page, backend }) => {
+  seed(backend);
+  const release = backend.hold('topic_drafts');
+  await login(page, projectPath + '/author/doc-a');
+  await expect(page.getByTestId('body-save-status')).toContainText('Loading saved body');
+  const button = page.getByRole('button', { name: 'Duplicate document', exact: true });
+  await expect(button).toBeVisible();
+  const position = () => button.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
+  const before = await position();
+  release();
+  await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 3');
+  expect(Math.abs((await position()) - before)).toBeLessThanOrEqual(2);
+  await activate(page, button);
+  await expect(page.getByLabel(/duplicate document title/i)).toBeVisible();
+  expect(backend.writes).toEqual([]);
+});

@@ -207,12 +207,13 @@ Validation performed with Node 24.19.0 and pnpm 10.34.9:
 
 | Check | Result |
 | --- | --- |
-| Full Studio unit suite, `pnpm --filter @workspace/spextar-studio test --maxWorkers=1` | Passed: 52 files, 1,082 tests |
+| Full workspace unit suite, `pnpm test --maxWorkers=1` | Passed: 52 files, 1,083 tests |
 | Final reference/delete/backend contract tests after the unsupported-reference scan guard | Passed: 3 files, 70 tests |
 | `PORT=5173 BASE_PATH=/ VITE_STUDIO_MODE=demo pnpm run build` | Passed: all workspace type checks and both production builds |
 | Studio `check:bundle` | Passed: 953,652 / 975,000 initial JavaScript bytes; lazy boundaries preserved |
 | `node scripts/readiness.ts scan` in Studio | Passed: known-pattern production asset exposure scan |
-| Full controlled browser suite, `pnpm test:browser --workers=1` | Running; final result will be recorded before handoff |
+| Full controlled browser sweep across desktop/mobile dark/light | 603 passed; one mobile-light duplication test exposed loading-height movement, corrected below |
+| Final focused browser regressions across all four profiles, one worker | Passed: 28 tests, including both duplication roles, all semantic-reference scenarios and a new delayed-body-loading position check |
 
 The initial broad run exposed legacy null-attribute serialization and obsolete
 placeholder assertions, which were corrected. Browser coverage also found and
@@ -221,6 +222,30 @@ cancellation. Initial default-sandbox unit startup did not complete; the full
 suite ran with execution network permission, as in the recorded environment
 baseline. Build annotation/sourcemap/chunk-size and color-environment warnings
 remain non-failing. No assertions were skipped or replaced with retries.
+
+Browser execution: `pnpm test:browser --workers=1` completed all 151 desktop-dark
+scenarios successfully, then was deliberately interrupted after that profile to
+use the repository's default two workers for the remaining profiles.
+`pnpm test:browser --project=desktop-light --project=mobile-dark
+--project=mobile-light --workers=2` reported 452 passed and one failed: a tap on
+Duplicate document during body loading did not open its dialog. The loading
+skeleton now reserves the loaded editor's 340px minimum height, keeping controls
+below it stationary. The test assertions and timeouts were unchanged.
+
+After the fix, the full unit suite, workspace type checks/builds, bundle guard and
+exposure scan were rerun and passed. The final browser command was
+`pnpm test:browser e2e/semantic-references.spec.ts e2e/management.spec.ts --grep
+'semantic references|linked previews|reference picker|loading a topic body|duplication, copied drafts'
+--workers=1`: **28 passed** across all four profiles. The new loading check holds
+the draft request, compares document-action positions before/after load, and
+opens the dialog using native interaction. The previously failed scenario and
+all semantic-reference scenarios passed. The complete 604-case sweep was not
+repeated after this CSS-only fix; its affected flows were retested as above.
+
+Desktop and responsive mobile checks cover the existing controls/tokens, local
+Inter/approved brand treatment, contrast, keyboard focus/trapping/return, loading,
+missing/error/retry, disabled and read-only states. These are controlled Chromium
+checks with intercepted requests, not manual UAT or exact Figma pixel approval.
 
 Product UAT, live multi-account RLS, migration replay and backend-candidate
 readiness remain external to these controlled checks. No live DB validation is
