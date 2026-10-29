@@ -441,7 +441,7 @@ Admin through the historical creator exception. The existing last-admin trigger
 still serializes Admin removal and handles project-delete cascades; organization
 owner protections and Review evidence restrictions remain unchanged.
 Both management helpers have empty search_path, postgres ownership and only
-authenticated EXECUTE beyond their owner. No new table grants or client/runtime
+authenticated EXECUTE beyond their owner. No new table grants or backend-adapter
 changes. Adapter/domain source-review digests are intentionally unchanged;
 the reviewed application contract records the pending source correction.
 
@@ -455,7 +455,7 @@ parent-delete cascades and target-user eligibility rules are not redesigned.
 Disposable database role/tenant/direct-write/bootstrap/last-admin concurrency
 acceptance, live parity and final product acceptance remain external gates.
 
-No UI/branding changes. No live Supabase, Replit, deployment, domain or DNS
+No project-management UI/branding changes. No live Supabase, Replit, deployment, domain or DNS
 changes. No Publishing, History, Style Guide, Brand Outputs or AI implementation.
 The PR must remain unmerged for product-owner/security review.
 
@@ -468,3 +468,26 @@ All 21 historical MD5s and Git blobs, the provenance manifest and merged Review
 SQL match the verified main base. Build emitted existing non-failing sourcemap
 notices. No local full-unit/browser sweep or PostgreSQL execution was performed;
 hosted CI results must be read separately from the actual PR/head checks.
+
+The initial hosted run [40921597741](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40921597741)
+passed all 1,109 assertions across 55 files and migration integrity, but failed
+on an unhandled Tiptap error in topic-search: a queued keyboard-shortcut focus
+callback accessed the editor view after unmount. Hosted build/bundle steps were
+therefore skipped; local build results above remain separate evidence.
+A deterministic cancellation test reproduced the missing cleanup (29 passed,
+one failed). The bounded follow-up cancels pending focus frames on shortcut
+replacement/unmount and captures the existing DOM root before scheduling, so
+the callback never reads a destroyed editor view. No assertion/timeout/retry
+policy was weakened. This is the sole incidental runtime fix required by the
+CI failure, outside the SQL correction itself.
+
+The Author find panel continues to use its existing Toolbar, controls, focus
+ring and semantic tokens, local Inter and approved brand assets; no visual
+pattern, styling or permission behavior was introduced. Keyboard/open/close,
+read-only search and editor/Review behavior are covered by focused jsdom tests.
+Desktop/mobile browser and visual/accessibility sweeps were not repeated for
+this cancellation-only change and are not claimed as executed.
+After the cleanup fix: **69 focused editor/search/Review tests passed**;
+workspace typecheck, both production builds and bundle guard passed again
+(734,058 / 975,000 initial JS bytes). Existing sourcemap/large-chunk notices
+remain non-failing. Hosted results on the updated head remain separate evidence.
