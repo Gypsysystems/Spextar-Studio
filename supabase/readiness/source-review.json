@@ -6,9 +6,9 @@
     "artifacts/spextar-studio/src/domain/project-settings.ts": "333f59678883e98ebd78d2cbd261838239b388a21ef2300a68b57abfe1af544c",
     "artifacts/spextar-studio/src/domain/project-variables.ts": "d9d0bedda0f88ec2d45fff3671b3898a7d4f6f9fa4c59cd1f9bdf49972f8b4d9",
     "artifacts/spextar-studio/src/domain/reusable-content.ts": "b0728a01c97665888f042e3e23b5d0e770b7e12b530b7a8e09c6e9d019d02880",
-    "artifacts/spextar-studio/src/domain/structured-content.ts": "66e72816535a9abebebf03f5c59122dfeae75c56d056af7c343a63b9a3b957aa",
+    "artifacts/spextar-studio/src/domain/structured-content.ts": "89b8dd36d7fdb8f3c301c7670793f7e8138704855ba1dbf29413e44d435b9e39",
     "artifacts/spextar-studio/src/domain/topic-content.ts": "5155d0270d223cc638e80dbdbfb179d4e22bd2f92572ec047d3b3696652ec731",
-    "artifacts/spextar-studio/src/services/supabase-adapter.ts": "0c885e898f1929ac8785c3fe0fb2f040e068c84baeb15cd54b5e8c4061bf69af",
+    "artifacts/spextar-studio/src/services/supabase-adapter.ts": "479924603d60cf2963f9b98adff26fb947aad956d4f5c36458bcfe8ea37a8950",
     "artifacts/spextar-studio/src/services/supabase-atomic.ts": "b96bb0cc62daca79df708c32e9304785a714d8b5c15a985a50977e72a86f0156",
     "artifacts/spextar-studio/src/services/supabase-client.ts": "3ba484fd1f41d20b50c29b77f133a1590cbe793f8c8fe1d8cd5c240c88f00ae6",
     "artifacts/spextar-studio/src/services/supabase-conditions.ts": "f66f07dc6a6c9170f2004b920c1f679a78280a1cfb15414e6fdd11776e72a204",
@@ -20,6 +20,8 @@
     "artifacts/spextar-studio/src/services/supabase-reusable.ts": "97551e5db9edff5a271feb9ccb28b8d997f88d4492b91b4b518286c31b2bb4fc",
     "artifacts/spextar-studio/src/services/supabase-topic-drafts.ts": "aa4e9fa0b62eb967a2d0d623aa82d0ed52f24415c55f81b16d78dd1f45d35d60",
     "artifacts/spextar-studio/src/services/supabase-variables.ts": "6ae7b3a0bfa51c93d6b21e145f175af1436140a31adfbd200bbc1f855dbd59ee",
-    "artifacts/spextar-studio/src/services/validation.ts": "89f7033a3a6b3ba7936c8f42d8a8ba88b22f95d0d7137906e622e2cadac5fb5a"
+    "artifacts/spextar-studio/src/services/validation.ts": "89f7033a3a6b3ba7936c8f42d8a8ba88b22f95d0d7137906e622e2cadac5fb5a",
+    "artifacts/spextar-studio/src/domain/semantic-references.ts": "d640f04e4bb27957a2de3dc01efaffd7664cad68d2a2db217631ac2c10b5b8b8",
+    "artifacts/spextar-studio/src/services/semantic-references.ts": "c6bcac7d3c0cf76b7715ec94bc33c98a118eda17698ddfe5d72c63c28fd08615"
   }
 }

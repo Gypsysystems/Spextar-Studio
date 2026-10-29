@@ -1,17 +1,19 @@
+import { conditionAssignableNodes, referenceId, validConditions } from './semantic-references';
 import { checkedContent, type JSONValue, type TopicContent } from './topic-content';
 import { ServiceError } from '@/services/contracts';
 
 /** SPEXTAR's version-1 authoring vocabulary. No editor-library types cross this boundary. */
 export const identifiedNodes = ['paragraph', 'heading', 'blockquote', 'bulletList', 'orderedList', 'listItem',
-  'codeBlock', 'horizontalRule', 'table', 'tableRow', 'tableCell', 'tableHeader', 'callout'] as const;
+  'codeBlock', 'horizontalRule', 'table', 'tableRow', 'tableCell', 'tableHeader', 'callout', 'variableReference', 'reusableReference'] as const;
 export const calloutKinds = ['note', 'tip', 'caution', 'warning'] as const;
 export type CalloutKind = typeof calloutKinds[number];
 export const calloutLabels: Record<CalloutKind, string> = { note: 'Note', tip: 'Tip', caution: 'Caution', warning: 'Warning' };
 type ObjectJSON = { [key: string]: JSONValue };
 const object = (value: JSONValue | undefined): value is ObjectJSON => !!value && typeof value === 'object' && !Array.isArray(value);
-const inline = new Set(['text', 'hardBreak']);
-const blocks = new Set<string>(identifiedNodes.filter((name) => !['listItem', 'tableRow', 'tableCell', 'tableHeader'].includes(name)));
+const inline = new Set(['text', 'hardBreak', 'variableReference']);
+const blocks = new Set<string>(identifiedNodes.filter((name) => !['listItem', 'tableRow', 'tableCell', 'tableHeader', 'variableReference'].includes(name)));
 const attributes: Record<string, string[]> = {
+  variableReference: ['referenceVersion', 'variableId'], reusableReference: ['referenceVersion', 'reusableId'],
   callout: ['kind'],
   heading: ['level'], orderedList: ['start', 'type'], codeBlock: ['language'],
   tableCell: ['colspan', 'rowspan', 'colwidth', 'align'], tableHeader: ['colspan', 'rowspan', 'colwidth', 'align'],
@@ -60,9 +62,11 @@ export function structuredContentIssue(input: TopicContent): string | null {
       if (seen.has('code') && seen.size > 1) return 'Inline code cannot contain other marks.';
     }
     const attrs = value.attrs;
-    if (attrs !== undefined && (!object(attrs) || Object.keys(attrs).some((key) => !['id', ...(attributes[type] ?? [])].includes(key))))
+    if (attrs !== undefined && (!object(attrs) || Object.keys(attrs).some((key) => !['id', ...(conditionAssignableNodes.includes(type) ? ['conditions'] : []), ...(attributes[type] ?? [])].includes(key))))
       return `Unsupported ${type} attributes.`;
+    if (['variableReference', 'reusableReference'].includes(type) && (!object(attrs) || attrs.referenceVersion !== 1 || !referenceId(attrs[type === 'variableReference' ? 'variableId' : 'reusableId']))) return 'Unsupported semantic reference.';
     if (object(attrs)) {
+      if (!validConditions(attrs.conditions)) return 'Unsupported conditional assignment.';
       if (attrs.id !== undefined && attrs.id !== null && (typeof attrs.id !== 'string' || !/^[\w.:-]{1,200}$/.test(attrs.id))) return 'Invalid node identity.';
       if (type === 'callout' && !(calloutKinds as readonly unknown[]).includes(attrs.kind)) return 'Unsupported callout kind.';
       if (type === 'heading' && ![1, 2, 3].includes(attrs.level as number)) return 'Only heading levels 1–3 are supported.';
@@ -79,7 +83,7 @@ export function structuredContentIssue(input: TopicContent): string | null {
     if (type === 'callout' && !object(attrs)) return 'Missing callout kind.';
     const children = value.content ?? [];
     if (!Array.isArray(children)) return 'Invalid node children.';
-    if (['text', 'hardBreak', 'horizontalRule'].includes(type) && children.length) return 'Unexpected leaf-node children.';
+    if (['text', 'hardBreak', 'horizontalRule', 'variableReference', 'reusableReference'].includes(type) && children.length) return 'Unexpected leaf-node children.';
     // A row can contain no own cells when preceding rowspans cover its entire
     // width. The containing table's grid check proves that coverage below.
     if (['callout', 'blockquote', 'bulletList', 'orderedList', 'listItem', 'table', 'tableCell', 'tableHeader'].includes(type) && !children.length) return 'Empty structural container.';
@@ -140,5 +144,14 @@ export function mergeEditorDocument(base: TopicContent, json: unknown): TopicCon
   const engine = checkedContent(json);
   if (engine.type !== 'doc' || Object.keys(engine).some((key) => !['type', 'content'].includes(key)))
     throw new ServiceError('The editing engine returned an unsupported document envelope.', 'validation');
-  return ensureNodeIds({ ...base, type: 'doc', content: engine.content });
+  // New optional editor attributes must not rewrite ordinary legacy bodies merely
+  // because the engine emits its null default on every existing block.
+  const body = structuredClone(engine.content);
+  const clean = (value: JSONValue) => {
+    if (!object(value)) return;
+    if (object(value.attrs) && value.attrs.conditions === null) delete value.attrs.conditions;
+    if (Array.isArray(value.content)) value.content.forEach(clean);
+  };
+  if (Array.isArray(body)) body.forEach(clean);
+  return ensureNodeIds({ ...base, type: 'doc', content: body });
 }

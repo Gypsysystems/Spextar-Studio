@@ -61,14 +61,14 @@ These are source-confirmed capabilities, not a declaration of final UAT completi
 | Organizations/workspaces/projects | Creation, navigation and lifecycle controls; scoped administration and archive/delete safeguards |
 | Documents/topics | Metadata, hierarchy/order, creation, duplication, move/promote/demote and conservative deletion |
 | Author | Structured editing, semantic callouts, advanced tables, find/replace, validated paste, heading navigation, revision saves/conflicts/recovery |
-| Variables | Text definitions, output overrides, validation and read-only output preview; insertion/references are incomplete |
-| Conditional tags | Category/value definitions; authored-content assignment/evaluation is incomplete |
-| Reusable content | Scoped metadata and structured drafts, duplication and future update-policy intent; linked insertion/propagation/where-used are incomplete |
+| Variables | Text definitions/output overrides, semantic inline Author insertion, saved references, default-value/read-only resolution and saved where-used locations |
+| Conditional tags | Category/value definitions, block apply/remove with saved assignments and category/value where-used; neutral preview preserves tagged content without publishing filters |
+| Reusable content | Scoped metadata/drafts/duplication, linked Author insertion, current saved draft previews and accessible saved where-used; notification/snapshot policies remain future intent |
 | Project settings | Explicit Project Admin metadata/member administration, archive/restore and lifecycle controls |
 | Review | Read-only inspection of saved in-review content; submit/assign/comments/approve/request-changes workflow is incomplete |
 | Publish/releases/history | Publish/History routes are placeholders; no completed release execution or immutable historical-version subsystem |
 | Style Guide / Brand & Outputs | Placeholder routes; existing output-preview IDs do not define publishing/templates |
-| Reference Safety & Cross-References | Pending |
+| Reference Safety & Cross-References | Versioned semantic IDs, visible missing/unsupported reference states, rename integrity and conservative definition-delete blocking; general topic cross-links/replacement workflows remain outside Issue #4 |
 | Identity/version presentation | Human-readable owners/creators/saved-by/member labels; “Unknown user” fallback and consistent “Unversioned” presentation; no invented release |
 
 ### Authoritative lifecycle versus implemented workflow
@@ -174,8 +174,118 @@ Run on `codex/migration-recovery-2` from accepted `ee3788b` with Node 24.19.0 an
 
 The first unit-test attempt in the default execution sandbox exited before Vitest initialized; the same command passed with explicit execution network permission. No assertions, retries or configuration were changed to obtain the passing result. Non-failing build annotation/chunk-size and browser color-environment warnings remain. Full browser profiles, backend-candidate readiness, migration replay, live schema/security UAT and deployment were not run. Supabase access consisted only of migration listing and `SELECT` queries; no live database write occurred.
 
+## Issue #4 semantic references — 2026-10-29
+
+Implemented on existing `codex/feature-semantic-references-2` for PR #8, based on
+`67f845e` main plus the bootstrap commit. See
+`artifacts/spextar-studio/SEMANTIC_REFERENCES.md` for the persisted contract,
+resolution behavior, usage visibility and delete boundaries.
+
+The implementation adds inline variable and linked block reusable references,
+block conditional assignments, accessible Author pickers, read-only resolution,
+missing/unsupported notices, and saved direct where-used locations in management.
+References use stable definition IDs and content-scoped node IDs; saves retain
+the existing revision/conflict/recovery engine. Workspace-shared usage includes
+all readable projects and labels its access limit; errors never display partial
+counts. Project enumeration now paginates to avoid a 1,000-row omission.
+
+Ordinary engineering decisions: use existing JSONB bodies and Services reads,
+without a synchronized index/schema change; keep all definition deletion blocked
+under existing service/grant/RLS boundaries; show default variables and neutral
+conditional/current reusable previews rather than inventing output policies.
+No new migration is required. The 21 historical SQL files are unchanged. No live
+Supabase access, Auth/RLS/grant/function change, deployment, publication or Replit
+configuration change was performed. Review/Publish lifecycle scope is unchanged.
+
+UI reuses Button, Dialog, existing management rails, editor CSS, semantic
+background/border/accent/focus tokens, local Inter and approved brand components.
+The additional reference picker uses a native labeled select for keyboard access;
+reference chips and linked-content borders distinguish semantic content. No
+parallel design system or exact-Figma-fidelity claim is introduced.
+
+Validation performed with Node 24.19.0 and pnpm 10.34.9:
+
+| Check | Result |
+| --- | --- |
+| Full workspace unit suite, `pnpm test --maxWorkers=1` | Passed: 52 files, 1,083 tests |
+| Final reference/delete/backend contract tests after the unsupported-reference scan guard | Passed: 3 files, 70 tests |
+| `PORT=5173 BASE_PATH=/ VITE_STUDIO_MODE=demo pnpm run build` | Passed: all workspace type checks and both production builds |
+| Studio `check:bundle` | Passed: 953,652 / 975,000 initial JavaScript bytes; lazy boundaries preserved |
+| `node scripts/readiness.ts scan` in Studio | Passed: known-pattern production asset exposure scan |
+| Full controlled browser sweep across desktop/mobile dark/light | 603 passed; one mobile-light duplication test exposed loading-height movement, corrected below |
+| Final focused browser regressions across all four profiles, one worker | Passed: 28 tests, including both duplication roles, all semantic-reference scenarios and a new delayed-body-loading position check |
+
+The initial broad run exposed legacy null-attribute serialization and obsolete
+placeholder assertions, which were corrected. Browser coverage also found and
+fixed selection/focus normalization causing an unintended save after picker
+cancellation. Initial default-sandbox unit startup did not complete; the full
+suite ran with execution network permission, as in the recorded environment
+baseline. Build annotation/sourcemap/chunk-size and color-environment warnings
+remain non-failing. No assertions were skipped or replaced with retries.
+
+Browser execution: `pnpm test:browser --workers=1` completed all 151 desktop-dark
+scenarios successfully, then was deliberately interrupted after that profile to
+use the repository's default two workers for the remaining profiles.
+`pnpm test:browser --project=desktop-light --project=mobile-dark
+--project=mobile-light --workers=2` reported 452 passed and one failed: a tap on
+Duplicate document during body loading did not open its dialog. The loading
+skeleton now reserves the loaded editor's 340px minimum height, keeping controls
+below it stationary. The test assertions and timeouts were unchanged.
+
+After the fix, the full unit suite, workspace type checks/builds, bundle guard and
+exposure scan were rerun and passed. The final browser command was
+`pnpm test:browser e2e/semantic-references.spec.ts e2e/management.spec.ts --grep
+'semantic references|linked previews|reference picker|loading a topic body|duplication, copied drafts'
+--workers=1`: **28 passed** across all four profiles. The new loading check holds
+the draft request, compares document-action positions before/after load, and
+opens the dialog using native interaction. The previously failed scenario and
+all semantic-reference scenarios passed. The complete 604-case sweep was not
+repeated after this CSS-only fix; its affected flows were retested as above.
+
+Desktop and responsive mobile checks cover the existing controls/tokens, local
+Inter/approved brand treatment, contrast, keyboard focus/trapping/return, loading,
+missing/error/retry, disabled and read-only states. These are controlled Chromium
+checks with intercepted requests, not manual UAT or exact Figma pixel approval.
+
+Product UAT, live multi-account RLS, migration replay and backend-candidate
+readiness remain external to these controlled checks. No live DB validation is
+claimed.
+
+## PR #8 list-container acceptance correction — 2026-10-29
+
+Addressed the [product-owner review](https://github.com/Gypsysystems/Spextar-Studio/pull/8#issuecomment-6489169622)
+on base `67617fa` on the existing `codex/feature-semantic-references-2` branch.
+`ReferenceBody` now places list-container condition badges in a surrounding div,
+outside both bullet and ordered lists. Only list items remain direct children of
+ul/ol; ordered start/type, saved assignments, neutral visibility, supported
+condition nodes and the persisted JSON contract remain unchanged. The renderer
+reuses existing ConditionLabels, tokens and branding without a new visual style.
+
+New unit cases first reproduced both invalid structures (SPAN, LI, LI), then
+passed after the fix. Linked reusable/read-only tests assert list DOM semantics,
+visible human-readable badges, preserved start/type, unchanged saved bodies,
+zero writes and no surfaced internal IDs. Browser cases additionally run axe and
+responsive overflow checks on the read-only Review surface.
+
+Sequential verification on the correction:
+
+| Command | Result |
+| --- | --- |
+| `pnpm --filter @workspace/spextar-studio test src/test/semantic-references.test.tsx src/test/structured-content.test.ts --maxWorkers=1` | Passed: 2 files, 50 tests |
+| `PORT=5173 BASE_PATH=/ VITE_STUDIO_MODE=demo pnpm run build` | Passed: workspace type checks and both production builds |
+| `pnpm --filter @workspace/spextar-studio check:bundle` | Passed: 953,652 / 975,000 initial JavaScript bytes; lazy boundaries intact |
+| `pnpm test:browser e2e/semantic-references.spec.ts --workers=1` | Passed: 28 tests across desktop-dark, desktop-light, mobile-dark and mobile-light, including both conditioned list types and axe |
+| `git diff --check` | Passed |
+
+The full unit/browser suites were not repeated for this bounded renderer change,
+as permitted by the review; prior broad verification remains recorded above.
+Non-failing existing build annotation/sourcemap/chunk and color-environment
+warnings remain. No live Supabase access, schema/migration/security change,
+Replit configuration change, merge, deployment or publication was performed.
+Manual UAT and live RLS certification are not claimed.
+
 ## Next step and unresolved matters
 
-Review the Issue #2 migration recovery PR before merge. Exact historical SQL is now available; replay validation and any live schema/security audit require separately approved scope. No application feature work, database changes or deployment is authorized by this recovery.
+Review PR #8 against Issue #4 for Engineering Handoff. Keep it unmerged and undeployed. Exact historical SQL is available; migration replay and live schema/security validation remain separately authorized tasks.
 
 Remaining matters include the verified leaked-password-protection warning, external UAT/release acceptance, relevant missing design frames when fidelity is required, and explicit approval for lifecycle/AI/hosting/production work. Do not replace these decisions with assumptions or treat incomplete modules as permanent prohibitions.

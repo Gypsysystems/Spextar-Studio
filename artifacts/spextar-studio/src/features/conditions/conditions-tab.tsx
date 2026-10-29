@@ -1,3 +1,4 @@
+import { ReferenceUsage, ValueReferenceUsage } from '@/features/content/reference-usage';
 import { useMemo, useState } from 'react';
 import { useConditionCategories, useConditionMutation, useConditionValues, type ConditionMutation } from '@/hooks/use-project-conditions';
 import { sortCategories, sortConditionValues, type ConditionCategory, type ConditionValue } from '@/domain/project-conditions';
@@ -11,7 +12,7 @@ type Dialog = null
 
 const matches = (c: ConditionCategory, q: string) => [c.name, c.key].some((s) => s.toLowerCase().includes(q));
 
-export function ConditionsTab({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
+export function ConditionsTab({ workspaceId, projectId, canEdit }: { workspaceId?: string; projectId: string; canEdit: boolean }) {
   const cats = useConditionCategories(projectId);
   const mutation = useConditionMutation(projectId, canEdit);
   const [query, setQuery] = useState('');
@@ -56,7 +57,8 @@ export function ConditionsTab({ projectId, canEdit }: { projectId: string; canEd
             onAddValue={() => open({ kind: 'createValue', category: selected, nextOrder })}
             onEditValue={(v) => open({ kind: 'editValue', category: selected, value: v })}
             onRenameValue={(v) => open({ kind: 'renameValue', category: selected, value: v })} />
-          <ConditionRail category={selected} />
+          <div className="space-y-3"><ConditionRail category={selected} usage={workspaceId ? <ReferenceUsage scope={{workspaceId,projectId}} target={{kind:'category',definitionId:selected.id}} /> : undefined} />
+            {workspaceId && values.map(v => <ValueReferenceUsage key={v.id} scope={{workspaceId,projectId}} id={v.id} categoryId={selected.id} name={v.name} />)}</div>
         </> : null}
       </div>
 

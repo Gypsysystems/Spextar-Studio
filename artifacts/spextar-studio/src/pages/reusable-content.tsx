@@ -1,3 +1,4 @@
+import { ReferenceUsage } from '@/features/content/reference-usage';
 import { useMemo, useState } from 'react';
 import { useParams } from 'wouter';
 import { Plus, FileText } from 'lucide-react';
@@ -61,7 +62,7 @@ function ReusableBody({ context }: { context: ReusableContext }) {
       <PageHeader
         eyebrow={backend ? canCreate ? undefined : <ScopeMarker kind="read-only" /> : <ScopeMarker kind="demo">Demo · session-only changes</ScopeMarker>}
         title="Reusable Content"
-        description="Shared snippets and blocks for this project and workspace. Metadata and body drafts only."
+        description="Shared snippets and blocks for this project and workspace. Linked previews resolve saved drafts."
         actions={<Button onClick={() => open('create')} disabled={!canCreate || pending} data-testid="reusable-new"><Plus className="mr-1.5 h-4 w-4" />New reusable content</Button>}
       />
       {perms.isError && <p className="mt-3 text-[12.5px] text-destructive" data-testid="reusable-permissions-error">Permissions could not be checked, so creating is disabled. <button type="button" className="underline" onClick={() => perms.refetch()} data-testid="reusable-permissions-retry">Retry</button></p>}
@@ -90,7 +91,7 @@ function ReusableBody({ context }: { context: ReusableContext }) {
                 </div>
               )}
           </ReusableDetails>
-          <ReusableRail item={selected} />
+          <ReusableRail usage={<ReferenceUsage scope={context} target={{kind:'reusable',definitionId:selected.id}} />} item={selected} />
         </> : null}
       </div>
 

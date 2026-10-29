@@ -63,9 +63,10 @@ describe('Variables & Conditions project route', () => {
     const { user } = await demo();
     expect(await screen.findByRole('heading', { name: 'Variables & Conditions' })).toBeVisible();
     await screen.findByText('ProductName', { selector: 'button p' });
-    expect(screen.getByText(/Reference tracking will become/)).toBeVisible();
+    await waitFor(() => expect(screen.getByTestId('text-where-used')).toHaveTextContent('saved references in accessible locations'));
+    expect(screen.getByTestId('text-where-used')).toHaveTextContent('unsaved edits are excluded');
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/Deletion is unavailable/i)).toBeVisible();
+    expect(within(screen.getByTestId('panel-variable-details')).getByText(/Deletion is unavailable/i)).toBeVisible();
     expect(screen.getByText('Demo · session-only changes')).toBeVisible();
     await user.type(screen.getByLabelText('Search'), 'ProductVersion');
     expect(screen.getByTestId('text-variable-name')).toHaveTextContent('ProductVersion');

@@ -15,13 +15,13 @@ const review = JSON.parse(readFileSync(resolve(repositoryRoot, 'supabase/readine
 };
 const tables = contract as BackendContract;
 const adapter = (file: string) => `${serviceDirectory}/supabase-${file}.ts`;
-const reviewedDomains = ['project-variables', 'project-conditions', 'reusable-content', 'project-settings', 'topic-content', 'structured-content']
+const reviewedDomains = ['project-variables', 'project-conditions', 'reusable-content', 'project-settings', 'topic-content', 'structured-content', 'semantic-references']
   .map(name => `${domainDirectory}/${name}.ts`);
 
 describe('offline backend contract readiness (not live migration/RLS certification)', () => {
   it('inventories every backend module and the schema/JSON validators it relies on', () => {
     expect(Object.keys(review.files).sort()).toEqual([
-      ...adapterFiles(), ...reviewedDomains, `${serviceDirectory}/validation.ts`,
+      ...adapterFiles(), ...reviewedDomains, `${serviceDirectory}/validation.ts`, `${serviceDirectory}/semantic-references.ts`,
     ].sort());
   });
 

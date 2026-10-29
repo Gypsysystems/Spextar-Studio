@@ -30,9 +30,10 @@ describe('Reusable management route and interactions', () => {
   it('renders real scoped data, searches/filters/selects, and reports reference tracking honestly', async () => {
     const { user } = await mount(); await ready();
     expect(screen.getByTestId('reusable-name')).toHaveTextContent('Product introduction');
-    expect(screen.getByTestId('reusable-where-used')).toHaveTextContent(/not available yet/i);
-    expect(screen.getByTestId('reusable-policy-note')).toHaveTextContent(/does not notify, update or propagate/i);
-    expect(screen.queryByText(/used in \d+|affected documents|\d+ references/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('reusable-where-used')).toHaveTextContent(/Insert linked reusable content from Author/i);
+    await waitFor(() => expect(screen.getByTestId('reference-usage')).toHaveTextContent(/0 saved references/));
+    expect(screen.getByTestId('reusable-policy-note')).toHaveTextContent(/does not publish, notify, or rewrite topic bodies/i);
+    expect(screen.getByTestId('reference-usage')).toHaveTextContent('Saved bodies only');
     await user.type(screen.getByTestId('reusable-search'), 'Shared');
     expect(screen.queryByTestId('reusable-card-reuse-a')).not.toBeInTheDocument();
     expect(screen.getByTestId('reusable-name')).toHaveTextContent('Shared notice');

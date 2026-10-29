@@ -52,9 +52,9 @@ describe('Conditional tags route and management', () => {
     expect(screen.getByTestId('text-category-unassigned')).toHaveTextContent('Included (default)');
     expect(screen.getByTestId('text-category-match')).toHaveTextContent('Match any (OR)');
     expect(screen.getByText(/Different categories always combine with AND/)).toBeVisible();
-    expect(screen.getByTestId('text-condition-assignment')).toHaveTextContent('Usage counts and references are not tracked yet');
+    expect(screen.getByTestId('text-condition-assignment')).toHaveTextContent('Apply or remove conditional values on blocks in Author');
     expect(screen.getByText(/Output filtering is not applied yet/)).toBeVisible();
-    expect(screen.getByText(/Deletion is unavailable until reference tracking/)).toBeVisible();
+    expect(screen.getByText(/deletion remain unavailable to protect saved content/)).toBeVisible();
     expect(screen.queryByRole('button', { name: /delete|publish|apply tags/i })).not.toBeInTheDocument();
     expect(screen.queryByTestId('button-validate-project')).not.toBeInTheDocument();
     expect(screen.queryByTestId('button-new-variable')).not.toBeInTheDocument();

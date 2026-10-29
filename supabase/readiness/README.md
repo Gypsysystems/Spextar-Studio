@@ -163,3 +163,16 @@ and isolated Playwright. Never replace these checks with a live migration push.
 5. Semantic references, comments/approvals, immutable releases/history, media,
    style enforcement, Brand & Outputs and publishing remain separate product
    work. Route labels and JSON extensibility are not backend contracts.
+
+## Issue #4 semantic body contract
+
+See `artifacts/spextar-studio/SEMANTIC_REFERENCES.md` and the application contract's
+`semanticReferences` entry. Existing JSONB draft bodies hold versioned variable,
+condition and linked reusable references. Where-used composes existing scoped
+Services reads; it reports saved direct uses in accessible locations, fails on
+partial scans, and never authorizes deletion from a partial count. All definition
+deletes remain blocked by the unchanged service and source grant/policy contract.
+No table/RPC/migration is added or applied. Source review additionally inventories
+the reference validator and service composition, plus paginated project/member
+reads needed for complete workspace-shared scans. This is offline contract review,
+not new live schema/security evidence.

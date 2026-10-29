@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TopicDraftController } from '@/features/content/topic-draft-controller';
-import { contentText, emptyContent, withText, type TopicDraft } from '@/domain/topic-content';
+import { contentText, emptyContent, withText, type TopicContent, type TopicDraft } from '@/domain/topic-content';
 import { ServiceError, type TopicDraftService } from '@/services/contracts';
 import { clearDeletedRecovery, clearIdentityRecovery, readRecovery, rememberRecovery } from '@/services/topic-draft-recovery';
 
@@ -57,6 +57,26 @@ describe('F3 autosave and recovery controller', () => {
     controllers.push(reloaded);
     await boot(reloaded);
     expect(reloaded.getSnapshot().content).toEqual(local);
+  });
+  it('recovers variable, conditional and reusable identities after failed saves without flattening them', async () => {
+    const { controller, service, getServer } = setup();
+    await boot(controller);
+    const content: TopicContent = { type:'doc',version:1,content:[
+      {type:'paragraph',attrs:{id:'conditioned-block',conditions:{version:1,values:[{categoryId:'category-a',valueId:'value-a'}]}},content:[{type:'variableReference',attrs:{id:'variable-node',referenceVersion:1,variableId:'variable-a'}}]},
+      {type:'reusableReference',attrs:{id:'reusable-node',referenceVersion:1,reusableId:'reusable-a'}},
+    ] };
+    vi.mocked(service.save).mockRejectedValueOnce(new ServiceError('Offline','network'));
+    controller.changeDocument(content);
+    await vi.advanceTimersByTimeAsync(700);
+    expect(controller.getSnapshot().status).toBe('error');
+    expect(readRecovery(scope)[0].copy.content).toEqual(content);
+    controller.stop();
+    const reloaded = new TopicDraftController(service,scope,true);controllers.push(reloaded);
+    await boot(reloaded);
+    reloaded.restore();
+    await vi.advanceTimersByTimeAsync(700);
+    expect(getServer()?.content).toEqual(content);
+    expect(readRecovery(scope)).toHaveLength(0);
   });
   it('does not save callout changes for read-only membership', async () => {
     const { controller, service } = setup(false);

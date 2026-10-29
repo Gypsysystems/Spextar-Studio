@@ -19,6 +19,7 @@ export function clipboardIssue(html: string): string | null {
   const document = new DOMParser().parseFromString(html, 'text/html');
   for (const element of document.body.querySelectorAll('*')) {
     const tag = element.tagName.toLowerCase();
+    if (element.hasAttribute('data-semantic-reference') || element.hasAttribute('data-conditions')) return 'Semantic references must be inserted using the reference actions.';
     if (!supportedTags.has(tag)) return `The clipboard contains unsupported ${tag} content.`;
     if (element.hasAttribute('data-type') && element.getAttribute('data-type') !== 'callout')
       return 'The clipboard contains an unknown structured node.';

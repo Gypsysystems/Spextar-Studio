@@ -69,7 +69,7 @@ export function ReusableDraftPanel({ context, item }: { context: ReusableContext
           </Suspense>
         </ErrorBoundary>
       </div>
-      <p className="mt-2 text-[12px] text-muted-foreground">Saving the draft does not publish or update any topic that might use this content.</p>
+      <p className="mt-2 text-[12px] text-muted-foreground">Linked previews read this saved draft when opened or refreshed. Saving does not publish, notify, or rewrite topic bodies.</p>
     </div>
   );
 }

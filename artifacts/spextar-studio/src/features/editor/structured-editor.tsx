@@ -1,3 +1,7 @@
+import type { ReferenceScope } from '@/domain/semantic-references';
+import { hasSemanticReferences } from '@/domain/semantic-references';
+import { ReferenceProvider } from './semantic-reference-preview';
+import { SemanticActions } from './semantic-reference-actions';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react';
 import {
@@ -18,9 +22,12 @@ import { pasteNoticeEvent, type PasteNotice, applySafePaste, focusBody } from '.
 import { DocumentNavigation } from './document-navigation';
 import { Fragment, Slice } from '@tiptap/pm/model';
 
-type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean; deferRender?: boolean };
+type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean; deferRender?: boolean; referenceContext?: ReferenceScope };
 
-export function StructuredEditor({ content, editable, onChange, loading = false, deferRender = false }: Props) {
+export function StructuredEditor(props: Props) {
+  return props.referenceContext ? <ReferenceProvider scope={props.referenceContext}><EditorSurface {...props} /></ReferenceProvider> : <EditorSurface {...props} />;
+}
+function EditorSurface({ content, editable, onChange, loading = false, deferRender = false }: Props) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const baseRef = useRef(content);
@@ -125,7 +132,7 @@ export function StructuredEditor({ content, editable, onChange, loading = false,
           This draft contains content the structured editor cannot represent ({issue ?? engineError}). It is shown read-only and its original JSON is preserved unchanged.
         </p>
         <pre className="se-fallback" role="textbox" aria-label="Topic body" aria-readonly="true" tabIndex={0} data-testid="input-topic-body">
-          {JSON.stringify(content, null, 2)}
+          {hasSemanticReferences(content) ? 'This draft contains unsupported semantic references. Its saved content is preserved; open it with a compatible editor.' : JSON.stringify(content, null, 2)}
         </pre>
       </div>
     );
@@ -134,6 +141,7 @@ export function StructuredEditor({ content, editable, onChange, loading = false,
   return (
     <div className="se-root mt-4">
       {editor && <Toolbar editor={editor} enabled={canEdit} />}
+      {editor && <SemanticActions editor={editor} enabled={canEdit} content={content} />}
       {editor && <DocumentNavigation editor={editor} />}
       {pasteNotice && <div className="se-paste-notice" role="alert">
         <p>{pasteNotice.message}</p>

@@ -114,7 +114,7 @@ for (const role of ['admin', 'author'] as const) {
     await page.getByTestId('input-search-categories').fill('Channels');
     await activate(page, page.getByTestId(`card-category-${category.id}`));
     await expect(page.getByTestId(`text-value-name-${value.id}`)).toHaveText('Early access');
-    await expect(page.getByTestId('text-condition-assignment')).toContainText(/not|available|future|implemented/i);
+    await expect(page.getByTestId('text-condition-assignment')).toContainText('Apply or remove conditional values on blocks in Author');
     await noOverflow(page);
   });
 
@@ -164,7 +164,7 @@ for (const role of ['admin', 'author'] as const) {
     await activate(page, page.getByTestId(`reusable-card-${copy.id}`));
     await activate(page, page.getByTestId('reusable-body-open'));
     await expect(body).toContainText('Saved reusable safety text');
-    await expect(page.getByTestId('reusable-where-used')).toContainText(/not|available|tracking/i);
+    await expect(page.getByTestId('reference-usage')).toContainText('0 saved references');
     await noOverflow(page);
   });
 

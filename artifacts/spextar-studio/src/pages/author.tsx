@@ -41,6 +41,7 @@ function numbering(topics: Topic[]): string[] {
 }
 
 function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
+  const { workspaceId = '' } = useParams<{ workspaceId: string }>();
   const services = useServices();
   const [, navigate] = useLocation();
   const backend = services.mode === 'backend';
@@ -225,7 +226,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
               onBody={(id, body) => {
               bodies.current.set(id, body);
               patch(id, { body });
-            }} /> : <StructuredEditor
+            }} /> : <StructuredEditor referenceContext={{workspaceId,projectId:doc.projectId}}
               content={demoDocuments.current.get(selected.id) ?? withText(emptyContent(), selected.body.join('\n\n'))}
               editable={canEdit}
               onChange={(content) => {
