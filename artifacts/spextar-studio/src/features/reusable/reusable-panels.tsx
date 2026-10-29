@@ -1,3 +1,4 @@
+import { UserIdentity } from '@/components/user-identity';
 import { Search, Plus, Layers, Info, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -130,11 +131,11 @@ export function ReusableDetails({ item, pending, onEdit, onRename, onDuplicate, 
           {[
             ['Scope', scopeLabels[item.scope], 'scope'], ['Lifecycle status', statusLabels[item.status], 'status'],
             ['Linked-update policy', policyLabels[item.updatePolicy], 'policy'], ['Updated', fmt(item.updatedAt), 'updated'],
-            ['Created', fmt(item.createdAt), 'created'], ['Created by', item.createdBy ?? 'Unknown', 'created-by'],
+            ['Created', fmt(item.createdAt), 'created'], ['Created by', '', 'created-by'],
           ].map(([k, v, id]) => (
             <div key={id} className="min-w-0">
               <dt className="text-[12px] text-muted-foreground">{k}</dt>
-              <dd className="mt-0.5 break-words text-[13.5px] [overflow-wrap:anywhere]" data-testid={`reusable-meta-${id}`}>{v}</dd>
+              <dd className="mt-0.5 break-words text-[13.5px] [overflow-wrap:anywhere]" data-testid={`reusable-meta-${id}`}>{id === 'created-by' ? <UserIdentity userId={item.createdBy} /> : v}</dd>
             </div>
           ))}
         </dl>

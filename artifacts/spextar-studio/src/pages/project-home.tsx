@@ -1,3 +1,5 @@
+import { UserIdentity } from '@/components/user-identity';
+import { documentVersionLabel } from '@/lib/presentation';
 import { Link, useParams } from 'wouter';
 import { ArrowRight, Files, PenLine } from 'lucide-react';
 import { ProjectScope, PageHeader } from '@/features/project/project-scope';
@@ -35,7 +37,7 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
         meta={
           <>
             {project.product && <span>Product: <span className="text-foreground">{project.product}</span></span>}
-            <span>Owner: <span className="text-foreground">{project.owner}</span></span>
+            <span>Owner: <span className="text-foreground"><UserIdentity userId={project.ownerId} name={project.owner} /></span></span>
             <span>Updated {relative(project.updatedAt)}</span>
           </>
         }
@@ -99,7 +101,7 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
                     <Link href={`${base}/author/${d.id}`} data-testid={`link-recent-doc-${d.id}`} className="group flex items-center gap-4 px-4 py-3.5 hover:bg-accent/40">
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{d.title}</span>
-                        <span className="text-[12.5px] text-muted-foreground">{DOC_TYPE_LABEL[d.type]} · {d.topics.length} topics · v{d.version}</span>
+                        <span className="text-[12.5px] text-muted-foreground">{DOC_TYPE_LABEL[d.type]} · {d.topics.length} topics · {documentVersionLabel(d.version, true)}</span>
                       </span>
                       <StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} />
                       <ArrowRight className="hidden h-4 w-4 text-muted-foreground group-hover:text-primary sm:block" />
@@ -134,7 +136,7 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
                 {(activity.data ?? []).map((a) => (
                   <li key={a.id} className="relative text-[13px]">
                     <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full border-2 border-background bg-primary" aria-hidden />
-                    <p><span className="font-medium">{a.actor}</span> {a.action} <span className="text-foreground/80">{a.target}</span></p>
+                    <p><span className="font-medium"><UserIdentity name={a.actor} /></span> {a.action} <span className="text-foreground/80">{a.target}</span></p>
                     <p className="text-xs text-muted-foreground">{relative(a.at)}</p>
                   </li>
                 ))}

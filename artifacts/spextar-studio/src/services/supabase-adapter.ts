@@ -6,6 +6,8 @@ import { ServiceError, type Services } from './contracts';
 import { backendError } from './supabase-errors';
 import { atomicOperations } from './supabase-atomic';
 import { contentCounts, supabaseDocuments } from './supabase-documents';
+import { supabaseIdentities } from './supabase-identities';
+import { identityLabel } from '@/lib/presentation';
 import { projectInputSchema, workspaceInputSchema } from './validation';
 import { SUPABASE_STORAGE_KEY } from './supabase-client';
 import { supabaseTopicDrafts } from './supabase-topic-drafts';
@@ -82,7 +84,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       ...org, plan: '', region: '', role: memberships.find((m) => m.organization_id === org.id)!.role,
     }));
     const selected = nextOrganizations.find((org) => org.id === readSelection(user.id)) ?? nextOrganizations[0];
-    const name = profile?.display_name?.trim() || user.email || 'Account';
+    const name = identityLabel(profile?.display_name, user.email);
     return { organizations: nextOrganizations, session: {
       mode: 'backend', userId: user.id, email: user.email ?? '', name,
       initials: name.split(/\s+/).slice(0, 2).map((s) => s[0]).join('').toUpperCase(),
@@ -145,7 +147,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
   function mapProject(row: z.infer<typeof projectRow>, role?: z.infer<typeof projectRole>, contentRole?: z.infer<typeof projectRole>): ProjectSummary {
     return {
       id: row.id, workspaceId: row.workspace_id, name: row.name, key: row.slug.toUpperCase(),
-      description: row.description ?? '', product: '', owner: row.created_by === identity?.userId ? identity.name : row.created_by ?? '',
+      description: row.description ?? '', product: '', owner: row.created_by === identity?.userId ? identity.name : '', ownerId: row.created_by ?? undefined,
       status: row.status === 'in_review' ? 'in-review' : row.status,
       createdAt: row.created_at, updatedAt: row.updated_at, source: 'backend', role,
       documentCount: 0, topicCount: 0, canEditContent: contentRole === 'admin' || contentRole === 'author',
@@ -176,6 +178,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
 
   return {
     mode: 'backend',
+    identities: supabaseIdentities(client, context),
     variables: supabaseVariables(client, requireProject),
     conditions: supabaseConditions(client, requireProject),
     reusable: supabaseReusable(client, async (c) => {

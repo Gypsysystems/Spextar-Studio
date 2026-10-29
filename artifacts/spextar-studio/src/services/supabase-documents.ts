@@ -88,7 +88,7 @@ export function mapDocument(raw: unknown, rawTopics: unknown[], canEdit: boolean
   const type = ['guide', 'procedure', 'reference', 'release-notes'].includes(String(row.settings.type)) ? row.settings.type as DocumentType : 'guide';
   return { id: row.id, projectId: row.project_id, title: row.title, slug: row.slug, summary: row.description ?? '',
     status: toStatus(row.status), settings: row.settings, type, version: typeof row.settings.version === 'string' ? row.settings.version : '—',
-    owner: row.created_by, updatedAt: row.updated_at, topics: orderTopics(topics), canEdit };
+    owner: '', ownerId: row.created_by, updatedAt: row.updated_at, topics: orderTopics(topics), canEdit };
 }
 
 export function supabaseDocuments(client: SupabaseClient, requireProject: (id: string) => Promise<ProjectSummary>): DocumentService {

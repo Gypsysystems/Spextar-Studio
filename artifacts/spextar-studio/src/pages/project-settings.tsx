@@ -15,6 +15,7 @@ import { useServices } from '@/providers/services-provider';
 import { useProjectSettings, useProjectSettingsMutation, type SettingsAction } from '@/hooks/use-project-settings';
 import { projectMetadataSchema, settingsRole, type ProjectSettings, type SettingsRole, type SettingsScope } from '@/domain/project-settings';
 import { LifecycleControl } from '@/features/workspaces/lifecycle-control';
+import { useIdentityLabels } from '@/components/user-identity';
 
 const ROLES = settingsRole.options;
 const roleLabel: Record<SettingsRole, string> = { admin: 'Admin', author: 'Author', reviewer: 'Reviewer', viewer: 'Viewer' };
@@ -43,6 +44,7 @@ function SettingsBody({ scope }: { scope: SettingsScope }) {
   const q = useProjectSettings(scope);
   const m = useProjectSettingsMutation(scope);
   const data = q.data;
+  const memberLabel = useIdentityLabels(data ? [...data.members.map(m => m.userId), ...data.candidates] : []);
   const pending = m.isPending;
   const admin = !!data?.canAdminister;
 
@@ -168,7 +170,7 @@ function SettingsBody({ scope }: { scope: SettingsScope }) {
         </form>
       </Section>
 
-      <Section title="Members" description="Project roles for people already in this workspace. Users are shown by their full user ID." testId="section-members">
+      <Section title="Members" description="Project roles for people already in this workspace." testId="section-members">
         <ul className="divide-y rounded-lg border" data-testid="list-members">
           {data.members.map((mb) => {
             const self = mb.userId === data.currentUserId;
@@ -178,7 +180,7 @@ function SettingsBody({ scope }: { scope: SettingsScope }) {
             return (
               <li key={mb.userId} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center" data-testid={`row-member-${mb.userId}`}>
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-[12.5px] [overflow-wrap:anywhere]" data-testid={`text-member-id-${mb.userId}`}>{mb.userId}</p>
+                  <p className="text-[12.5px] [overflow-wrap:anywhere]" data-testid={`text-member-id-${mb.userId}`}>{memberLabel(mb.userId)}</p>
                   <p className="mt-0.5 flex items-center gap-1 text-[12px] text-muted-foreground">
                     {mb.role === 'admin' && <ShieldCheck className="h-3 w-3" aria-hidden />}{roleLabel[mb.role]}{self && ' · You'}
                   </p>
@@ -186,16 +188,16 @@ function SettingsBody({ scope }: { scope: SettingsScope }) {
                 </div>
                 {admin && (
                   <div className="flex flex-wrap items-center gap-2">
-                    <label className="sr-only" htmlFor={`role-${mb.userId}`}>Role for {mb.userId}</label>
+                    <label className="sr-only" htmlFor={`role-${mb.userId}`}>Role for {memberLabel(mb.userId)}</label>
                     <select id={`role-${mb.userId}`} className={`${selectCls} w-32`} value={draft} disabled={pending}
                       onChange={(e) => setRoleDraft((d) => ({ ...d, [mb.userId]: e.target.value as SettingsRole }))} data-testid={`select-role-${mb.userId}`}>
                       {ROLES.map((r) => <option key={r} value={r} disabled={locked && r !== 'admin'}>{roleLabel[r]}</option>)}
                     </select>
                     <Button size="sm" variant="outline" disabled={pending || draft === mb.role} data-testid={`button-save-role-${mb.userId}`}
-                      onClick={() => setConfirm({ title: 'Change role?', body: <>Change <span className="font-mono [overflow-wrap:anywhere]">{mb.userId}</span> from {roleLabel[mb.role]} to {roleLabel[draft]}.</>, label: 'Change role',
+                      onClick={() => setConfirm({ title: 'Change role?', body: <>Change <span className="[overflow-wrap:anywhere]">{memberLabel(mb.userId)}</span> from {roleLabel[mb.role]} to {roleLabel[draft]}.</>, label: 'Change role',
                         run: () => act({ kind: 'role', userId: mb.userId, role: draft, expectedRole: mb.role }, 'Role updated.', () => setRoleDraft((d) => { const n = { ...d }; delete n[mb.userId]; return n; })) })}>Save role</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" disabled={pending || locked} aria-label={`Remove ${mb.userId}`} data-testid={`button-remove-${mb.userId}`}
-                      onClick={() => setConfirm({ title: 'Remove member?', destructive: true, label: 'Remove member', body: <>Remove <span className="font-mono [overflow-wrap:anywhere]">{mb.userId}</span> ({roleLabel[mb.role]}) from this project. Their workspace membership is unchanged.</>,
+                    <Button size="sm" variant="ghost" className="text-destructive" disabled={pending || locked} aria-label={`Remove ${memberLabel(mb.userId)}`} data-testid={`button-remove-${mb.userId}`}
+                      onClick={() => setConfirm({ title: 'Remove member?', destructive: true, label: 'Remove member', body: <>Remove <span className="[overflow-wrap:anywhere]">{memberLabel(mb.userId)}</span> ({roleLabel[mb.role]}) from this project. Their workspace membership is unchanged.</>,
                         run: () => act({ kind: 'remove', userId: mb.userId, expectedRole: mb.role }, 'Member removed.') })}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 )}
@@ -213,9 +215,9 @@ function SettingsBody({ scope }: { scope: SettingsScope }) {
               <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px_auto] sm:items-end">
                 <div className="min-w-0">
                   <label htmlFor="add-user" className="text-[12.5px] font-medium">Workspace user</label>
-                  <select id="add-user" className={`${selectCls} mt-1 font-mono`} value={addUser} disabled={pending} onChange={(e) => setAddUser(e.target.value)} data-testid="select-add-user">
-                    <option value="">Choose a user ID</option>
-                    {data.candidates.map((c) => <option key={c} value={c}>{c}</option>)}
+                  <select id="add-user" className={`${selectCls} mt-1`} value={addUser} disabled={pending} onChange={(e) => setAddUser(e.target.value)} data-testid="select-add-user">
+                    <option value="">Choose a workspace member</option>
+                    {data.candidates.map((c) => <option key={c} value={c}>{memberLabel(c)}</option>)}
                   </select>
                 </div>
                 <div>

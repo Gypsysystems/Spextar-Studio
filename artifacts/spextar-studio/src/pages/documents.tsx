@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { useServices } from '@/providers/services-provider';
 import { ContentDialog, DocumentMetadataDialog } from '@/features/content/content-dialogs';
 import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
+import { UserIdentity } from '@/components/user-identity';
+import { documentVersionLabel } from '@/lib/presentation';
 
 function DocumentsBody({ project, base }: { project: ProjectSummary; base: string }) {
   const backend = useServices().mode === 'backend';
@@ -98,7 +100,7 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{d.title}</p>
                       <p className="truncate text-[12.5px] text-muted-foreground">
-                        {DOC_TYPE_LABEL[d.type]} · {d.topics.length} topics · {d.version === '—' ? 'Unversioned' : `v${d.version}`} · {d.owner} · {relative(d.updatedAt)}
+                        {DOC_TYPE_LABEL[d.type]} · {d.topics.length} topics · {documentVersionLabel(d.version, true)} · <UserIdentity userId={d.ownerId} name={d.owner} /> · {relative(d.updatedAt)}
                       </p>
                     </div>
                     <StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} className="hidden sm:inline-flex" />

@@ -1,3 +1,7 @@
+# Identity presentation
+
+Human-readable labels use existing authenticated `profiles` reads (`id,display_name`), scoped to identities already present in authorized records. The signed-in user's existing session supplies their email fallback. The confirmed profile contract does not expose other users' emails; unavailable labels display “Unknown user”, never a UUID. This does not add a directory, admin-Auth access, table grants, or RLS changes. Label queries are isolated by signed-in identity and organization and use the existing identity-teardown cache boundary.
+
 # Backend-contract readiness
 
 ## Authority and safety

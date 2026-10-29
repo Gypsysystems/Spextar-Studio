@@ -50,6 +50,7 @@ export interface Project {
   description: string;
   product: string;
   owner: string;
+  ownerId?: ID;
   status: ProjectStatus;
   createdAt: ISODate;
   updatedAt: ISODate;
@@ -90,6 +91,7 @@ export interface DocumentRecord {
   type: DocumentType;
   status: DocumentStatus;
   owner: string;
+  ownerId?: ID;
   version: string;
   summary: string;
   updatedAt: ISODate;

@@ -1,3 +1,5 @@
+import { documentVersionLabel } from '@/lib/presentation';
+import { UserIdentity } from '@/components/user-identity';
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
 import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -111,7 +113,7 @@ function DraftPanel({ projectId, doc, topic, refreshKey }: { projectId: string; 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Meta k="Draft revision" v={d.revision} testId="review-draft-revision" />
         <Meta k="Saved" v={fmt(d.updatedAt)} testId="text-draft-updated" />
-        <Meta k="Saved by" v={<span className="font-mono text-[12px]">{d.updatedBy ?? 'Unknown'}</span>} testId="text-draft-updated-by" />
+        <Meta k="Saved by" v={<UserIdentity userId={d.updatedBy} />} testId="text-draft-updated-by" />
       </dl>
       <ReviewDraftViewer key={`${d.topicId}-${d.revision}-${d.updatedAt}`} content={d.content} />
     </div>
@@ -193,7 +195,7 @@ function ReviewBody({ projectId, onDoc }: { projectId: string; onDoc: (d: Docume
           <dl className="grid grid-cols-2 gap-3 rounded-lg border bg-card p-4 sm:grid-cols-4">
             <Meta k="Document" v={doc.title} testId="text-review-doc-title" />
             <Meta k="Status" v={label(doc.status)} testId="text-review-doc-status" />
-            <Meta k="Stored version label" v={doc.version} />
+            <Meta k="Version" v={documentVersionLabel(doc.version)} />
             <Meta k="Updated" v={fmt(doc.updatedAt)} />
           </dl>
           {topic ? (

@@ -1,3 +1,5 @@
+import { UserIdentity } from '@/components/user-identity';
+import { documentVersionLabel } from '@/lib/presentation';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation, useParams, useSearch } from 'wouter';
 import { ArrowLeftToLine, ArrowRightToLine, FileText, Files, RotateCcw } from 'lucide-react';
@@ -248,8 +250,8 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
         <dl className="mt-4 grid grid-cols-[88px_1fr] gap-y-2.5 text-[13px]">
           <dt className="text-muted-foreground">Status</dt><dd><StatusPill status={doc.status} label={DOC_STATUS_LABEL[doc.status]} /></dd>
           <dt className="text-muted-foreground">Type</dt><dd>{DOC_TYPE_LABEL[doc.type]}</dd>
-          <dt className="text-muted-foreground">Version</dt><dd className="font-mono text-xs">{doc.version}</dd>
-          <dt className="text-muted-foreground">Owner</dt><dd>{doc.owner}</dd>
+          <dt className="text-muted-foreground">Version</dt><dd className="font-mono text-xs">{documentVersionLabel(doc.version)}</dd>
+          <dt className="text-muted-foreground">Owner</dt><dd><UserIdentity userId={doc.ownerId} name={doc.owner} /></dd>
           <dt className="text-muted-foreground">Updated</dt><dd>{relative(doc.updatedAt)}</dd>
         </dl>
         {selected && (

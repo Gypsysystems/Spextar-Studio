@@ -86,6 +86,7 @@ export interface TopicMetadata { title?: string; slug?: string; status?: Documen
 
 export interface Services {
   readonly mode: StudioMode;
+  identities?: { resolve(ids: string[]): Promise<Record<string, string>> };
   auth: AuthService;
   organizations: OrganizationService;
   workspaces: WorkspaceService;

@@ -50,7 +50,8 @@ describe('Review current-draft inspection', () => {
     const crumb = screen.getByRole('navigation', { name: 'Breadcrumb' });
     await waitFor(() => expect(within(crumb).getByText('doc-a')).toBeVisible());
     expect(within(crumb).getByText('Review')).toBeVisible();
-    expect(screen.getByTestId('text-draft-updated-by')).toHaveTextContent('user-a');
+    expect(screen.getByTestId('text-draft-updated-by')).toHaveTextContent('Technical Writer');
+    expect(screen.getByTestId('text-draft-updated-by')).not.toHaveTextContent('user-a');
     expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
     assertNoWrites(f);
   });

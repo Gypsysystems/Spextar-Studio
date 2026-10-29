@@ -24,11 +24,12 @@ async function confirm(user: ReturnType<typeof userEvent.setup>) {
   await waitFor(() => expect(screen.queryByTestId('dialog-confirm')).not.toBeInTheDocument());
 }
 describe('Project Settings route', () => {
-  it('renders existing shell, real metadata, members and honest user IDs without invitations', async () => {
+  it('renders existing shell, real metadata and readable members without invitations', async () => {
     await mount();
     expect(screen.getByTestId('project-settings-page')).toBeVisible();
     expect(screen.getByTestId('input-slug')).toHaveValue('pa');
-    expect(screen.getByTestId(`text-member-id-${testUser.id}`)).toHaveTextContent(testUser.id);
+    await waitFor(() => expect(screen.getByTestId(`text-member-id-${testUser.id}`)).toHaveTextContent('Technical Writer'));
+    expect(screen.getByTestId(`text-member-id-${testUser.id}`)).not.toHaveTextContent(testUser.id);
     expect(screen.queryByRole('button', { name: /invite/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete project permanently' })).toBeDisabled();
     expect(screen.getByTestId(`button-remove-${testUser.id}`)).toBeDisabled();
