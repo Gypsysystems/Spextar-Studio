@@ -3,6 +3,7 @@ import { qk } from './use-studio-data';
 
 export async function invalidateContent(client: QueryClient, projectId: string) {
   await Promise.all([
+    client.invalidateQueries({ queryKey: ['reference-usage'] }),
     client.invalidateQueries({ queryKey: qk.documents(projectId) }),
     client.invalidateQueries({ queryKey: ['document', projectId] }),
     client.invalidateQueries({ queryKey: ['project'] }),

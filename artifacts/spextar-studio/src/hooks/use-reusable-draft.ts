@@ -20,7 +20,7 @@ export function useReusableDraft(c: ReusableContext, item: ReusableItem) {
         get: () => reusable.getDraft(scoped, item.id),
         save: (content, revision) => reusable.saveDraft(scoped, item.id, content, revision),
       }, !!userId && item.canEdit, reusableRecovery(scoped, item.id, mode === 'backend'),
-      () => { void client.invalidateQueries({ queryKey: reusableKeys.all }); }), 'reusable');
+      () => { void client.invalidateQueries({ queryKey: reusableKeys.all }); void client.invalidateQueries({ queryKey: ['linked-reusable-draft'] }); void client.invalidateQueries({ queryKey: ['reference-usage'] }); }), 'reusable');
   }, [client, reusable, mode, userId, c.workspaceId, c.projectId, item.id, item.canEdit]);
   const controller = entry.controller;
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);

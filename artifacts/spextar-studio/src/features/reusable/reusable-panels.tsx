@@ -147,7 +147,7 @@ export function ReusableDetails({ item, pending, onEdit, onRename, onDuplicate, 
             </ul>
           ) : <p className="mt-0.5 text-[13px] italic text-muted-foreground" data-testid="reusable-tags">No tags</p>}
         </div>
-        <p className="mt-3 text-[12px] text-muted-foreground">Status and policy are stored metadata only. Nothing is published, reviewed or propagated from this page.</p>
+        <p className="mt-3 text-[12px] text-muted-foreground">Status and policy remain metadata. Linked previews read the current saved draft. Saving does not publish, review, or rewrite topic bodies.</p>
       </div>
 
       <div className="rounded-lg border bg-card p-4">
@@ -160,21 +160,22 @@ export function ReusableDetails({ item, pending, onEdit, onRename, onDuplicate, 
   );
 }
 
-export function ReusableRail({ item }: { item: ReusableItem }) {
+export function ReusableRail({ item, usage }: { item: ReusableItem; usage?: React.ReactNode }) {
   return (
     <aside aria-label="Where used and linked updates" className="min-w-0 space-y-4" data-testid="reusable-rail">
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Link2 className="h-4 w-4 text-muted-foreground" aria-hidden />Where used</h3>
-        <ScopeMarker kind="placeholder" className="mt-2">Coming next</ScopeMarker>
+
         <p className="mt-2 text-[12.5px] text-muted-foreground" data-testid="reusable-where-used">
-          Reference tracking is not available yet. No usage count is shown because none is recorded. Inserting this content into topics is not offered here.
+          Insert linked reusable content from Author. The current saved draft is resolved on opening or refreshing a preview.
         </p>
+        {usage}
       </div>
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Info className="h-4 w-4 text-muted-foreground" aria-hidden />Linked-update policy</h3>
         <p className="mt-2 break-words text-[13.5px] font-medium" data-testid="reusable-rail-policy">{policyLabels[item.updatePolicy]}</p>
         <p className="mt-1 text-[12.5px] text-muted-foreground">{policyHelp[item.updatePolicy]}</p>
-        <p className="mt-2 text-[12px] text-muted-foreground" data-testid="reusable-policy-note">This records future intent only. Saving changes here does not notify, update or propagate to any topic or output.</p>
+        <p className="mt-2 text-[12px] text-muted-foreground" data-testid="reusable-policy-note">Notification and retained-copy policies record future intent. Linked previews read the current saved draft; saving does not publish, notify, or rewrite topic bodies. Deletion is unavailable to protect linked content.</p>
       </div>
     </aside>
   );

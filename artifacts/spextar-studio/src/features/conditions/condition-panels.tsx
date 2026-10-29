@@ -89,7 +89,7 @@ export function CategoryDetails({ category, values, canEdit, pending, onEdit, on
             <dd className="mt-0.5 text-[13.5px]" data-testid="text-category-match">{matchCopy[category.valueMatchMode]}{category.valueMatchMode === 'any' && <span className="text-muted-foreground"> (default)</span>}</dd>
           </div>
         </dl>
-        <p className="mt-3 text-[12px] text-muted-foreground">Different categories always combine with AND. Rules are stored now and take effect once content assignment is available.</p>
+        <p className="mt-3 text-[12px] text-muted-foreground">Different categories always combine with AND. Assignments are preserved on authored blocks; previews keep tagged content visible.</p>
       </div>
 
       <div className="rounded-lg border bg-card p-4">
@@ -129,22 +129,23 @@ export function CategoryDetails({ category, values, canEdit, pending, onEdit, on
 
       <div className="rounded-lg border bg-card p-4">
         <h3 className="text-[14px] font-semibold">Safe changes</h3>
-        <p className="mt-0.5 text-[12.5px] text-muted-foreground">Rename keeps the key and ID. Deletion is unavailable until reference tracking exists.</p>
+        <p className="mt-0.5 text-[12.5px] text-muted-foreground">Rename preserves assignments. Category and value deletion remain unavailable to protect saved content.</p>
         <div className="mt-3"><Button variant="outline" size="sm" onClick={onRename} disabled={disabled} data-testid="button-rename-category">Rename category</Button></div>
       </div>
     </section>
   );
 }
 
-export function ConditionRail({ category }: { category: ConditionCategory }) {
+export function ConditionRail({ category, usage }: { category: ConditionCategory; usage?: React.ReactNode }) {
   return (
     <aside aria-label="Assignment and output preview" className="min-w-0 space-y-4" data-testid="panel-condition-rail">
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Info className="h-4 w-4 text-muted-foreground" aria-hidden />Assignment</h3>
-        <ScopeMarker kind="placeholder" className="mt-2">Coming next</ScopeMarker>
+
         <p className="mt-2 text-[12.5px] text-muted-foreground" data-testid="text-condition-assignment">
-          Tagging topics and blocks with these values arrives in a later release. Usage counts and references are not tracked yet.
+          Apply or remove conditional values on blocks in Author. Tags are preserved without applying output filtering here.
         </p>
+        {usage}
       </div>
       <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-[14px] font-semibold"><Eye className="h-4 w-4 text-muted-foreground" aria-hidden />How this will resolve</h3>

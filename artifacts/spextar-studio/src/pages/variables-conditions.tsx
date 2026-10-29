@@ -1,3 +1,4 @@
+import { ReferenceUsage } from '@/features/content/reference-usage';
 import { useMemo, useState } from 'react';
 import { useParams } from 'wouter';
 import { Plus, ShieldCheck } from 'lucide-react';
@@ -101,12 +102,12 @@ function VariablesBody({ project }: { project: ProjectSummary }) {
               loading={vars.isLoading} error={vars.isError ? vars.error : null} onRetry={() => vars.refetch()} canEdit={canEdit} onCreate={() => open('create')} />
             {vars.isLoading ? <><DetailsSkeleton /><DetailsSkeleton /></> : selected ? <>
               <VariableDetails variable={selected} canEdit={canEdit} pending={pending} onEdit={() => open('edit')} onRename={() => open('rename')} onDuplicate={() => open('duplicate')} />
-              <VariableRail variable={selected} output={output} onOutput={setOutput} />
+              <VariableRail usage={<ReferenceUsage scope={{workspaceId:project.workspaceId,projectId:project.id}} target={{kind:'variable',definitionId:selected.id}} />} variable={selected} output={output} onOutput={setOutput} />
             </> : null}
           </div>
         </TabsContent>
         <TabsContent value="conditions" className="mt-6">
-          <ConditionsTab projectId={project.id} canEdit={canEdit} />
+          <ConditionsTab workspaceId={project.workspaceId} projectId={project.id} canEdit={canEdit} />
         </TabsContent>
         <TabsContent value="preview" className="mt-6">
           <VariableOutputPreview projectId={project.id} />

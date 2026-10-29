@@ -194,6 +194,17 @@
     "authority": "Atomic F0/F1 and document/topic callable names and named parameters are confirmed by the supplied authoritative live contracts; this does not certify exact migration SQL or live RLS implementation.",
     "returns": "F2 creators/duplicators require a nonempty UUID string. Move/promote/demote do not consume a return value. Atomic F0/F1 create accepts string or id/entity_id record, then verifies bootstrap membership."
   },
+  "semanticReferences": {
+    "version": 1,
+    "storage": "Existing topic_drafts.content and reusable_content_drafts.content JSONB; no reference index table or new RPC",
+    "variable": "Inline variableReference attrs: id, referenceVersion=1, variableId",
+    "condition": "Supported block attrs.conditions: version=1, values=[{categoryId,valueId}]; null/absent unassigned",
+    "reusable": "Block leaf reusableReference attrs: id, referenceVersion=1, reusableId; current saved accessible draft preview",
+    "resolution": "Default variable value unless an existing output ID is explicit; neutral conditional preview; bounded/cycle-safe current reusable preview; missing/unsupported references stay visible and saved JSON is preserved",
+    "whereUsed": "Services composition over persisted direct references in RLS-accessible project/document/topic and reusable drafts, paginated project/document/topic/reusable enumeration; workspace-shared reusable scans readable projects in that workspace. Counts exclude unsaved, transitive and inaccessible uses and fail closed on any read error",
+    "deleteSafety": "Definition deletion remains entirely unavailable: no Services delete operations and recovered definition SQL grants/policies omit DELETE. No replacement/cascade-reference workflow introduced",
+    "authority": "Source-reviewed application behavior; no live DB changes or live RLS certification. See artifacts/spextar-studio/SEMANTIC_REFERENCES.md"
+  },
   "unresolved": [
     "All 18 applied versions/names and exact original SQL from the authoritative migration ledger",
     "Exact constraints, indexes, FK ON DELETE actions, triggers, private helpers and grants/policy definitions",
@@ -201,6 +212,6 @@
     "Live multi-identity RLS coverage for all management/draft tables; fixtures are not live certification",
     "Atomic last-project-admin and dependency-delete protections under concurrent sessions",
     "General project reader accepts legacy in_review/in-review; this does not expand the active/archived writable database contract",
-    "No confirmed persisted reference, comments/approval, release/history, brand/output or publishing contract"
+    "No comments/approval, release/history, brand/output or publishing execution contract; semantic references now use the source-reviewed version-1 body contract"
   ]
 }

@@ -1,3 +1,4 @@
+import { useParams } from 'wouter';
 import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { DocumentRecord, Topic } from '@/domain/types';
@@ -16,6 +17,7 @@ export function TopicBodyEditor({ doc, topic, onBody, onStatistics }: {
   doc: DocumentRecord; topic: Topic; onBody: (id: string, body: string[]) => void;
   onStatistics?: (topicId: string, value: ContentStatistics | null, loading: boolean) => void;
 }) {
+  const { workspaceId = '' } = useParams<{ workspaceId: string }>();
   const services = useServices();
   const { data: session } = useStudioSession();
   const client = useQueryClient();
@@ -73,7 +75,7 @@ export function TopicBodyEditor({ doc, topic, onBody, onStatistics }: {
         </div>
       </div>}
       <StructuredEditor content={state.content} editable={controller.editable()} loading={!state.loaded || state.status === 'loading'}
-        onChange={controller.changeDocument} />
+        onChange={controller.changeDocument} referenceContext={{ workspaceId, projectId: doc.projectId }} />
     </div>
   );
 }

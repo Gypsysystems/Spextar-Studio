@@ -1,3 +1,4 @@
+import { VariableReference, ReusableReference, ConditionalAssignments } from './semantic-reference-extensions';
 import { Extension, type Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { TableKit } from '@tiptap/extension-table';
@@ -23,6 +24,9 @@ const NodeIdentity = Extension.create({
     const editor = this.editor;
     return [new Plugin({
       filterTransaction(transaction) {
+        // Focusing, selecting and cancelling a picker must not normalize a saved
+        // body ending in a linked atom into a write. Normalize only real edits.
+        if (!transaction.docChanged) transaction.setMeta('skipTrailingNode', true);
         return editor.isEditable || !transaction.docChanged || transaction.getMeta('preventUpdate') === true;
       },
       appendTransaction(transactions, old, state) {
@@ -96,6 +100,7 @@ const ExactHistoryCommands = Extension.create({
 
 export function studioExtensions() {
   return [
+    VariableReference, ReusableReference, ConditionalAssignments,
     SafePaste,
     TopicSearch,
     Callout,

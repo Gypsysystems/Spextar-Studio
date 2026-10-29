@@ -5,7 +5,7 @@ import { slugify } from '@/domain/project-identifiers';
 import { ServiceError, type Services } from './contracts';
 import { backendError } from './supabase-errors';
 import { atomicOperations } from './supabase-atomic';
-import { contentCounts, supabaseDocuments } from './supabase-documents';
+import { contentCounts, readAll, supabaseDocuments } from './supabase-documents';
 import { supabaseIdentities } from './supabase-identities';
 import { identityLabel } from '@/lib/presentation';
 import { projectInputSchema, workspaceInputSchema } from './validation';
@@ -332,18 +332,20 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       async listProjects(workspaceId) {
         const ws = await requireWorkspace(workspaceId);
         const ctx = await context();
-        const result = await client.from('projects').select(projectColumns).eq('workspace_id', workspaceId).order('updated_at', { ascending: false });
-        check(result.error);
-        const rows = parse(z.array(projectRow), result.data);
+        const rows = parse(z.array(projectRow), await readAll((from, to) => client.from('projects').select(projectColumns)
+          .eq('workspace_id', workspaceId).order('id').range(from, to)));
         if (!rows.length) return [];
-        const memberships = await client.from('project_members').select('project_id,role').eq('user_id', ctx.userId).in('project_id', rows.map((p) => p.id));
-        check(memberships.error);
-        const roles = parse(z.array(z.object({ project_id: z.string(), role: projectRole })), memberships.data);
+        const roles: Array<{ project_id: string; role: z.infer<typeof projectRole> }> = [];
+        for (let offset = 0; offset < rows.length; offset += 200) {
+          roles.push(...parse(z.array(z.object({ project_id: z.string(), role: projectRole })), await readAll((from, to) =>
+            client.from('project_members').select('project_id,role').eq('user_id', ctx.userId)
+              .in('project_id', rows.slice(offset, offset + 200).map(p => p.id)).order('project_id').range(from, to))));
+        }
         const counts = await contentCounts(client, rows.map((row) => row.id));
         return rows.map((row) => {
           const ownRole = roles.find((m) => m.project_id === row.id)?.role;
           return { ...mapProject(row, ws.role === 'admin' ? 'admin' : ownRole, ownRole), ...counts.get(row.id)! };
-        });
+        }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
       },
       getProject,
       async createProject(workspaceId, input): Promise<Project> {

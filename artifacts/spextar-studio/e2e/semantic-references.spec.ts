@@ -1,0 +1,158 @@
+import { test, expect, login, activate, noOverflow, projectPath, type Backend } from './fixture';
+import { accessible, tabTo, visibleFocus } from './accessibility-helpers';
+const at = '2026-10-27T10:00:00Z';
+function seed(backend: Backend) {
+  backend.management.enabled = true;
+  backend.db.reusable_contents = [
+    {
+      id: 'reuse-a',
+      workspace_id: 'ws-a',
+      project_id: 'project-a',
+      scope: 'project',
+      name: 'Safety notice',
+      slug: 'safety-notice',
+      description: null,
+      settings: {},
+      status: 'draft',
+      update_policy: 'notify',
+      tags: [],
+      created_by: 'user-a',
+      created_at: at,
+      updated_at: at,
+    },
+  ];
+  backend.db.reusable_content_drafts = [
+    {
+      reusable_content_id: 'reuse-a',
+      content: {
+        type: 'doc',
+        version: 1,
+        content: [
+          { type: 'paragraph', attrs: { id: 'reuse-p' }, content: [{ type: 'text', text: 'Wear eye protection' }] },
+        ],
+      },
+      revision: 2,
+      updated_at: at,
+      updated_by: 'user-a',
+    },
+  ];
+}
+const linkedBody = () => ({
+  type: 'doc',
+  version: 1,
+  content: [
+    {
+      type: 'paragraph',
+      attrs: { id: 'p', conditions: { version: 1, values: [{ categoryId: 'cat-a', valueId: 'val-a' }] } },
+      content: [
+        { type: 'text', text: 'Product: ' },
+        { type: 'variableReference', attrs: { id: 'v', referenceVersion: 1, variableId: 'var-a' } },
+      ],
+    },
+    { type: 'reusableReference', attrs: { id: 'r', referenceVersion: 1, reusableId: 'reuse-a' } },
+  ],
+});
+test('Author inserts semantic references, saves/reopens, inspects usage and removes a conditional value', async ({
+  page,
+  backend,
+}) => {
+  seed(backend);
+  await login(page, projectPath + '/author/doc-a');
+  const body = page.getByRole('textbox', { name: 'Topic body' });
+  await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 3');
+  await body.press('ControlOrMeta+End');
+  await activate(page, page.getByRole('button', { name: 'Insert variable', exact: true }));
+  await page.getByLabel('Variable', { exact: true }).selectOption('var-a');
+  await activate(page, page.getByRole('button', { name: 'Insert reference', exact: true }));
+  await expect(body).toContainText('QA Product');
+  await expect(body).toBeFocused();
+  await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 4');
+  expect(JSON.stringify(backend.db.topic_drafts[0].content)).toContain('variableReference');
+  await activate(page, page.getByRole('button', { name: 'Conditional tags', exact: true }));
+  await page.getByLabel('Conditional value', { exact: true }).selectOption('val-a');
+  await activate(page, page.getByRole('button', { name: 'Apply tag', exact: true }));
+  await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 5');
+  await expect(page.getByLabel('Applied conditional tags')).toContainText('Audience: Developer');
+  await body.press('ControlOrMeta+End');
+  await activate(page, page.getByRole('button', { name: 'Insert reusable content', exact: true }));
+  await page.getByLabel('Reusable content', { exact: true }).selectOption('reuse-a');
+  await activate(page, page.getByRole('button', { name: 'Insert reference', exact: true }));
+  await expect(body).toContainText('Wear eye protection');
+  await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 6');
+  await page.reload();
+  await expect(body).toContainText('QA Product');
+  await expect(body).toContainText('Wear eye protection');
+  await expect(page.getByLabel('Applied conditional tags')).toContainText('Audience: Developer');
+  await page.goto(projectPath + '/variables-conditions');
+  await expect(page.getByTestId('text-where-used')).toContainText('1 saved reference');
+  await expect(page.getByTestId('text-where-used')).toContainText('QA document · QA topic');
+  await activate(page, page.getByTestId('button-rename-variable'));
+  await page.getByTestId('input-identity-name').fill('Renamed product');
+  await activate(page, page.getByRole('dialog').locator('button[type=submit]'));
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.goto(projectPath + '/author/doc-a');
+  await expect(body).toContainText('QA Product');
+  await body.press('ControlOrMeta+Home');
+  await activate(page, page.getByRole('button', { name: 'Conditional tags', exact: true }));
+  await activate(page, page.getByRole('button', { name: 'Remove tag', exact: true }));
+  await expect(page.getByTestId('body-save-status')).toHaveText('Saved · revision 7');
+  await page.reload();
+  await expect(page.getByLabel('Applied conditional tags')).toHaveCount(0);
+  await noOverflow(page);
+});
+for (const role of ['reviewer', 'viewer'] as const)
+  test(`${role} sees linked previews and missing references with no writes`, async ({ page, backend }) => {
+    seed(backend);
+    backend.setRole(role);
+    backend.db.topic_drafts[0].content = linkedBody();
+    await login(page, projectPath + '/author/doc-a');
+    const body = page.getByRole('textbox', { name: 'Topic body' });
+    await expect(body).toContainText('QA Product');
+    await expect(body).toContainText('Wear eye protection');
+    await expect(page.getByRole('button', { name: 'Insert variable', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Conditional tags', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Insert reusable content', exact: true })).toBeDisabled();
+    backend.db.project_variables[0].value = 'Updated product';
+    backend.db.reusable_content_drafts[0].content = {
+      type: 'doc',
+      version: 1,
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated safety notice' }] }],
+    };
+    await page.goto(projectPath + '/review');
+    await expect(body).toContainText('Updated product');
+    await expect(body).toContainText('Updated safety notice');
+    backend.db.project_variables = [];
+    backend.db.reusable_contents = [];
+    backend.db.condition_values = [];
+    await page.reload();
+    await expect(body).toContainText('Missing variable');
+    await expect(body).toContainText('Missing reusable content');
+    await expect(page.getByLabel('Applied conditional tags')).toContainText('Missing conditional tag');
+    expect(await body.innerText()).not.toMatch(/var-a|reuse-a|val-a/);
+    expect(backend.writes).toEqual([]);
+    await noOverflow(page);
+  });
+test('reference picker keyboard focus, cancellation, tags and linked preview meet accessibility checks', async ({
+  page,
+  backend,
+}) => {
+  seed(backend);
+  backend.db.topic_drafts[0].content = linkedBody();
+  await login(page, projectPath + '/author/doc-a');
+  const body = page.getByRole('textbox', { name: 'Topic body' });
+  await expect(body).toContainText('Wear eye protection');
+  const trigger = page.getByRole('button', { name: 'Insert variable', exact: true });
+  await tabTo(page, trigger);
+  await visibleFocus(trigger);
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(page.getByLabel('Variable', { exact: true })).toBeFocused();
+  await accessible(page);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(body).toBeFocused();
+  await accessible(page);
+  await noOverflow(page);
+  expect(backend.writes).toEqual([]);
+});

@@ -86,3 +86,9 @@
   .se-table-tools { flex-wrap: nowrap; max-width: none; }
   .se-table-help { display: none; }
 }
+
+/* Semantic references remain visibly distinct from copied text. */
+.se-variable-reference { display: inline; border: 1px solid hsl(var(--primary) / .45); background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); border-radius: .25rem; padding: .05rem .25rem; overflow-wrap: anywhere; }
+.se-reusable-reference { border: 1px solid hsl(var(--border)); border-left: 3px solid hsl(var(--primary)); border-radius: .375rem; padding: .75rem; margin: .75rem 0; background: hsl(var(--muted) / .25); overflow-wrap: anywhere; }
+.se-linked-body > :first-child { margin-top: 0; }
+.se-root [data-conditions] { border-left: 2px dashed hsl(var(--primary)); padding-left: .5rem; }
