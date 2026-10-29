@@ -91,6 +91,9 @@ try {
   await failedSubmit(body([{ type:'paragraph',content:[{...vr,attrs:{...vr.attrs,referenceVersion:2}}] }]));
   await failedSubmit(body([{ type:'paragraph',content:[{type:'text',text:'unsafe',marks:[{type:'link',attrs:{href:'javascript:alert(1)'}}]}] }]));
   await failedSubmit({ ...body([]), metadata:{ unsafeNumber:9007199254740992 } });
+  let deepMetadata='leaf';
+  for(let i=0;i<96;i++) deepMetadata=[deepMetadata];
+  await failedSubmit({ ...body([]), metadata:deepMetadata }); // envelope depth, not just body depth
   const chain = Array.from({length:9},(_,i)=>id(100+i));
   await db.exec('reset role');
   for (let i=0;i<chain.length;i++) {

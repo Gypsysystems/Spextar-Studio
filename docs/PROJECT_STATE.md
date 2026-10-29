@@ -535,8 +535,10 @@ updated after extending the documented application contract.
 
 Executed local validation (Windows, Node 24.22.1, pnpm 10.34.9):
 
-- Focused package, lifecycle, viewer and migration tests: **48 passed / 4 files**.
-- Disposable PGlite 0.5.13: **52 PostgreSQL assertions passed**. Includes real SQL
+- Initial focused package/lifecycle/viewer/migration tests: **48 passed / 4 files**.
+- Final focused package/lifecycle/viewer/migration/backend-contract regression after
+  envelope-depth follow-up: **105 passed / 6 files**.
+- Disposable PGlite 0.5.13: **55 PostgreSQL assertions passed**. Includes real SQL
   function/RLS/grant execution with synthetic Auth, transitive closure, same-
   workspace sharing, foreign-project/tenant denial, atomic failure rollback,
   unsupported/missing dependency failures, eight/nine-level and cycle behavior,
@@ -557,9 +559,31 @@ Executed local validation (Windows, Node 24.22.1, pnpm 10.34.9):
   and color-environment notices remain non-failing. The build's incidental sandbox
   generated-file line-ending rewrite was restored, outside this task's scope.
 
-Focused four-profile Chromium validation and hosted quality CI are pending at
-this implementation checkpoint; do not infer green results from this entry.
-Final evidence will be recorded after actual execution. UI reuses StructuredEditor,
+Four-profile Chromium sweep (`review-lifecycle.spec.ts` and
+`semantic-references.spec.ts`, one worker): **55 passed, 1 failed / 56**.
+All new dependency-freeze and legacy-evidence cases passed on desktop/mobile,
+dark/light. The existing full lifecycle scenario failed one mobile-light axe
+contrast check while opening Start New Draft: reported 4.28:1 on an intermediate
+button color; the saved settled screenshot shows the normal approved colors.
+Dialog/button/theme/action source is byte-unchanged from accepted main. A
+transition-state capture is the supported inference, not a certified root cause.
+The unchanged scenario was rechecked on all four profiles: **4 passed**, with
+identical assertions/timeouts and no configured retry. No broad 56-case rerun or
+manual UAT is claimed. The initial failure remains recorded, not erased.
+
+Hosted [quality run 40956580053](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40956580053)
+passed on implementation head `5ff31e915017a2ddfd48245f4d616ba14ed4839c`:
+**57 files / 1135 unit tests**, locked install, typecheck, both production builds,
+bundle guard (736794/975000), PR whitespace/tracked-file integrity and recovered
+migration integrity. This is independently observed Linux CI, not a Codex-local
+run. The final follow-up aligns JSON depth validation with the complete canonical
+package envelope and adds a passing PostgreSQL rollback regression (55 SQL
+assertions); application/editor source is unchanged. Final-head hosted checks
+must be read from [PR #22](https://github.com/Gypsysystems/Spextar-Studio/pull/22).
+The draft PR remains unmerged, titled exactly
+`feat: freeze review dependency packages for publishing`, and links Issue #19.
+
+UI reuses StructuredEditor,
 ReferenceBody, VariableValue, ConditionLabels, BrandedText and existing border/
 muted/destructive tokens; the linked label identifies its submitted revision.
 No new visual pattern/layout, logo/font/vector/color changes. Manual UAT, actual

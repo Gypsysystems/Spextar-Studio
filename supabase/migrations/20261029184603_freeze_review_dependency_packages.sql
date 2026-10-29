@@ -26,7 +26,7 @@ begin
 end $$;
 
 -- STABLE is essential: all catalog SELECTs, including recursive calls, use the
--- INSERT statement's MVCC snapshot. No per-query READ COMMITTED snapshot mixing.
+-- package invocation's calling-query MVCC snapshot. No per-read snapshot mixing.
 -- Invoker only, private and ungranted; called inside the existing checked
 -- postgres-owned transition. Explicit scope checks are required despite that owner.
 create function app_private.review_dependency_walk(
@@ -265,8 +265,8 @@ begin
   if not found then raise exception 'Review scope unavailable' using errcode = '42501'; end if;
   -- One STABLE function invocation traverses ALL submitted topics in one snapshot.
   v_result := app_private.review_dependency_package(new.project_id,v_scope.workspace_id,v_scope.organization_id,new.topics_snapshot);
-  perform app_private.check_review_json(new.document_snapshot);
-  perform app_private.check_review_json(new.topics_snapshot);
+  perform app_private.check_review_json(jsonb_build_object(
+    'document',new.document_snapshot,'topics',new.topics_snapshot,'dependencies',v_result));
   new.dependency_package := v_result;
   return new;
 end $$;
