@@ -222,6 +222,18 @@ describe('topic search panel', () => {
     await user.keyboard('{Control>}f{/Control}');
     await waitFor(() => expect(screen.getByRole('textbox', { name: 'Find in this topic' })).toHaveFocus());
   });
+  it('cancels pending shortcut focus when the editor unmounts', async () => {
+    const surface = ui();
+    const area = await screen.findByRole('textbox', { name: 'Topic body' });
+    const frame = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(42);
+    const cancel = vi.spyOn(window, 'cancelAnimationFrame');
+    try {
+      act(() => area.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true })));
+      expect(frame).toHaveBeenCalled();
+      surface.unmount();
+      expect(cancel).toHaveBeenCalledWith(42);
+    } finally { frame.mockRestore(); cancel.mockRestore(); }
+  });
   it('keeps unknown content verbatim and does not expose replacement against a partial document', () => {
     const changed = vi.fn(), unknown = root([{ type: 'unknown-node', content: [{ type: 'text', text: 'pump' }] }]);
     render(<StructuredEditor content={unknown} editable onChange={changed} />);

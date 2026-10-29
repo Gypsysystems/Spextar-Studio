@@ -1,6 +1,13 @@
 {
   "formatVersion": 1,
   "reviewPolicy": "Offline semantic-source review guard, not live introspection. Review application-contract.json and adapter tests before accepting changed digests.",
+  "projectManagementReview": {
+    "issue": 17,
+    "base": "078a10b8f565fc311a5500a6a7dd5fa19e4ffea0",
+    "migration": "20261029172250_enforce_explicit_project_admin_management.sql",
+    "scope": "Reviewed all is_project_admin consumers, recovered policies/grants/bootstrap/last-admin/owner safeguards, explicit authoring helper, merged Review transition roles, Settings/lifecycle services and role mapping. Adapter/domain semantics unchanged; existing digests intentionally retained.",
+    "evidence": "Offline source contracts and adapter test doubles only; no PostgreSQL/RLS execution or live inspection."
+  },
   "files": {
     "artifacts/spextar-studio/src/domain/project-conditions.ts": "d4cd44fb294af157fddaf3b3e2dd73037bc7553a41d08f5f2742638170ee9861",
     "artifacts/spextar-studio/src/domain/project-settings.ts": "333f59678883e98ebd78d2cbd261838239b388a21ef2300a68b57abfe1af544c",

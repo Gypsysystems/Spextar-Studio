@@ -168,14 +168,20 @@ function Toolbar({ editor, enabled }: { editor: Editor; enabled: boolean }) {
   const searchButton = useRef<HTMLButtonElement>(null);
   const closeSearch = () => { setSearchOpen(false); editor.commands.setTopicSearch(''); searchButton.current?.focus(); };
   useEffect(() => {
+    let focusFrame: number | undefined;
     const shortcut = (event: globalThis.KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || !['f', 'h'].includes(event.key.toLowerCase())
         || !(event.target instanceof Node) || !editor.view.dom.closest('.se-root')?.contains(event.target)) return;
       event.preventDefault(); setSearchOpen(true);
-      requestAnimationFrame(() => editor.view.dom.closest('.se-root')?.querySelector<HTMLInputElement>('[data-topic-find]')?.focus());
+      const root = editor.view.dom.closest('.se-root');
+      if (focusFrame !== undefined) cancelAnimationFrame(focusFrame);
+      focusFrame = requestAnimationFrame(() => root?.querySelector<HTMLInputElement>('[data-topic-find]')?.focus());
     };
     document.addEventListener('keydown', shortcut);
-    return () => document.removeEventListener('keydown', shortcut);
+    return () => {
+      document.removeEventListener('keydown', shortcut);
+      if (focusFrame !== undefined) cancelAnimationFrame(focusFrame);
+    };
   }, [editor]);
   const s = useEditorState({
     editor,
