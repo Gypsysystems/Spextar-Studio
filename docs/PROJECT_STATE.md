@@ -286,6 +286,29 @@ Manual UAT and live RLS certification are not claimed.
 
 ## Next step and unresolved matters
 
+### Issue #10 — independent PR quality gates
+
+The `codex/ci-quality-gates` branch starts from accepted main
+`70ffe3be130164e8d5ac42fa9adc17355ca538e3`, independently of Issue #9.
+Workflow `quality` adds `unit-type-build` and `migration-integrity` jobs for PRs
+to main, with read-only permissions, cancellation of superseded runs and bounded
+timeouts. [CI documentation](CI.md) records automatic commands, historical
+manifest coverage and separate browser/live acceptance gates. No package scripts,
+test configuration, product code, historical SQL, live services or deployment
+settings are changed. Hosted execution and acceptance must be established from
+the PR's actual run results; this entry alone does not claim green CI or UAT.
+
+Local verification on Windows with Node 24.22.1 / pnpm 10.34.9: frozen install,
+typecheck, both demo production builds, bundle guard (729,475 / 975,000 initial
+bytes), actionlint 1.7.7 syntax validation, all 21 manifest checks and diff checks
+passed. The full unit run was **not green**: 46 files passed / 6 failed;
+1,023 tests passed / 8 failed / 54 skipped. Failures include Windows symlink
+`EPERM`, a Windows path-format assertion and UI timeout/lookup failures; the
+readiness-server setup failure caused the 54 skips. Local native Windows modules
+were supplied through machine-only `NODE_PATH` because the lockfile excludes
+those binaries; no dependency files were changed. No assertions, skips, retries
+or timeouts were altered. Browser/live checks were not run for this CI-only task.
+
 Review PR #8 against Issue #4 for Engineering Handoff. Keep it unmerged and undeployed. Exact historical SQL is available; migration replay and live schema/security validation remain separately authorized tasks.
 
 Remaining matters include the verified leaked-password-protection warning, external UAT/release acceptance, relevant missing design frames when fidelity is required, and explicit approval for lifecycle/AI/hosting/production work. Do not replace these decisions with assumptions or treat incomplete modules as permanent prohibitions.

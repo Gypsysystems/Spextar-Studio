@@ -1,0 +1,86 @@
+name: quality
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-type-build:
+    name: unit-type-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Check PR whitespace
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: git diff --check "$BASE_SHA...$HEAD_SHA"
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit and offline source-contract tests
+        run: pnpm test --maxWorkers=1
+      - name: Production build
+        env:
+          PORT: '5173'
+          BASE_PATH: /
+          VITE_STUDIO_MODE: demo
+        run: pnpm run build
+      - name: Bundle guard
+        run: pnpm --filter @workspace/spextar-studio check:bundle
+      - name: Check tracked-file integrity
+        run: |
+          git diff --check
+          git diff --exit-code
+
+  migration-integrity:
+    name: migration-integrity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify recovered migration bytes without executing SQL
+        shell: python
+        run: |
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path('supabase/migrations')
+          entries = json.loads((root / 'migration-manifest.json').read_text())['migrations']
+          assert entries, 'Migration manifest must not be empty'
+          assert len({entry['version'] for entry in entries}) == len(entries)
+          assert len({entry['name'] for entry in entries}) == len(entries)
+          assert entries == sorted(entries, key=lambda entry: entry['version'])
+          for entry in entries:
+              assert entry['file'] == f"{entry['version']}_{entry['name']}.sql"
+              assert Path(entry['file']).name == entry['file']
+              assert entry['statement_count'] == 1
+              body = (root / entry['file']).read_bytes()
+              assert body.decode('utf-8').encode('utf-8') == body
+              assert len(body) == entry['byte_count'], entry['file']
+              assert hashlib.md5(body).hexdigest() == entry['md5'], entry['file']
+          print(f"{len(entries)} recovered migration files match the provenance manifest")
