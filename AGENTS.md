@@ -2,7 +2,7 @@
 
 ## Product Purpose
 
-SPEXTAR Studio supports structured technical-documentation authoring within organizations, workspaces and projects. The broader product workflow is Sources → Analyze & Structure → Author → Review → Publish. Consult `docs/PROJECT_STATE.md` for implemented capabilities; product vision and route labels are not permission to invent features.
+SPEXTAR Studio supports structured technical-documentation authoring within organizations, workspaces and projects. The current product workflow is Sign in → Workspaces → Projects → Project Home → Documents/Content → Author → Review → Publish. Consult `docs/PROJECT_STATE.md` for implemented capabilities; product vision and route labels are not permission to invent features.
 
 ## Operating Model and Authority
 
@@ -58,7 +58,7 @@ Before any UI change, inspect the relevant existing screen/components and these 
 - `src/components/ui/`, `src/components/shell/app-shell.tsx`, `src/features/project/project-scope.tsx`, `src/components/states.tsx`, and `src/features/editor/structured-editor.css` for controls, layouts, states and editor visuals.
 - `src/test/{branding,theme,logo,branded-name}.test.*`, `e2e/brand-assertions.ts`, and `e2e/accessibility*.ts` for existing visual/accessibility expectations.
 
-Use repository-approved branding guidance first, then tokens, established product components and approved screens. Resolve material conflicts with the current user instruction explicitly. No standalone complete brand manual or actual Figma file is tracked; the application README records original vector asset IDs and frozen Variables/Conditions node `37:276`. Obtain the relevant source frames before claiming exact Figma fidelity.
+Use repository-approved branding guidance first, then tokens, established product components and approved screens. Resolve material conflicts with the current user instruction explicitly. No standalone complete brand manual or actual Figma file is tracked; the application README records original vector asset IDs. Current frozen Figma references are Variables `37:276`, Conditional Tags `37:414`, and Reusable Content `33:252`. Obtain the relevant source frames before claiming exact Figma fidelity.
 
 Every visually branded SPEXTAR product-name instance must use the approved Signature X treatment with its purple center dot through existing brand components; do not substitute a plain text X. Preserve approved vector geometry/optical treatment, exact action violet `#6236FF`, local Inter, semantic dark default/light tokens, remembered 240px/72px navigation and existing responsive shell. Reuse established spacing, borders, radii, shadows, icons and interaction states. Do not redesign, replace logos, introduce arbitrary colors/fonts, external font requests or a parallel design system. The optional sandbox is not the SPEXTAR design authority.
 
