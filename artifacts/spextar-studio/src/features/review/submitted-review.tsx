@@ -13,6 +13,7 @@ import { orderTopics } from '@/domain/topic-tree';
 import type { TopicContent } from '@/domain/topic-content';
 import type { DocumentRecord, ProjectSummary, Topic } from '@/domain/types';
 import type { Review } from '@/domain/reviews';
+import type { ReviewPackage } from '@/domain/review-package';
 import { cn } from '@/lib/utils';
 import { documentVersionLabel } from '@/lib/presentation';
 
@@ -44,7 +45,7 @@ function Decision({ review, decision }: { review: Review; decision: 'approved' |
   </Dialog>;
 }
 
-export function SubmittedReview({ project, Viewer, onDoc }: { project: ProjectSummary; Viewer: ComponentType<{ content: TopicContent }>; onDoc?: (doc: DocumentRecord | null) => void }) {
+export function SubmittedReview({ project, Viewer, onDoc }: { project: ProjectSummary; Viewer: ComponentType<{ content: TopicContent; frozenPackage?: ReviewPackage | null }>; onDoc?: (doc: DocumentRecord | null) => void }) {
   const docs = useDocuments(project.id);
   const [selection, setSelection] = useState('');
   const eligible = (docs.data ?? []).filter(d => d.status !== 'published');
@@ -85,7 +86,7 @@ export function SubmittedReview({ project, Viewer, onDoc }: { project: ProjectSu
       <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <nav aria-label={`Submitted outline for ${review.document_snapshot.title}`}><ol className="space-y-1">{topics.map(t => <li key={t.id} style={{ paddingLeft: `${Math.min(t.level - 1, 4) * 12}px` }}><button data-testid={`review-topic-${t.id}`} className={cn('w-full rounded px-3 py-2 text-left text-sm [overflow-wrap:anywhere]', topic?.id === t.id ? 'bg-accent text-accent-foreground' : 'hover:bg-muted')} aria-current={topic?.id === t.id} onClick={() => setTopicId(t.id)}>{t.title}</button></li>)}</ol></nav>
         <section className="min-w-0 space-y-3" aria-label="Submitted topic">
-          {body ? <><h3 className="text-xl font-semibold [overflow-wrap:anywhere]">{body.title}</h3>{body.content === null ? <p data-testid="review-draft-missing">No saved body was submitted for this topic.</p> : <><p className="text-sm text-muted-foreground">Submitted revision <span data-testid="review-draft-revision">{body.revision}</span></p><Viewer key={`${review.id}-${body.id}`} content={body.content} /></>}</> : <p>No topics were submitted.</p>}
+          {body ? <><h3 className="text-xl font-semibold [overflow-wrap:anywhere]">{body.title}</h3>{body.content === null ? <p data-testid="review-draft-missing">No saved body was submitted for this topic.</p> : <><p className="text-sm text-muted-foreground">Submitted revision <span data-testid="review-draft-revision">{body.revision}</span></p><Viewer key={`${review.id}-${body.id}`} content={body.content} frozenPackage={review.dependency_package ?? null} /></>}</> : <p>No topics were submitted.</p>}
         </section>
       </div>
     </>}

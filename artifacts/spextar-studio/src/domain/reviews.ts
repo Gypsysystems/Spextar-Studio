@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { checkedContent, type TopicContent } from './topic-content';
 import { ServiceError } from '@/services/contracts';
 import { orderTopics } from './topic-tree';
+import { checkedReviewPackage, reviewPackageSchema, canonicalReviewJson } from './review-package';
 
 const topic = z.object({
   id: z.string(), parent_topic_id: z.string().nullable(), title: z.string(), slug: z.string(),
@@ -14,6 +15,7 @@ export const reviewSchema = z.object({
   decided_by: z.string().nullable(), decided_at: z.string().refine(v => Number.isFinite(Date.parse(v))).nullable(), decision_note: z.string().nullable(),
   document_snapshot: z.object({ title: z.string(), slug: z.string(), description: z.string().nullable(), settings: z.record(z.string(), z.unknown()) }),
   topics_snapshot: z.array(topic),
+  dependency_package: reviewPackageSchema.nullable().optional(),
 });
 export type Review = Omit<z.infer<typeof reviewSchema>, 'topics_snapshot'> & {
   topics_snapshot: Array<Omit<z.infer<typeof topic>, 'content'> & { content: TopicContent | null }>;
@@ -30,6 +32,10 @@ export function checkedReview(value: unknown, projectId: string, documentId: str
     throw new ServiceError('The saved review decision could not be confirmed. Refresh and try again.', 'unavailable');
   }
   orderTopics(row.topics_snapshot.map(t => ({ id: t.id, title: t.title, kind: 'concept', level: 1, body: [], parentTopicId: t.parent_topic_id, sortOrder: t.sort_order })));
+  if (row.dependency_package) {
+    checkedReviewPackage(row.dependency_package, projectId, row.topics_snapshot.map(t => t.content === null ? null : checkedContent(t.content)));
+    canonicalReviewJson({ document: row.document_snapshot, topics: row.topics_snapshot, dependencies: row.dependency_package });
+  }
   return { ...row, topics_snapshot: row.topics_snapshot.map(t => {
     if ((t.revision === null) !== (t.content === null)) throw new ServiceError('The submitted topic could not be loaded.', 'unavailable');
     return { ...t, content: t.content === null ? null : checkedContent(t.content) };

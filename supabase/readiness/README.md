@@ -187,3 +187,17 @@ UI semantics and the exact signatures. The new forward-only migration remains
 unapplied. The 21 historical SQL files remain exact; no migration replay or live
 schema/Auth/RLS/data validation was performed. Offline inventory/digests describe
 source only, and do not certify deployed behavior.
+# Issue #19 review dependency package extension
+
+The source-reviewed `document_reviews.dependency_package` column freezes only
+the transitive referenced Variables, Conditions and Reusable Content, atomically
+with new submissions. A single STABLE package invocation uses one statement
+MVCC snapshot for all catalog reads. Private invoker helpers add no definer or
+public RPC; parent review RLS and immutability protect the column. See the
+[complete package contract](../../artifacts/spextar-studio/REVIEW_DEPENDENCY_PACKAGES.md).
+Legacy rows remain NULL and cannot supply deterministic Publishing content.
+The optional PGlite harness exercises PostgreSQL with synthetic Auth in memory;
+it is not live certification. Three source migrations now follow the 21 recovered
+originals; none was applied by this task, and no fresh live ledger was inspected.
+The historical limitation prose below is superseded where these extensions and
+the recovered migration manifest provide newer source evidence.

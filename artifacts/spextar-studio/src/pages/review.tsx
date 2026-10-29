@@ -13,6 +13,7 @@ import { useServices } from '@/providers/services-provider';
 import { useDocuments } from '@/hooks/use-studio-data';
 import type { DocumentRecord, Topic } from '@/domain/types';
 import type { TopicContent } from '@/domain/topic-content';
+import type { ReviewPackage } from '@/domain/review-package';
 import { cn } from '@/lib/utils';
 import { SubmittedReview } from '@/features/review/submitted-review';
 
@@ -57,10 +58,10 @@ function ViewerLoading() {
 }
 
 /** Injectable download boundary; rejected module imports require a real page reload. */
-export function createReviewViewer(load: () => Promise<{ default: ComponentType<{ content: TopicContent }> }>) {
+export function createReviewViewer(load: () => Promise<{ default: ComponentType<{ content: TopicContent; frozenPackage?: ReviewPackage | null }> }>) {
   const Viewer = lazy(load);
-  return function LazyReviewViewer({ content }: { content: TopicContent }) {
-    return <ViewerBoundary><Suspense fallback={<ViewerLoading />}><Viewer content={content} /></Suspense></ViewerBoundary>;
+  return function LazyReviewViewer({ content, frozenPackage }: { content: TopicContent; frozenPackage?: ReviewPackage | null }) {
+    return <ViewerBoundary><Suspense fallback={<ViewerLoading />}><Viewer content={content} frozenPackage={frozenPackage} /></Suspense></ViewerBoundary>;
   };
 }
 const ReviewDraftViewer = createReviewViewer(() => import('@/features/review/review-draft-viewer'));

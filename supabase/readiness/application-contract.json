@@ -2,6 +2,17 @@
   "formatVersion": 1,
   "authority": "Application expectations derived from source and established product behavior; NOT a live schema export or executable migration baseline.",
   "schema": "public",
+  "reviewDependencyPackages": {
+    "authority": "Issue #19; source-only 20261029184603_freeze_review_dependency_packages.sql; see artifacts/spextar-studio/REVIEW_DEPENDENCY_PACKAGES.md",
+    "storage": "Nullable document_reviews.dependency_package. NULL is legacy, never backfilled; every new INSERT captures version-1 dependencies atomically. Existing whole-row immutable guard and parent SELECT RLS apply.",
+    "closure": "Only reachable variable definitions/defaults/output overrides, condition categories/referenced values/policies, project or authorized same-workspace shared reusable metadata/exact persisted body revisions and transitive closure. Original JSON/reference identities remain unflattened.",
+    "consistency": "Single STABLE package function and STABLE recursive reads share one statement MVCC snapshot for all catalogs. Existing document/membership locks and stale expected timestamp checks remain. No claim of equality with a prior browser dependency preview or locking all catalog edits.",
+    "security": "No new definer/grants/public RPC. Private invoker helpers, empty search_path, no PUBLIC/anon/authenticated EXECUTE. Insert capture checks postgres transition context, auth identity, submitter and explicit Admin/Author role. Exact project/tenant scope checked for every dependency.",
+    "schema": "schemaVersion=1, resolverVersion=1, canonicalization=spextar-json-v1; organization/workspace/project IDs; neutral conditions/default variables/no selected output; UUID-ordered variables/categories/values/reusable arrays. Safe-integer JSON canonical domain, UTF-16 sorted object keys, significant array order, UTF-8 encoding; no digest execution.",
+    "bounds": "Eight reusable levels; ancestor cycles/ninth level fail; repeated DAG paths permitted. 256 distinct reusable IDs, 4096 body visits, 30000 nodes/body, 100000 visited nodes, JSON depth<100, dependency JSONB text<=16MiB. Missing/unsupported/unsafe/out-of-scope dependencies fail closed.",
+    "review": "Frozen provider performs no mutable dependency or reusable-body reads; Author/demo continue current resolution. Legacy semantic reviews show an explicit unavailable notice. Approval/Start New Draft preserve evidence; resubmission captures a new package.",
+    "limits": "No live migration/schema/Auth/RLS certification, multi-session race execution, release creation/digest, deployment or UAT. Optional in-memory PGlite SQL harness uses synthetic Auth, not live Supabase."
+  },
   "reviewLifecycle": {
     "authority": "Issue #9; source-reviewed only",
     "snapshot": "Document metadata and ordered topic graph with nullable persisted revision/content; JSONB is copied without resolving references.",
@@ -23,8 +34,8 @@
     "exactSqlAvailable": true,
     "replayCertified": false,
     "sourceRecoveredCount": 21,
-    "pendingSourceCount": 2,
-    "authority": "Issue #2 recovered manifest; Review and Issue #17 project-management migrations are source-only, with no fresh live inspection"
+    "pendingSourceCount": 3,
+    "authority": "Issue #2 recovered manifest; Review, Issue #17 project-management and Issue #19 package migrations are source-only, with no fresh live inspection"
   },
   "projectManagement": {
     "authority": "Issue #17; source-only forward migration 20261029172250_enforce_explicit_project_admin_management.sql",
@@ -47,7 +58,8 @@
         "decided_at",
         "decision_note",
         "document_snapshot",
-        "topics_snapshot"
+        "topics_snapshot",
+        "dependency_package"
       ],
       "operations": [
         "select"
