@@ -52,6 +52,9 @@ See [the F2 contract](artifacts/spextar-studio/F2.md) for metadata and body-stor
 
 Use Node.js 24 and pnpm 10.
 
+Pull requests to `main` run the [automatic CI quality gates](docs/CI.md).
+That guide lists local reproduction commands and separate manual acceptance gates.
+
 ```sh
 pnpm install --frozen-lockfile
 cp artifacts/spextar-studio/.env.example artifacts/spextar-studio/.env.local
