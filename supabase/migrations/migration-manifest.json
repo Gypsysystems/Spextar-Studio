@@ -1,0 +1,191 @@
+{
+  "format_version": 1,
+  "provenance": {
+    "project_ref": "luyyxblmtupmugtazgbr",
+    "source_table": "supabase_migrations.schema_migrations",
+    "source_columns": [
+      "version",
+      "name",
+      "statements"
+    ],
+    "exported_on": "2026-10-29",
+    "transport": "Supabase MCP execute_sql; SELECT queries only",
+    "authority": "https://github.com/Gypsysystems/Spextar-Studio/issues/2",
+    "cross_check": "All identities and MD5s also match the product-owner audit and retained handoff manifest; latest SQL matches the retained original byte for byte"
+  },
+  "encoding": "UTF-8",
+  "checksum_algorithm": "MD5",
+  "checksum_input": "array_to_string(statements, E'\\n'); every entry has one stored statement, so this is the exact file bytes without added separators or normalization",
+  "statement_count_definition": "Number of elements in the ledger statements array, not the number of SQL commands",
+  "replay_certified": false,
+  "migrations": [
+    {
+      "version": "20261026235245",
+      "name": "f0_f1_identity_workspace_project_foundation",
+      "file": "20261026235245_f0_f1_identity_workspace_project_foundation.sql",
+      "statement_count": 1,
+      "byte_count": 14925,
+      "md5": "42ba335139c4175513ed1888c848820f"
+    },
+    {
+      "version": "20261026235312",
+      "name": "index_created_by_foreign_keys",
+      "file": "20261026235312_index_created_by_foreign_keys.sql",
+      "statement_count": 1,
+      "byte_count": 220,
+      "md5": "aea3bc3acdc69ad2265c9a0aa69c2fac"
+    },
+    {
+      "version": "20261026235541",
+      "name": "harden_membership_bootstrap_and_create_flows",
+      "file": "20261026235541_harden_membership_bootstrap_and_create_flows.sql",
+      "statement_count": 1,
+      "byte_count": 4562,
+      "md5": "a395b041654a35830fabb4fe0b7ff3e7"
+    },
+    {
+      "version": "20261027002606",
+      "name": "restrict_atomic_create_rpc_execution",
+      "file": "20261027002606_restrict_atomic_create_rpc_execution.sql",
+      "statement_count": 1,
+      "byte_count": 535,
+      "md5": "d9f3facbb0b4d32717b9b591278ebfa9"
+    },
+    {
+      "version": "20261027002742",
+      "name": "least_privilege_authenticated_table_grants",
+      "file": "20261027002742_least_privilege_authenticated_table_grants.sql",
+      "statement_count": 1,
+      "byte_count": 1011,
+      "md5": "ce33f4753d48c4993590afbfb97edb18"
+    },
+    {
+      "version": "20261027003321",
+      "name": "protect_organization_owner_membership",
+      "file": "20261027003321_protect_organization_owner_membership.sql",
+      "statement_count": 1,
+      "byte_count": 1092,
+      "md5": "ad9c1f5522b568b998f2a01c25b8b9dd"
+    },
+    {
+      "version": "20261027005229",
+      "name": "fix_organization_bootstrap_returning_rls",
+      "file": "20261027005229_fix_organization_bootstrap_returning_rls.sql",
+      "statement_count": 1,
+      "byte_count": 618,
+      "md5": "c9e7554895bb16513e2761ad2d7df591"
+    },
+    {
+      "version": "20261027010030",
+      "name": "f2_documents_topics_foundation",
+      "file": "20261027010030_f2_documents_topics_foundation.sql",
+      "statement_count": 1,
+      "byte_count": 7266,
+      "md5": "79a7f80ffb8b40c696ca97de94571e61"
+    },
+    {
+      "version": "20261027010127",
+      "name": "index_topics_parent_document_foreign_key",
+      "file": "20261027010127_index_topics_parent_document_foreign_key.sql",
+      "statement_count": 1,
+      "byte_count": 87,
+      "md5": "38f7e502327e999c87ad576c37413e6a"
+    },
+    {
+      "version": "20261027010421",
+      "name": "f2_topic_tree_operations",
+      "file": "20261027010421_f2_topic_tree_operations.sql",
+      "statement_count": 1,
+      "byte_count": 5588,
+      "md5": "6d00e98f386e001dd9dd8e4c52c0d68d"
+    },
+    {
+      "version": "20261027010458",
+      "name": "f2_document_topic_duplication",
+      "file": "20261027010458_f2_document_topic_duplication.sql",
+      "statement_count": 1,
+      "byte_count": 4843,
+      "md5": "308ba6244686f71e00fcceb218a87b3c"
+    },
+    {
+      "version": "20261027073614",
+      "name": "f3_topic_drafts_foundation",
+      "file": "20261027073614_f3_topic_drafts_foundation.sql",
+      "statement_count": 1,
+      "byte_count": 8459,
+      "md5": "0be3102c0470bcf034800fd2551e1afd"
+    },
+    {
+      "version": "20261027073722",
+      "name": "index_topic_draft_audit_foreign_keys",
+      "file": "20261027073722_index_topic_draft_audit_foreign_keys.sql",
+      "statement_count": 1,
+      "byte_count": 155,
+      "md5": "8a96caeda20c9840213aa8948a9a176a"
+    },
+    {
+      "version": "20261027083130",
+      "name": "allow_project_members_select_project",
+      "file": "20261027083130_allow_project_members_select_project.sql",
+      "statement_count": 1,
+      "byte_count": 278,
+      "md5": "471629f0bd5de9dd2525b394c6b89461"
+    },
+    {
+      "version": "20261027084157",
+      "name": "f3_semantic_definitions_foundation",
+      "file": "20261027084157_f3_semantic_definitions_foundation.sql",
+      "statement_count": 1,
+      "byte_count": 10421,
+      "md5": "70b10a632ffc36592df3396c91768028"
+    },
+    {
+      "version": "20261027084756",
+      "name": "align_semantic_definitions_with_frozen_ui",
+      "file": "20261027084756_align_semantic_definitions_with_frozen_ui.sql",
+      "statement_count": 1,
+      "byte_count": 11578,
+      "md5": "5d965052d9cb71126a55c46e073cbda3"
+    },
+    {
+      "version": "20261027084851",
+      "name": "allow_project_members_read_workspace_reusable",
+      "file": "20261027084851_allow_project_members_read_workspace_reusable.sql",
+      "statement_count": 1,
+      "byte_count": 1363,
+      "md5": "7e2893b187e5ffe2ee416fae73c7f305"
+    },
+    {
+      "version": "20261027153832",
+      "name": "restrict_content_authoring_to_explicit_project_roles",
+      "file": "20261027153832_restrict_content_authoring_to_explicit_project_roles.sql",
+      "statement_count": 1,
+      "byte_count": 345,
+      "md5": "2d327b9722a583cda94ccc6a6f201c61"
+    },
+    {
+      "version": "20261028120753",
+      "name": "protect_last_project_admin",
+      "file": "20261028120753_protect_last_project_admin.sql",
+      "statement_count": 1,
+      "byte_count": 1810,
+      "md5": "af44336bcee0550a8f6b25bff62f6f10"
+    },
+    {
+      "version": "20261028122933",
+      "name": "harden_function_execute_defaults",
+      "file": "20261028122933_harden_function_execute_defaults.sql",
+      "statement_count": 1,
+      "byte_count": 405,
+      "md5": "6c634c7ea6e56a42eb90e5240b218f39"
+    },
+    {
+      "version": "20261028234310",
+      "name": "align_authenticated_content_write_grants",
+      "file": "20261028234310_align_authenticated_content_write_grants.sql",
+      "statement_count": 1,
+      "byte_count": 440,
+      "md5": "fa15d85d89ac2782b815ee55d5a628e4"
+    }
+  ]
+}

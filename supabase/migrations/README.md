@@ -1,57 +1,96 @@
-# Migration source-control handoff — SQL not yet exported
+# Recovered authoritative migration history
 
-This directory intentionally contains **no reconstructed SQL migrations**.
-The application contract in [`../readiness`](../readiness/README.md) is not a
-database definition and must never be applied as one.
+This directory contains all **21 applied migrations** from the approved Supabase
+project `luyyxblmtupmugtazgbr`, recovered for [Issue #2](https://github.com/Gypsysystems/Spextar-Studio/issues/2)
+on 2026-10-29. Each `<version>_<name>.sql` preserves the exact stored SQL text.
+The latest is `20261028234310_align_authenticated_content_write_grants.sql`.
+No migration was executed during recovery; no live database write occurred.
 
-The supplied project history reports **18 applied migrations**. This is a
-reported count, not a live ledger query result from this change. Neither that
-count nor application reads establish the original SQL, timestamps, policy
-definitions, foreign-key actions, function security properties or replayability.
+## Source and byte preservation
 
-## Known supplied identities (partial, not an export)
+The authoritative source was `supabase_migrations.schema_migrations`, accessed
+through connected Supabase MCP tools with read-only migration listing and
+`SELECT` queries. The export read `version`, `name` and `statements` in version
+order. SQL text was transported as base64 of `convert_to(statements[1], 'UTF8')`
+and decoded directly into file bytes. No headers, separators, formatting,
+line-ending changes or extra final newline were added.
 
-These nine identities were supplied earlier in the project conversation. They
-remain **unverified against an exported ledger**, and are not placeholder files:
+Every ledger entry contains one element in its `statements` array. This is a
+**stored-statement count**, not a count of SQL commands: an element can contain
+several commands, functions and comments. For these entries the exact file bytes
+match `md5(array_to_string(statements, E'\n'))` without joining multiple elements.
 
-| Version | Name |
-|---|---|
-| 20261026235245 | f0_f1_identity_workspace_project_foundation |
-| 20261026235312 | index_created_by_foreign_keys |
-| 20261026235541 | harden_membership_bootstrap_and_create_flows |
-| 20261027002606 | restrict_atomic_create_rpc_execution |
-| 20261027002742 | least_privilege_authenticated_table_grants |
-| 20261027010030 | f2_documents_topics_foundation |
-| 20261027010127 | index_topics_parent_document_foreign_key |
-| 20261027010421 | f2_topic_tree_operations |
-| 20261027010458 | f2_document_topic_duplication |
+[`migration-manifest.json`](migration-manifest.json) records the shared source,
+capture date, checksum convention and each version, name, filename,
+stored-statement count, UTF-8 byte count and MD5. All 21 identities and checksums
+matched the live ledger, the product-owner audit in Issue #2 and the retained
+handoff CSV. The latest SQL also matched the retained original file byte for byte,
+with MD5 `fa15d85d89ac2782b815ee55d5a628e4`.
 
-Nine timestamped identities are listed above; organization-owner membership
-protection was also confirmed, but its timestamp/name/SQL were not supplied
-authoritatively here. Do not invent the remaining ledger entries.
+The earlier report of 18 migrations and nine partial identities is superseded.
+Historical migration-status fields in `../readiness/application-contract.json`
+and its readiness documents describe the earlier application-contract snapshot;
+this manifest is the recovery authority. The application contract remains an
+expectation inventory, not SQL or a certification of live schema/security/replay.
+Its drift checks and semantic digests were not changed.
 
-## Safe completion gate
+## Offline integrity check
 
-1. Obtain an authorized **read-only export** of the applied migration ledger,
-   including version, name and the original ordered SQL statements for every
-   applied entry, or the original files verified against that ledger.
-   Do not request/expose a service-role key in the browser, weaken metadata
-   access, grant anon access, or use application table reads as a schema dump.
-2. Verify the current live count rather than assuming it is still 18. Reject
-   missing/duplicate versions, missing SQL, truncated exports and name/order
-   mismatches. Preserve exact original statements and their order; do not
-   regenerate approximate migrations from a current-schema dump.
-3. Track one `<version>_<name>.sql` per actual entry here. Record the export
-   provenance and per-file checksums in a reviewed manifest without tokens,
-   connection strings, personal data or machine-local paths.
-4. Compare ledger identities, statement order and checksums. Reconcile adapter
-   expectations with the exported schema, not by silently changing the database.
-5. If replay validation is available, use only a separately authorized isolated
-   disposable environment. Replay has **not** been performed or certified here.
-   Never reset, repair, push, rerun, roll back or apply migrations on the live
-   SPEXTAR project as part of source control.
-6. Run the repository regression/typecheck/build/browser/bundle gates before
-   committing the exact baseline. Do not claim migration parity until all
-   applied entries and their exact SQL have been compared.
+From the repository root, this checks the exact file set, unique ordered versions
+and names, stored-statement counts, byte counts and MD5s without contacting
+Supabase or executing SQL:
 
-No migrations or live queries are executed by the readiness checks.
+```sh
+python - <<'PY'
+import hashlib
+import json
+from pathlib import Path
+
+root = Path('supabase/migrations')
+manifest = json.loads((root / 'migration-manifest.json').read_text())
+entries = manifest['migrations']
+assert len(entries) == 21
+assert len({entry['version'] for entry in entries}) == 21
+assert len({entry['name'] for entry in entries}) == 21
+assert entries == sorted(entries, key=lambda entry: entry['version'])
+assert {path.relative_to(root).as_posix() for path in root.rglob('*.sql')} == {
+    entry['file'] for entry in entries
+}
+for entry in entries:
+    assert entry['file'] == f"{entry['version']}_{entry['name']}.sql"
+    assert entry['statement_count'] == 1
+    body = (root / entry['file']).read_bytes()
+    assert body.decode('utf-8').encode('utf-8') == body
+    assert len(body) == entry['byte_count']
+    assert hashlib.md5(body).hexdigest() == entry['md5'], entry['file']
+assert entries[-1]['version'] == '20261028234310'
+assert entries[-1]['md5'] == 'fa15d85d89ac2782b815ee55d5a628e4'
+print('21 exact migration files: identities, sizes and MD5s match manifest')
+PY
+git diff --check
+```
+
+This verifies local integrity against the captured manifest. A later live ledger
+comparison requires another authorized read-only query. MD5 is retained for
+parity with the ledger audit, not as a signature.
+
+## Safety and remaining verification
+
+Recovery closes the missing-original-SQL source-control gap for these 21 entries.
+It does **not** certify replay, current schema parity, RLS/security behavior or
+product UAT. No live schema, grants, policies, Auth configuration, functions,
+triggers, tables, data or migration-ledger entries were modified. Application
+behavior, permissions, lifecycle semantics, branding and deployment are unchanged.
+
+Never replay, reset, repair, push, apply, rerun, revert or roll back migrations on
+the live SPEXTAR project as part of recovery. Any replay validation requires a
+separately authorized isolated disposable environment. Do not infer missing SQL
+from current schema, regenerate historical bodies, or normalize these files to
+silence a check. If a later comparison differs, report the exact gap and obtain
+authoritative originals before extending the manifest.
+
+The application contract in [`../readiness`](../readiness/README.md) must never
+be applied as a database definition. Repository regression, typecheck/build,
+bundle and controlled browser checks support technical verification; they do
+not execute these migrations or certify live database behavior. Review the
+recovery PR before merge; deployment and replay remain separate decisions.
