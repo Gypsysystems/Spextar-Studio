@@ -31,9 +31,9 @@
     "artifacts/spextar-studio/src/domain/semantic-references.ts": "d640f04e4bb27957a2de3dc01efaffd7664cad68d2a2db217631ac2c10b5b8b8",
     "artifacts/spextar-studio/src/services/semantic-references.ts": "c6bcac7d3c0cf76b7715ec94bc33c98a118eda17698ddfe5d72c63c28fd08615",
     "artifacts/spextar-studio/src/domain/reviews.ts": "2edb8eae2ade1c24408ca8a1dc6c89c5fad5fe0393c19e70889fe3bcd073eb30",
-    "artifacts/spextar-studio/src/services/supabase-reviews.ts": "bd17586d8f58d8040c8415cabf2a4011730fdf49c684c0a184ecd4ce833f86b1",
+    "artifacts/spextar-studio/src/services/supabase-reviews.ts": "88f2f2e752310d30e46ac3e5232bc6f56930acd63def0e7e8d79a72303ddbaf0",
     "artifacts/spextar-studio/src/domain/review-package.ts": "ce30675a884b56d541da60f6a37f5106436cc786084d05ab125d27cc37044063",
-    "artifacts/spextar-studio/src/services/supabase-releases.ts": "75600529f51a76524373055b216dbee195e72df05e0507d0ec5f5fbb5227756d",
+    "artifacts/spextar-studio/src/services/supabase-releases.ts": "117627b1bfda6d4bbdf2f63e7a5e072b8de77e56eb3dd7f2db281239f0fd57e6",
     "artifacts/spextar-studio/src/domain/releases.ts": "fc87cd182a96830354f96c16526dfb38b406228d900a20bc906105fc09479766",
     "artifacts/spextar-studio/src/domain/release-renderer.ts": "d5d866b68ae0db3b3295199f4b4ae663d9b25d02356d8ae44b09ada2575edb78"
   },
@@ -50,5 +50,11 @@
     "migration": "20261030001220_immutable_document_releases.sql",
     "review": "SELECT-only scoped release table; one exact publish RPC with identifiers/time/key only. Pinned package parser, canonical digests and pure renderer. No direct release writes or catalog content reads.",
     "evidence": "Source review only; execution evidence documented separately. No live certification."
+  },
+  "rpcConflictTransport": {
+    "issue": 27,
+    "base": "a307c8afebcfc9310c9de162834842e1a2ec6bc8",
+    "migration": "20261030213342_non_retryable_rpc_conflicts.sql",
+    "scope": "Reviewed exact existing RPC signatures, one call per mutation, unchanged projections/scopes and fail-closed roles. Only PT409 conflict recognition added; legacy 40001/23505 recognition retained for compatibility. No fallback or retries added."
   }
 }

@@ -291,3 +291,13 @@ product-owner acceptance. Database evidence supports requesting controlled rollo
 once these gates are satisfied; it is not permission to apply or deploy. Any
 confirmed failing browser acceptance case remains a blocker until classified and
 resolved with unchanged assertions or explicitly accepted by the product owner.
+
+## Issue #27 compatibility correction
+
+The authenticated Issue #26 stale-submit gate exposed a PostgREST 14 retry defect
+in authored SQLSTATE 40001 business guards. The historical ready-to-request-rollout
+recommendation above predates that finding. [Issue #27 audit and verification](RPC_CONFLICT_TRANSPORT.md)
+records the new forward-only PT409 fix and disposable HTTP/native evidence.
+Issue #26 remains open and Replit/UAT remains blocked until independent review,
+explicit merge/migration authorization and fresh real authenticated smoke. No live
+rollout authority is granted by passing disposable tests.

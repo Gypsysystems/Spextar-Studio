@@ -8,7 +8,7 @@ export async function validatePrivateBeta(db) {
   let checks = 0, serial = 20000;
   const id = n => `10000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
   const check = (value, label) => { assert.ok(value, label); checks++; console.log('PASS', label); };
-  const denied = async (fn, label, codes = ['42501', '23514', '40001']) => {
+  const denied = async (fn, label, codes = ['42501', '23514', 'PT409']) => {
     await assert.rejects(fn, e => codes.includes(e.code), label); checks++; console.log('PASS', label);
   };
   const as = async (c, user) => {
@@ -126,19 +126,19 @@ export async function validatePrivateBeta(db) {
   await a.query('begin'); await publish(a,raceDoc,r2,id(serial++),stamp2);
   const competing=publish(b,raceDoc,r2,id(serial++),stamp2).then(v=>({v}),e=>({e}));
   await waiting(pidB); await a.query('commit'); const outcome=await competing;
-  check(outcome.e?.code === '40001','different-key concurrent publication fails stale after lock');
+  check(outcome.e?.code === 'PT409','different-key concurrent publication fails stale after lock');
   check((await q(root,'select sequence from document_releases where document_id=$1 order by sequence',[raceDoc])).map(x=>x.sequence).join(',') === '1,2','concurrent release numbering has no duplicate or gap');
   await draft(a,raceDoc,r2); const staleStamp=await stamp(raceDoc);
   await a.query('begin'); await a.query('update documents set title=\'Updated\' where id=$1',[raceDoc]);
   const stale=b.query('select submit_document_review($1,$2,$3)',[project,raceDoc,staleStamp]).then(v=>({v}),e=>({e}));
   await waiting(pidB); await a.query('commit');
-  check((await stale).e?.code === '40001','concurrent document change rejects stale submission');
+  check((await stale).e?.code === 'PT409','concurrent document change rejects stale submission');
   const raceDraftDoc=await fresh(), raceDraftReview=await submit(a,raceDraftDoc); await approve(a,raceDraftDoc,raceDraftReview);
   const draftStamp=await stamp(raceDraftDoc);
   await a.query('begin'); await publish(a,raceDraftDoc,raceDraftReview,id(serial++),draftStamp);
   const newDraft=b.query('select start_document_draft($1,$2,$3,$4)',[project,raceDraftDoc,raceDraftReview,draftStamp]).then(v=>({v}),e=>({e}));
   await waiting(pidB); await a.query('commit');
-  check((await newDraft).e?.code === '40001','concurrent Publish versus Start Draft rejects stale transition');
+  check((await newDraft).e?.code === 'PT409','concurrent Publish versus Start Draft rejects stale transition');
   await root.query("update project_members set role='admin' where project_id=$1 and user_id=$2",[project,author]);
   const revokedDoc=await fresh(), revokedReview=await submit(a,revokedDoc); await approve(a,revokedDoc,revokedReview);
   const revokedStamp=await stamp(revokedDoc);

@@ -48,13 +48,18 @@ describe('Submitted review lifecycle', () => {
     const perform = () => action === 'submit' ? f.services.reviews!.submit('project-a', 'doc-a', at)
       : action === 'decide' ? f.services.reviews!.decide('project-a', 'doc-a', 'review-a', 'approved', '')
         : f.services.reviews!.startDraft('project-a', 'doc-a', 'review-a', at);
-    f.raw.rpc.mockResolvedValueOnce({ data: null, error: { code: '40001' } });
+    f.raw.rpc.mockResolvedValueOnce({ data: null, error: { code: 'PT409' } });
     await expect(perform()).rejects.toMatchObject({ code: 'conflict' });
     expect(f.raw.rpc).toHaveBeenCalledTimes(1);
     f.raw.rpc.mockResolvedValueOnce({ data: null, error: null });
     await expect(perform()).rejects.toMatchObject({ code: 'unavailable' });
     expect(f.raw.rpc).toHaveBeenCalledTimes(2);
     expect(f.calls.filter(c => c.patch || c.insert || c.deleted)).toEqual([]);
+  });
+  it.each(['40001', '23505'])('recognizes legacy %s conflicts without retry', async code => {
+    const f = backend(); f.raw.rpc.mockResolvedValue({ data: null, error: { code } });
+    await expect(f.services.reviews!.submit('project-a', 'doc-a', at)).rejects.toMatchObject({ code: 'conflict' });
+    expect(f.raw.rpc).toHaveBeenCalledTimes(1);
   });
   it.each(['author', 'viewer'])('surfaces server decision denial for %s without alternative writes', async role => {
     const f = backend(role); f.raw.rpc.mockResolvedValue({ data: null, error: { code: '42501' } });
@@ -130,7 +135,7 @@ describe('Submitted review lifecycle', () => {
     expect(f.calls.filter(c => c.patch || c.insert || c.deleted)).toEqual([]);
   });
   it('shows stale decisions without blind retry', async () => {
-    const f = backend(); f.raw.rpc.mockResolvedValue({ data: null, error: { code: '40001' } }); f.mount();
+    const f = backend(); f.raw.rpc.mockResolvedValue({ data: null, error: { code: 'PT409' } }); f.mount();
     await f.user.click(await screen.findByRole('button', { name: 'Approve' }));
     await f.user.click(screen.getByRole('button', { name: 'Confirm approve' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('changed'); expect(f.raw.rpc).toHaveBeenCalledTimes(1);

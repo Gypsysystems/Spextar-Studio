@@ -55,18 +55,18 @@ export function reviewTransition(name: string, body: Row, db: Record<string, Row
   let review = db.document_reviews.find(r => r.id === body.p_review_id && r.document_id === doc.id);
   const topics = db.topics.filter(t => t.document_id === doc.id);
   if (name === 'submit_document_review') {
-    if (doc.status !== 'draft' || doc.updated_at !== body.p_expected_updated_at) return failure('40001');
+    if (doc.status !== 'draft' || doc.updated_at !== body.p_expected_updated_at) return failure('PT409');
     review = capturedReview(db, userId); review.sequence = db.document_reviews.length + 1; review.id = `review-${review.sequence}`;
     db.document_reviews.unshift(review); doc.status = 'in_review'; topics.forEach(t => { t.status = 'in_review'; });
   } else if (name === 'start_document_draft') {
-    if (!review || review !== db.document_reviews[0] || review.status !== 'approved' || doc.status !== 'approved' || doc.updated_at !== body.p_expected_updated_at) return failure('40001');
+    if (!review || review !== db.document_reviews[0] || review.status !== 'approved' || doc.status !== 'approved' || doc.updated_at !== body.p_expected_updated_at) return failure('PT409');
     doc.status = 'draft'; topics.forEach(t => { t.status = 'draft'; });
     for (const t of review.topics_snapshot as Row[]) {
       const draft = db.topic_drafts.find(d => d.topic_id === t.id);
       if (draft && t.content) { draft.content = structuredClone(t.content); draft.revision = Number(draft.revision) + 1; }
     }
   } else {
-    if (!review || review.status !== 'in_review' || doc.status !== 'in_review') return failure('40001');
+    if (!review || review.status !== 'in_review' || doc.status !== 'in_review') return failure('PT409');
     const changes = name === 'request_document_changes';
     if (changes && !String(body.p_note ?? '').trim()) return failure('22023');
     review.status = changes ? 'changes_requested' : 'approved'; review.decision_note = body.p_note;

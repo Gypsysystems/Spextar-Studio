@@ -194,6 +194,16 @@ describe('pinned immutable releases', () => {
     expect(await supabaseReleases(f.client).findRequest({ ...r, reviewId: 'other-review' })).toBeNull();
     expect(f.calls[0].filters).toContainEqual(['review_id', 'review-a']);
   });
+  it.each(['PT409', '40001', '23505'])('maps %s to conflict without retry or fallback writes', async code => {
+    const f = supabaseDouble();
+    f.raw.rpc.mockResolvedValue({ data: null, error: { code } });
+    await expect(supabaseReleases(f.client).publish({
+      projectId: 'project-a', documentId: 'doc-a', reviewId: 'review-a',
+      expectedUpdatedAt: reviewAt, requestKey: 'request',
+    })).rejects.toMatchObject({ code: 'conflict' });
+    expect(f.raw.rpc).toHaveBeenCalledTimes(1);
+    expect(f.calls).toEqual([]);
+  });
   it('sends only exact scoped identifiers, expected timestamp and stable request key in one authenticated call', async () => {
     const f = supabaseDouble();
     f.raw.rpc.mockResolvedValueOnce({ data: 'release-id', error: null });

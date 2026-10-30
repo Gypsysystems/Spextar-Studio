@@ -11,7 +11,7 @@ let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 const query = async (sql, args = []) => (await db.query(sql, args)).rows;
 const scalar = async (sql, args = []) => Object.values((await query(sql, args))[0])[0];
-const denied = async (action, codes = ['42501','23514','22P02','22023','40001']) => {
+const denied = async (action, codes = ['42501','23514','22P02','22023','PT409']) => {
   await assert.rejects(action, e => codes.includes(e.code)); checks++;
 };
 try {

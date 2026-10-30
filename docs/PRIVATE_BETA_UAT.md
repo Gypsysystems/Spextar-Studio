@@ -62,3 +62,8 @@ v1/default/neutral/internal-inspection scope, no PDF/Word/public portal/global
 History promise. Product owner signs UAT separately from technical checks and
 separately authorizes any Replit deployment/domain connection. See the backend
 [validation and rollout checklist](PRIVATE_BETA_BACKEND_VALIDATION.md).
+
+Issue #27 follow-up: U09/U12/U14/U17/U21 must include prompt HTTP 409/PT409 stale
+conflicts with no review/release side effects after the separately approved forward
+migration. [Disposable compatibility evidence](RPC_CONFLICT_TRANSPORT.md) does not
+complete real Auth UAT or unblock Issue #26 deployment.

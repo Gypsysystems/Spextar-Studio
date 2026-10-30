@@ -13,6 +13,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  backend-conflicts:
+    name: backend-conflicts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Prepare isolated native test driver and PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql
+          mkdir -p generated-artifacts/issue27-driver
+          npm install --prefix generated-artifacts/issue27-driver --ignore-scripts --package-lock=false pg@8.16.3
+          echo "SPEXTAR_TEST_POSTGRES_BIN=$(pg_config --bindir)" >> "$GITHUB_ENV"
+          echo "SPEXTAR_TEST_PG_MODULE=$PWD/generated-artifacts/issue27-driver/node_modules/pg/lib/index.js" >> "$GITHUB_ENV"
+      - name: Native replay, exact catalog delta and conflict guards
+        run: node supabase/tests/rpc-conflicts.mjs
+      - name: Full native backend lifecycle, security and concurrency regressions
+        run: |
+          node supabase/tests/document-releases.mjs
+          node supabase/tests/review-dependency-packages.mjs
+      - name: Actual PostgREST 14 HTTP conflict and execution count
+        run: node supabase/tests/postgrest-conflicts.mjs
+
   unit-type-build:
     name: unit-type-build
     runs-on: ubuntu-24.04

@@ -159,7 +159,7 @@ test('uncertain committed response recovers by request key without another publi
 test('stale confirmation fails closed and offers refreshed eligibility', async ({ page, backend }) => {
   prepare(backend);
   await page.route('**/rest/v1/rpc/publish_document_release', (route) =>
-    route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: '40001' }) }),
+    route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: 'PT409' }) }),
   );
   await login(page, projectPath + '/publish');
   await activate(page, page.getByRole('button', { name: 'Publish', exact: true }));

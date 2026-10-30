@@ -43,7 +43,7 @@ export function supabaseReleases(client: SupabaseClient): ReleaseService {
         p_request_key: r.requestKey,
       });
       if (result.error) {
-        if (['40001', '23505'].includes(result.error.code))
+        if (['PT409', '40001', '23505'].includes(result.error.code))
           throw new ServiceError('The approved document changed. Refresh before publishing.', 'conflict');
         if (['23514', '22023', '22P02', 'P0002', 'P0003'].includes(result.error.code))
           throw new ServiceError(
