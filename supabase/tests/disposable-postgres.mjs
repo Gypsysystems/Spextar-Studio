@@ -42,7 +42,9 @@ export async function openDatabase() {
   writeFileSync(path.join(data, 'pg_hba.conf'), 'host all all 127.0.0.1/32 trust\nhost all all 0.0.0.0/0 reject\nhost all all ::0/0 reject\n');
   console.log('Initializing isolated PostgreSQL at', directory, 'port', port);
   try {
-    run('pg_ctl', ['-D', data, '-l', path.join(directory, 'server.log'), '-o', `-h 127.0.0.1 -p ${port}`, '-w', 'start']);
+    // No shared Unix socket directory: unprivileged Linux runners cannot write
+    // the distribution's /var/run/postgresql. Tests use loopback TCP exclusively.
+    run('pg_ctl', ['-D', data, '-l', path.join(directory, 'server.log'), '-o', `-h 127.0.0.1 -p ${port} -c unix_socket_directories=''`, '-w', 'start']);
   } catch (e) {
     // Even a startup timeout must not leave our own newly created server running.
     try { run('pg_ctl', ['-D', data, '-m', 'fast', '-w', 'stop']); } catch { /* preserve startup diagnostic */ }
