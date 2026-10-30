@@ -44,7 +44,8 @@ export async function openDatabase() {
   try {
     // No shared Unix socket directory: unprivileged Linux runners cannot write
     // the distribution's /var/run/postgresql. Tests use loopback TCP exclusively.
-    run('pg_ctl', ['-D', data, '-l', path.join(directory, 'server.log'), '-o', `-h 127.0.0.1 -p ${port} -c unix_socket_directories=''`, '-w', 'start']);
+    const sockets = process.platform === 'win32' ? '' : " -c unix_socket_directories=''";
+    run('pg_ctl', ['-D', data, '-l', path.join(directory, 'server.log'), '-o', `-h 127.0.0.1 -p ${port}${sockets}`, '-w', 'start']);
   } catch (e) {
     // Even a startup timeout must not leave our own newly created server running.
     try { run('pg_ctl', ['-D', data, '-m', 'fast', '-w', 'stop']); } catch { /* preserve startup diagnostic */ }
