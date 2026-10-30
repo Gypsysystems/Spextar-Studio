@@ -1,13 +1,12 @@
-// Disposable in-memory PostgreSQL only. No URL, credentials, remote connection,
-// Supabase CLI or application environment is used. Optional PGlite 0.5.13 runner;
-// set PGLITE_MODULE_PATH to an installed module's dist/index.js when not on PATH.
+// Disposable PostgreSQL only: fresh native loopback cluster or PGlite 0.5.13.
+// See docs/PRIVATE_BETA_BACKEND_VALIDATION.md for binary/driver selection.
+// No URL, credentials, Supabase CLI or application environment is consumed.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-const moduleName = process.env.PGLITE_MODULE_PATH;
-const { PGlite } = await import(moduleName ? pathToFileURL(moduleName).href : '@electric-sql/pglite');
-const db = new PGlite();
+import { fileURLToPath } from 'node:url';
+import { openDatabase, recordReplay } from './disposable-postgres.mjs';
+const db = await openDatabase();
 const root = fileURLToPath(new URL('../migrations/', import.meta.url));
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -24,11 +23,13 @@ try {
     grant execute on function auth.uid() to authenticated,anon;`);
   for (const file of fs.readdirSync(root).filter(f => f.endsWith('.sql')).sort()) {
     // PGlite has built-in gen_random_uuid; pgcrypto is unused by these migrations.
-    // Only this in-memory input copy omits extension installation. Source bytes
-    // are never rewritten; this is not full Supabase migration replay certification.
-    const sql = fs.readFileSync(`${root}/${file}`, 'utf8').replace('create extension if not exists pgcrypto;', '');
+    // Only the PGlite input copy omits extension installation. Native executes
+    // the entire file unchanged. Source bytes are never rewritten.
+    const original = fs.readFileSync(`${root}/${file}`, 'utf8');
+    const sql = db.native ? original : original.replace('create extension if not exists pgcrypto;', '');
     try { await db.exec(sql); } catch (e) { throw new Error(`Offline migration compilation: ${file}: ${e.message}`, { cause: e }); }
   }
+  await recordReplay(db, fs.readdirSync(root).filter(f => f.endsWith('.sql')).sort());
   const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
   const user = id(1), outsider = id(2), org = id(10), ws = id(11), project = id(12), doc = id(13), topic = id(14);
   const variable = id(20), category = id(21), value = id(22), reusable = id(23), nested = id(24);
@@ -111,8 +112,9 @@ try {
   await denied(()=>query(`delete from document_releases`));
   await denied(()=>query(`insert into document_releases select * from document_releases`));
   await db.exec('reset role');
-  await denied(()=>query(`delete from documents where id=$1`,[doc]),['23001']);
-  await denied(()=>query(`delete from projects where id=$1`,[project]),['23001']);
+  // Native 17 reports foreign_key_violation; PGlite reports restrict_violation.
+  await denied(()=>query(`delete from documents where id=$1`,[doc]),[db.native ? '23503' : '23001']);
+  await denied(()=>query(`delete from projects where id=$1`,[project]),[db.native ? '23503' : '23001']);
   await denied(()=>query(`update document_releases set sequence=2`));
   await denied(()=>query(`delete from document_releases`));
   for (const role of ['author','reviewer','viewer']) {
@@ -189,5 +191,9 @@ try {
   check((await query(`select sequence from document_releases order by sequence`)).map(r=>r.sequence).join(',')==='1,2','monotonic committed release sequence');
   assert.deepEqual((await query(`select frozen_source from document_releases where id=$1`,[releaseId]))[0].frozen_source,release.frozen_source);checks++;
   check(await publish()===releaseId,'old request remains idempotent after later cycle');
-  console.log(`${checks} disposable PostgreSQL release assertions passed (PGlite; synthetic Auth; no concurrent sessions or live certification).`);
+  console.log(`${checks} disposable PostgreSQL release assertions passed (${db.native ? 'native' : 'PGlite'}; synthetic Auth).`);
+  if (db.native) {
+    const { validatePrivateBeta } = await import('./private-beta-matrix.mjs');
+    await validatePrivateBeta(db);
+  }
 } finally { await db.close(); }

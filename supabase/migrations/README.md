@@ -59,6 +59,7 @@ assert {path.relative_to(root).as_posix() for path in root.rglob('*.sql')} == {
     '20261029140601_review_lifecycle_foundation.sql',
     '20261029172250_enforce_explicit_project_admin_management.sql',
     '20261029184603_freeze_review_dependency_packages.sql',
+    '20261030001220_immutable_document_releases.sql',
 }
 for entry in entries:
     assert entry['file'] == f"{entry['version']}_{entry['name']}.sql"

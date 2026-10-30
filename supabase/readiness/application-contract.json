@@ -34,8 +34,8 @@
     "exactSqlAvailable": true,
     "replayCertified": false,
     "sourceRecoveredCount": 21,
-    "pendingSourceCount": 3,
-    "authority": "Issue #2 recovered manifest; Review, Issue #17 project-management and Issue #19 package migrations are source-only, with no fresh live inspection"
+    "pendingSourceCount": 4,
+    "authority": "21 recovered historical entries plus four accepted forward source migrations including Publishing; pending count assumes the historical ledger, with no fresh live inspection. Issue #24 native PostgreSQL 17.11 replay uses synthetic Auth; replayCertified remains false for full Supabase/live certification. See docs/PRIVATE_BETA_BACKEND_VALIDATION.md."
   },
   "projectManagement": {
     "authority": "Issue #17; source-only forward migration 20261029172250_enforce_explicit_project_admin_management.sql",

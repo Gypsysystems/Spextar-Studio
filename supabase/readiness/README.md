@@ -205,3 +205,16 @@ the recovered migration manifest provide newer source evidence.
 ## Immutable Publishing source contract
 
 Issue #20 adds SELECT-only `document_releases` and the exact five-parameter authenticated `publish_document_release` RPC. Explicit Project Admin only; source content is the latest valid Approved Review and frozen dependency package. No current catalogs are read for release content. See [Publishing contract](../../artifacts/spextar-studio/PUBLISHING_RELEASES.md). The new migration is unapplied; disposable/synthetic SQL evidence is distinct from live RLS and multi-session acceptance.
+
+## Issue #24 validation evidence
+
+The current source chain contains 25 accepted SQL migrations: 21 recovered originals
+plus Review, explicit Project Admin enforcement, dependency freezing and Publishing.
+The historical missing-original/publishing-absent statements above are superseded.
+Native PostgreSQL 17.11 with synthetic Auth now executes the entire unchanged chain
+(including pgcrypto) in fresh local clusters. This does not certify live ledger/schema,
+Supabase Auth/PostgREST, platform defaults, pooling or deployment. Global
+`replayCertified` remains false for that broader scope; `pendingSourceCount=4` assumes
+the last authoritative 21-entry ledger, pending a fresh authorized comparison.
+See [current validation evidence and rollout gates](../../docs/PRIVATE_BETA_BACKEND_VALIDATION.md).
+Application adapter/domain semantic digests are unchanged and were not regenerated.
