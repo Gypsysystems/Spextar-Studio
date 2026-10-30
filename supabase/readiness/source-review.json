@@ -33,7 +33,7 @@
     "artifacts/spextar-studio/src/domain/reviews.ts": "2edb8eae2ade1c24408ca8a1dc6c89c5fad5fe0393c19e70889fe3bcd073eb30",
     "artifacts/spextar-studio/src/services/supabase-reviews.ts": "bd17586d8f58d8040c8415cabf2a4011730fdf49c684c0a184ecd4ce833f86b1",
     "artifacts/spextar-studio/src/domain/review-package.ts": "ce30675a884b56d541da60f6a37f5106436cc786084d05ab125d27cc37044063",
-    "artifacts/spextar-studio/src/services/supabase-releases.ts": "23154bae7e438b1f55088572c5eef8b431767793b5715233fca57a95f62751dd",
+    "artifacts/spextar-studio/src/services/supabase-releases.ts": "75600529f51a76524373055b216dbee195e72df05e0507d0ec5f5fbb5227756d",
     "artifacts/spextar-studio/src/domain/releases.ts": "9261b2b2671d24e70bd7c898df74626f0df613e7487106b30ef7a95ccfa38552",
     "artifacts/spextar-studio/src/domain/release-renderer.ts": "d5d866b68ae0db3b3295199f4b4ae663d9b25d02356d8ae44b09ada2575edb78"
   },

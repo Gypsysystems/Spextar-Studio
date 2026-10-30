@@ -104,8 +104,8 @@ PostgreSQL UTF-8/codepoint order. `release_utf16_key` pins the server ordering.
 `renderReleaseV1` is a pure frozen-input resolver. It validates the Approved package,
 orders the frozen parent graph, resolves frozen default text variables, includes
 all neutrally tagged content and expands exact frozen reusable bodies. Empty
-required values block publication; optional empty values render empty with one
-human-readable warning per variable. Frozen reusable groups show names/revisions.
+required values block publication; optional empty values render empty with
+deduplicated human-readable warnings. Frozen reusable groups show names/revisions.
 Source is never overwritten by the derived rendering. Repeated acyclic references
 are allowed; ancestor cycles, ninth reusable level, missing definitions/bodies,
 unsupported nodes/marks/versions, unsafe links and excessive traversal fail closed.
@@ -127,7 +127,9 @@ No portal, PDF/Word, condition evaluator, AI or global History is introduced.
 Publish reuses ProjectScope/PageHeader, Button, Radix Dialog, ErrorState/ListSkeleton,
 UserIdentity, BrandedText, semantic card/border/muted/focus tokens and editor styles.
 Only the release list/inspector and frozen reusable grouping are new composition;
-they provide immutable selection and provenance. No brand/font/vector/color changes.
+they provide immutable selection and provenance. No brand/font/vector/color changes. The shared tooltip now honors reduced-motion
+preferences, correcting a closing-animation contrast failure without changing
+normal-motion styling.
 Confirmation captures review identity/time and a request key. Pending prevents
 repeat clicks; success announces Release number and moves focus to status. A stale
 or blocked response requires refreshed eligibility. An uncertain result preserves
@@ -135,6 +137,9 @@ the request key and offers scoped re-query before an explicit same-key retry.
 The key lives in the mounted screen; reload loses the pending request UI, but the
 release list and server approval uniqueness still prevent duplicate publication.
 Backend errors never fall back to demo. Demo reports publishing unavailable.
+The first-scope page loads document cards and verifies paginated complete release
+rows (100 per request); very large histories can require substantial reads.
+Metadata-only history paging is a future optimization, not implemented here.
 
 Executable checks: domain/service/migration contracts, four-profile controlled
 browser scenarios and optional `supabase/tests/document-releases.mjs` with PGlite

@@ -70,6 +70,8 @@ try {
   const publish = (key=request,reviewId=review) => scalar(`select publish_document_release($1,$2,$3,$4,$5)`,[project,doc,reviewId,stamp,key]);
   // Author/Reviewer/Viewer and absent explicit membership cannot publish, even
   // when inherited organization/workspace administration allows project reads.
+  await db.exec('reset role');
+  await query(`insert into workspace_members(workspace_id,user_id,role) values($1,$2,'admin')`,[ws,outsider]);
   for (const role of ['author','reviewer','viewer',null]) {
     await db.exec('reset role');
     if (role) await query(`insert into project_members(project_id,user_id,role) values($1,$2,$3) on conflict(project_id,user_id) do update set role=excluded.role`,[project,outsider,role]);
@@ -77,6 +79,8 @@ try {
     await query(`select set_config('request.jwt.claim.sub',$1,false)`,[outsider]);
     await db.exec('set role authenticated'); await denied(publish);
   }
+  check(await scalar(`select count(*) from documents where id=$1`,[doc])===1,'inherited workspace Admin reads but cannot publish');
+  await db.exec('reset role');await query(`delete from workspace_members where workspace_id=$1 and user_id=$2`,[ws,outsider]);
   await db.exec('reset role'); await query(`select set_config('request.jwt.claim.sub',$1,false)`,[user]); await db.exec('set role authenticated');
   await denied(()=>publish(request,id(999)));
   check(await scalar(`select count(*) from document_releases`)===0,'stale review inserts no release');
@@ -158,6 +162,20 @@ try {
     damage(frozen);
     await denied(()=>query(`select app_private.validate_release_package(jsonb_populate_record(null::public.document_reviews,$1))`,[frozen]),['23514','P0002','P0003','42501']);
   }
+  const optional=(await query(`select to_jsonb(r) as r from document_reviews r where id=$1`,[review]))[0].r;
+  optional.dependency_package.variables[0].required=false;optional.dependency_package.variables[0].value='';
+  const optionalSource=await scalar(`select app_private.validate_release_package(jsonb_populate_record(null::public.document_reviews,$1))`,[optional]);
+  check(optionalSource.dependencies.variables[0].value==='','optional frozen empty value is publishable');
+  const deep=(await query(`select to_jsonb(r) as r from document_reviews r where id=$1`,[review]))[0].r;
+  const chain=Array.from({length:9},(_,i)=>id(1000+i));
+  const template=deep.dependency_package.reusable[0];
+  deep.dependency_package.variables=[];deep.dependency_package.categories=[];deep.dependency_package.values=[];
+  deep.dependency_package.reusable=chain.map((entry,i)=>({item:{...template.item,id:entry},draft:{...template.draft,reusable_content_id:entry,content:body(i===8?[]:[rr(chain[i+1])])}}));
+  deep.topics_snapshot[0].content=body([rr(chain[0])]);
+  await denied(()=>query(`select app_private.validate_release_package(jsonb_populate_record(null::public.document_reviews,$1))`,[deep]));
+  deep.dependency_package.reusable.shift();deep.topics_snapshot[0].content=body([rr(chain[1])]);
+  const depthSource=await scalar(`select app_private.validate_release_package(jsonb_populate_record(null::public.document_reviews,$1))`,[deep]);
+  check(depthSource.dependencies.reusable.length===8,'eight frozen reusable levels are supported, ninth blocked');
   // A later approved cycle gets the next number; original release stays exact.
   await query(`select set_config('request.jwt.claim.sub',$1,false)`,[user]);
   await db.exec('set role authenticated');

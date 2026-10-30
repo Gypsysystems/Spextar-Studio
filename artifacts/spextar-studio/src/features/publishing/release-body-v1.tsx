@@ -111,13 +111,13 @@ export default function ReleaseBodyV1({
         break;
       case 'releaseReusable':
         result = (
-          <section className="se-reusable-reference" aria-label="Frozen linked content">
+          <div className="se-reusable-reference" role="group" aria-label={`Frozen linked content: ${String(a.name)}`}>
             {conditions}
             <p className="text-sm text-muted-foreground">
               <BrandedText>{String(a.name)}</BrandedText> · Frozen revision {Number(a.revision)}
             </p>
             {children}
-          </section>
+          </div>
         );
         break;
       case 'blockquote':

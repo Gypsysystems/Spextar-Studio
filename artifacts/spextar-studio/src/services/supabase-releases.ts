@@ -28,6 +28,7 @@ export function supabaseReleases(client: SupabaseClient): ReleaseService {
         .select(fields)
         .eq('project_id', r.projectId)
         .eq('document_id', r.documentId)
+        .eq('review_id', r.reviewId)
         .eq('request_key', r.requestKey)
         .maybeSingle();
       if (result.error) throw backendError(result.error);

@@ -171,6 +171,21 @@ describe('pinned immutable releases', () => {
     row.frozen_source.document.title = 'Changed';
     await expect(checkedRelease(row, 'project-a', 'doc-a')).rejects.toThrow();
   });
+  it('recovers only the exact scoped review/request identity', async () => {
+    const f = supabaseDouble(),
+      row = await releaseFixture();
+    f.db.document_releases = [row];
+    const r = {
+      projectId: 'project-a',
+      documentId: 'doc-a',
+      reviewId: 'review-a',
+      expectedUpdatedAt: reviewAt,
+      requestKey: row.request_key,
+    };
+    expect((await supabaseReleases(f.client).findRequest(r))?.id).toBe(row.id);
+    expect(await supabaseReleases(f.client).findRequest({ ...r, reviewId: 'other-review' })).toBeNull();
+    expect(f.calls[0].filters).toContainEqual(['review_id', 'review-a']);
+  });
   it('sends only exact scoped identifiers, expected timestamp and stable request key in one authenticated call', async () => {
     const f = supabaseDouble();
     f.raw.rpc.mockResolvedValueOnce({ data: 'release-id', error: null });

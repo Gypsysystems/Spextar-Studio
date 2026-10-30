@@ -1,8 +1,10 @@
 # SPEXTAR Studio — Current Engineering State
 
-Recorded: 2026-10-29. Refresh this document when code, backend provenance, staging or validation changes. Durable operating rules live in root `AGENTS.md`.
+Recorded: 2026-10-30. Refresh this document when code, backend provenance, staging or validation changes. Durable operating rules live in root `AGENTS.md`.
 
 ## Evidence and authority
+
+- Issue #20 implementation base: GitHub `main` verified at `0bc97737a027af45ef28aa42a22a06160a1fa0bf`, including accepted Review, explicit Project Admin management and Issue #19 dependency packages. Branch `codex/feature-publishing-releases`; [PR #23](https://github.com/Gypsysystems/Spextar-Studio/pull/23) remains unmerged. Source-only immutable Publishing is implemented; no live migration/deployment changes. See final evidence below.
 
 - Issue #19 implementation base: GitHub `main` verified at `3529a9cc2f802e3c91e75d4ad23a654fd8d9863b`, including merged Review and explicit Project Admin RLS correction. Fresh branch `codex/review-publishing-dependency-freeze`; no worktree or live-service changes. See the package implementation/verification entry below. Older pending/merge statements describe their historical checkpoints.
 - Issue #17 implementation base: current GitHub `main` verified at `078a10b8f565fc311a5500a6a7dd5fa19e4ffea0`; branch `codex/fix-project-admin-rls`. This supersedes older implementation checkpoints for this task only. Review PR #18 is present, including `20261029140601_review_lifecycle_foundation.sql`. See the Issue #17 evidence below; neither pending migration was applied.
@@ -635,7 +637,7 @@ Initial focused regression: **105 passed / 4 files**. First publishing browser r
 was corrected without weakening assertions/timeouts/skips. Combined Publishing/Review lifecycle rerun: **60 passed / 60**, all four
 profiles on installed Chrome, including keyboard/focus, axe and responsive overflow.
 The later nonvisual resource-budget hardening is separately covered by unit/SQL checks.
-Disposable PGlite uses synthetic Auth and memory only; final **63 SQL assertions**
+Disposable PGlite uses synthetic Auth and memory only; final **75 SQL assertions**
 passed, including atomic rollback, exact frozen source after mutable catalog edits,
 roles, RLS/grants, immutability, retention, idempotency across later cycles, sequence
 1/2 and independent cross-language canonical SHA vectors. Resource-bound, Unicode-required-value, cyclic-outline and invalid-order checks
@@ -648,3 +650,59 @@ live migration application/replay/reset/repair/rollback; no AI, History, Style G
 Brand Outputs, PDF/Word or public portal work. No live Auth/RLS/parity certification,
 actual multi-session race certification, merge, release acceptance or deployment is
 claimed. Keep the PR unmerged for independent product-owner/security acceptance.
+
+### Issue #20 final validation and remaining boundaries
+
+Final focused application regression: **140 passed / 8 files**. A subsequent
+exact-review recovery/read-only renderer/backend-contract check passed **71 tests /
+3 files**, including the added request/review scoping assertion. The complete
+prepared-Windows unit run finished **1101 passed, 4 failed, 54 setup-blocked/skipped /
+1159**, 57 passed files / 3 failed files. Failures are the unchanged symlink EPERM
+cases in predeploy-cli/readiness and predeploy-server setup. No skip/timeout/retry
+or assertion policy was weakened. An earlier sandboxed run was stopped after the
+same setup failures and an obsolete Publish-placeholder assertion; the latter now
+asserts the authorized demo-unavailable Publish behavior. Windows full-suite
+results predate the final bounded accessibility/read-query follow-up; focused,
+browser and hosted checks cover that follow-up separately.
+
+Final four-profile Publish browser run: **36 passed / 36** on installed Chrome,
+including frozen defaults, optional-empty warnings, neutral conditions, nested
+reusable groups, no mutable catalog/body reads, confirmation/progress/success,
+role denial, legacy blocking, request-key recovery, stale/errors, keyboard/focus,
+axe and responsive overflow. The earlier combined Publish/Review lifecycle run
+passed **60 / 60**. The intervening expanded Publish run was **31 passed, 5 failed**:
+four duplicate reusable landmark labels were corrected to accessible groups; one
+closed navigation tooltip contrast failure was corrected by honoring reduced
+motion on the shared tooltip. Existing colors/geometry and normal-motion styling
+are preserved. No assertions/timeouts/skips were weakened to obtain the final pass.
+
+Final workspace typecheck, both demo production builds and strengthened bundle
+guard passed. Initial JS **740709 / 975000 bytes**; Publish and its read-only
+inspector now have explicit lazy-boundary assertions alongside existing Author,
+editor, management and Review guards. Existing non-failing sourcemap/chunk notices
+remain. The incidental sandbox generated-file line-ending rewrite was restored.
+Git whitespace and accepted historical-source integrity checks pass.
+
+Disposable PGlite final **75 assertions** include all source migration compilation,
+explicit Project Admin publication, inherited Workspace Admin and other-role denial,
+current Author/Reviewer/Viewer historical reads, current-access revocation/outsider
+and anon denial, immutable rows, retained parents, rollback, frozen closure after
+catalog edits, required/optional semantics, malformed/legacy/future packages,
+cycles/outline/resource limits, canonical SHA vectors, later-cycle sequences and
+old-request idempotency. Queued competing requests are explicitly not multi-session
+race evidence; no native PostgreSQL/Docker runtime was available to this session.
+
+Hosted quality on `8f99af6aa4c00acd2575910ee2255ae364b1877e` passed both
+[unit-type-build and migration-integrity](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40982516563).
+Earlier hosted runs stopped at two newly added test-fixture typing/syntax errors;
+both were corrected. The final accessibility/recovery follow-up is checked on the
+current [unmerged draft PR #23](https://github.com/Gypsysystems/Spextar-Studio/pull/23);
+its live checks and PR description retain final-head evidence. Hosted results are
+independent Linux CI, not Codex-local execution.
+
+Known limits: v1/default/neutral/internal inspection only; pending request UI is
+mounted-screen state (server uniqueness still prevents duplicate publication after
+reload); eager verification of paginated complete histories can be expensive.
+Actual multi-session races, live Supabase Auth/RLS/schema parity, external product
+UAT and migration rollout remain separate gates. Zero live Supabase/Replit,
+deployment/production/domain/DNS changes; no merge or product acceptance is claimed.
