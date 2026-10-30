@@ -265,12 +265,21 @@ begin
     or p->>'projectId' is distinct from p_review.project_id::text
     or p->'outputContext' is distinct from '{"variableValues":"default","conditions":"neutral","outputId":null}'::jsonb then
     raise exception 'Approved package unavailable' using errcode = '23514'; end if;
+  if jsonb_typeof(p) is distinct from 'object'
+    or p->>'workspaceId' is null or p->>'organizationId' is null
+    or (p->>'workspaceId')::uuid::text is distinct from p->>'workspaceId'
+    or (p->>'organizationId')::uuid::text is distinct from p->>'organizationId'
+    or exists(select 1 from jsonb_object_keys(p) key where key not in ('schemaVersion','resolverVersion','canonicalization','projectId','workspaceId','organizationId','outputContext','variables','categories','values','reusable')) then
+    raise exception 'Frozen package envelope invalid' using errcode = '23514'; end if;
+  foreach k in array array['variables','categories','values','reusable'] loop
+    if jsonb_typeof(p->k) is distinct from 'array' then raise exception 'Frozen catalog invalid' using errcode = '23514'; end if;
+  end loop;
   if jsonb_array_length(p_review.topics_snapshot) > 4096
     or octet_length(p_review.topics_snapshot::text)+octet_length(p_review.document_snapshot::text)+octet_length(p::text) > 33554432 then
     raise exception 'Release source limit' using errcode = '23514'; end if;
   if jsonb_typeof(p_review.document_snapshot->'title') is distinct from 'string'
     or jsonb_typeof(p_review.document_snapshot->'slug') is distinct from 'string'
-    or jsonb_typeof(p_review.document_snapshot->'description') not in ('null','string')
+    or coalesce(jsonb_typeof(p_review.document_snapshot->'description'),'missing') not in ('null','string')
     or jsonb_typeof(p_review.document_snapshot->'settings') is distinct from 'object' then
     raise exception 'Frozen document invalid' using errcode = '23514'; end if;
   -- Validate the frozen outline only; no mutable topics participate.

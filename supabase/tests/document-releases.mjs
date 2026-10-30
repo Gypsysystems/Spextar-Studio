@@ -134,6 +134,8 @@ try {
   // Validate synthetic damaged frozen packages without mutating real evidence.
   for (const damage of [
     r=>{r.dependency_package=null;},
+    r=>{r.dependency_package.futurePolicy=true;},
+    r=>{r.dependency_package.workspaceId=null;},
     r=>{r.dependency_package.variables[0].value='';},
     r=>{r.dependency_package.variables[0].value='\u00a0\ufeff';},
     r=>{r.dependency_package.variables[0].value='x'.repeat(50000);r.topics_snapshot[0].content=body(Array.from({length:700},()=>({type:'paragraph',content:[vr]})));},
