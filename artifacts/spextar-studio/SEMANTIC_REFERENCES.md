@@ -91,7 +91,9 @@ live RLS, migration replay, manual UAT or release acceptance.
 ## Review snapshots
 
 Review now renders submitted immutable topic JSON, not current `topic_drafts`.
-Semantic references remain stored by ID; read-only labels and linked reusable
-previews use the existing safe current-definition resolution. See
+Semantic references remain stored by ID. New submitted reviews freeze their
+transitive definitions and linked bodies and resolve exclusively from that
+package; Author/demo keep current-definition previews. Legacy semantic reviews
+without a package show an explicit notice. See [the package contract](REVIEW_DEPENDENCY_PACKAGES.md) and
 [REVIEW_LIFECYCLE.md](REVIEW_LIFECYCLE.md). Starting a new Draft copies Approved
 snapshot JSON without flattening references or resetting revision safeguards.

@@ -1,6 +1,7 @@
 import type { ReferenceScope } from '@/domain/semantic-references';
 import { hasSemanticReferences } from '@/domain/semantic-references';
-import { ReferenceProvider } from './semantic-reference-preview';
+import { ReferenceProvider, FrozenReferenceProvider } from './semantic-reference-preview';
+import type { ReviewPackage } from '@/domain/review-package';
 import { SemanticActions } from './semantic-reference-actions';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react';
@@ -22,9 +23,13 @@ import { pasteNoticeEvent, type PasteNotice, applySafePaste, focusBody } from '.
 import { DocumentNavigation } from './document-navigation';
 import { Fragment, Slice } from '@tiptap/pm/model';
 
-type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean; deferRender?: boolean; referenceContext?: ReferenceScope };
+type Props = { content: TopicContent; editable: boolean; onChange: (content: TopicContent) => void; loading?: boolean; deferRender?: boolean; referenceContext?: ReferenceScope; frozenPackage?: ReviewPackage | null };
 
 export function StructuredEditor(props: Props) {
+  if (props.frozenPackage) return <FrozenReferenceProvider package={props.frozenPackage}><EditorSurface {...props} /></FrozenReferenceProvider>;
+  if (props.frozenPackage === null) return hasSemanticReferences(props.content)
+    ? <p role="alert">This older review has no frozen dependencies. Submit a new review from Draft to review semantic content.</p>
+    : <EditorSurface {...props} />;
   return props.referenceContext ? <ReferenceProvider scope={props.referenceContext}><EditorSurface {...props} /></ReferenceProvider> : <EditorSurface {...props} />;
 }
 function EditorSurface({ content, editable, onChange, loading = false, deferRender = false }: Props) {

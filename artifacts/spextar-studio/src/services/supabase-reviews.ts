@@ -17,7 +17,8 @@ export function supabaseReviews(client: SupabaseClient): ReviewService {
     const result = await client.rpc(name, args);
     if (result.error) {
       if (['40001', '23505'].includes(result.error.code)) throw new ServiceError('This document or review changed. Refresh before trying again.', 'conflict');
-      if (result.error.code === '22023') throw new ServiceError('Enter a decision note before requesting changes.', 'validation');
+      if (name === 'submit_document_review' && ['23514', '22P02', '22023'].includes(result.error.code)) throw new ServiceError('Review dependencies could not be frozen. Check saved content and linked definitions before submitting again.', 'validation');
+      if (result.error.code === '22023' && name === 'request_document_changes') throw new ServiceError('Enter a decision note before requesting changes.', 'validation');
       throw backendError(result.error);
     }
     if (typeof result.data !== 'string' || !result.data) throw new ServiceError('The review action could not be confirmed. Refresh before trying again.', 'unavailable');
@@ -25,7 +26,7 @@ export function supabaseReviews(client: SupabaseClient): ReviewService {
   }
   return {
     async latest(projectId, documentId) {
-      const result = await client.from('document_reviews').select('id,project_id,document_id,sequence,status,submitted_by,submitted_at,decided_by,decided_at,decision_note,document_snapshot,topics_snapshot').eq('project_id', projectId).eq('document_id', documentId).order('sequence', { ascending: false }).limit(1).maybeSingle();
+      const result = await client.from('document_reviews').select('id,project_id,document_id,sequence,status,submitted_by,submitted_at,decided_by,decided_at,decision_note,document_snapshot,topics_snapshot,dependency_package').eq('project_id', projectId).eq('document_id', documentId).order('sequence', { ascending: false }).limit(1).maybeSingle();
       if (result.error) throw backendError(result.error);
       return result.data ? checkedReview(result.data, projectId, documentId) : null;
     },

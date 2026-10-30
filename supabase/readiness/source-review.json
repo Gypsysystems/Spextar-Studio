@@ -30,7 +30,15 @@
     "artifacts/spextar-studio/src/services/validation.ts": "89f7033a3a6b3ba7936c8f42d8a8ba88b22f95d0d7137906e622e2cadac5fb5a",
     "artifacts/spextar-studio/src/domain/semantic-references.ts": "d640f04e4bb27957a2de3dc01efaffd7664cad68d2a2db217631ac2c10b5b8b8",
     "artifacts/spextar-studio/src/services/semantic-references.ts": "c6bcac7d3c0cf76b7715ec94bc33c98a118eda17698ddfe5d72c63c28fd08615",
-    "artifacts/spextar-studio/src/domain/reviews.ts": "89fef6983002abe4f916a200acaf81735cc540cd499ab8805dcdf3ba243c7638",
-    "artifacts/spextar-studio/src/services/supabase-reviews.ts": "b977db57dc8a3fc2be08a4e14a0ebc4f2f0da7b0672da0f6ac7cea462c790435"
+    "artifacts/spextar-studio/src/domain/reviews.ts": "2edb8eae2ade1c24408ca8a1dc6c89c5fad5fe0393c19e70889fe3bcd073eb30",
+    "artifacts/spextar-studio/src/services/supabase-reviews.ts": "bd17586d8f58d8040c8415cabf2a4011730fdf49c684c0a184ecd4ce833f86b1",
+    "artifacts/spextar-studio/src/domain/review-package.ts": "ce30675a884b56d541da60f6a37f5106436cc786084d05ab125d27cc37044063"
+  },
+  "reviewDependencyPackages": {
+    "issue": 19,
+    "base": "3529a9cc2f802e3c91e75d4ad23a654fd8d9863b",
+    "migration": "20261029184603_freeze_review_dependency_packages.sql",
+    "scope": "Reviewed new SELECT projection and package schema/closure/canonical validator; exact roles and RPC signatures unchanged. Forward-only private capture trigger, one STABLE catalog snapshot, existing immutable evidence guard and parent RLS. Only these three changed/new source digests updated.",
+    "evidence": "Offline source checks and disposable PGlite SQL with synthetic Auth; no live schema/Auth/RLS or concurrency certification."
   }
 }

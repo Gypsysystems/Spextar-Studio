@@ -4,6 +4,7 @@ Recorded: 2026-10-29. Refresh this document when code, backend provenance, stagi
 
 ## Evidence and authority
 
+- Issue #19 implementation base: GitHub `main` verified at `3529a9cc2f802e3c91e75d4ad23a654fd8d9863b`, including merged Review and explicit Project Admin RLS correction. Fresh branch `codex/review-publishing-dependency-freeze`; no worktree or live-service changes. See the package implementation/verification entry below. Older pending/merge statements describe their historical checkpoints.
 - Issue #17 implementation base: current GitHub `main` verified at `078a10b8f565fc311a5500a6a7dd5fa19e4ffea0`; branch `codex/fix-project-admin-rls`. This supersedes older implementation checkpoints for this task only. Review PR #18 is present, including `20261029140601_review_lifecycle_foundation.sql`. See the Issue #17 evidence below; neither pending migration was applied.
 - Recovery base: `Gypsysystems/Spextar-Studio`, accepted GitHub `main` at `ee3788b6719adbc0a04269e8cafdeacccf60391d`, verified before work on `codex/migration-recovery-2`. The earlier onboarding application baseline was `cbe5b4dce31e5b03da5acbad489bb4609f3e41bd` (`Fix readable user identities and unversioned document labels`). Verify remote HEADs again before future work.
 - [Issue #2](https://github.com/Gypsysystems/Spextar-Studio/issues/2) authorizes source-control recovery of the exact migration history. This branch adds original SQL and a provenance manifest and updates recovery documentation. No application functionality, dependency declarations, lockfiles, live database state or deployment was changed.
@@ -491,3 +492,105 @@ After the cleanup fix: **69 focused editor/search/Review tests passed**;
 workspace typecheck, both production builds and bundle guard passed again
 (734,058 / 975,000 initial JS bytes). Existing sourcemap/large-chunk notices
 remain non-failing. Hosted results on the updated head remain separate evidence.
+
+## Issue #19 — immutable semantic dependency packages — 2026-10-30
+
+Scope: [Issue #19](https://github.com/Gypsysystems/Spextar-Studio/issues/19), based
+on accepted main `3529a9cc2f802e3c91e75d4ad23a654fd8d9863b`; fresh branch
+`codex/review-publishing-dependency-freeze`. Issue #20 Publishing execution is
+not implemented. No historical/accepted SQL or provenance manifest was changed.
+
+New forward-only source migration:
+`20261029184603_freeze_review_dependency_packages.sql` (created with Supabase CLI
+2.122.0, source file only). It adds nullable `document_reviews.dependency_package`
+and private invoker helpers/INSERT capture trigger. Existing immutable evidence
+and parent-review RLS cover the new column. No new definer, public RPC, grants,
+release table or lifecycle authority. Three source migrations now follow the 21
+recovered originals; no fresh live ledger inspection or application is claimed.
+
+A single STABLE traversal invocation captures only reachable variable defaults/
+metadata/output overrides, condition category/value metadata/policy and exact
+nested reusable bodies/revisions in one statement snapshot. Existing document/
+membership locks and expected timestamps remain; capture errors roll back the
+submission. Source JSON and semantic/node identities remain unflattened. Approval
+and Start New Draft leave the package unchanged; resubmission captures current
+saved dependencies. Same-workspace shared reusable references are accepted;
+foreign-project/project-owned and foreign-tenant dependencies are rejected.
+
+Schema/resolver version 1, `spextar-json-v1`, neutral conditions/default variable
+values/no selected output. Arrays sort by canonical UUID; canonical JSON sorts
+object keys by UTF-16 code units and retains array/string order. Safe integers
+only, JSON depth <100; no final digest implementation. Reusable ancestor cycles
+and paths beyond eight entries fail; repeated acyclic references are allowed.
+Bounds: 256 reusable IDs, 4096 body visits, 30000 nodes/body, 100000 nodes overall,
+16 MiB dependency JSONB text. See the complete [package contract](../artifacts/spextar-studio/REVIEW_DEPENDENCY_PACKAGES.md).
+
+Review now uses a frozen provider without mutable catalog/body reads. Legacy NULL
+packages are not backfilled: ordinary bodies remain inspectable, semantic bodies
+show an explicit unavailable notice and cannot be used for deterministic future
+Publishing. Author/demo retain current-catalog behavior. New submit validation
+errors identify content/dependency capture instead of misleading tree/note errors.
+Only three changed/new adapter/domain digests were deliberately reviewed and
+updated after extending the documented application contract.
+
+Executed local validation (Windows, Node 24.22.1, pnpm 10.34.9):
+
+- Initial focused package/lifecycle/viewer/migration tests: **48 passed / 4 files**.
+- Final focused package/lifecycle/viewer/migration/backend-contract regression after
+  envelope-depth follow-up: **105 passed / 6 files**.
+- Disposable PGlite 0.5.13: **55 PostgreSQL assertions passed**. Includes real SQL
+  function/RLS/grant execution with synthetic Auth, transitive closure, same-
+  workspace sharing, foreign-project/tenant denial, atomic failure rollback,
+  unsupported/missing dependency failures, eight/nine-level and cycle behavior,
+  approval/catalog-change/New Draft/resubmission and fixed statement snapshots.
+  All source migrations compile in memory; the unused pgcrypto install is omitted
+  from that in-memory input because UUID generation is built in. Historical file
+  bytes remain untouched. This is not Supabase Auth/replay/live certification or
+  a concurrent-session race test.
+- Full unit run: **1077 passed, 4 failed, 54 blocked/skipped / 1135**, 54 passed
+  files / 3 failed. All failures are unchanged Windows symlink EPERM cases in
+  predeploy-cli/readiness; predeploy-server setup blocks its 54 assertions. An
+  earlier sandboxed attempt was interrupted after the same setup failures; the
+  complete prepared-toolchain run is the result above. No assertion/timeout/skip
+  or retry policy was changed. Hosted Linux results are separate evidence.
+- Workspace typecheck and both demo production builds: **passed**.
+- Bundle guard: **736794 / 975000** initial JS bytes; lazy management, Author/
+  editor and Review viewer boundaries **passed**. Existing chunk-size/sourcemap
+  and color-environment notices remain non-failing. The build's incidental sandbox
+  generated-file line-ending rewrite was restored, outside this task's scope.
+
+Four-profile Chromium sweep (`review-lifecycle.spec.ts` and
+`semantic-references.spec.ts`, one worker): **55 passed, 1 failed / 56**.
+All new dependency-freeze and legacy-evidence cases passed on desktop/mobile,
+dark/light. The existing full lifecycle scenario failed one mobile-light axe
+contrast check while opening Start New Draft: reported 4.28:1 on an intermediate
+button color; the saved settled screenshot shows the normal approved colors.
+Dialog/button/theme/action source is byte-unchanged from accepted main. A
+transition-state capture is the supported inference, not a certified root cause.
+The unchanged scenario was rechecked on all four profiles: **4 passed**, with
+identical assertions/timeouts and no configured retry. No broad 56-case rerun or
+manual UAT is claimed. The initial failure remains recorded, not erased.
+
+Hosted [quality run 40956580053](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40956580053)
+passed on implementation head `5ff31e915017a2ddfd48245f4d616ba14ed4839c`:
+**57 files / 1135 unit tests**, locked install, typecheck, both production builds,
+bundle guard (736794/975000), PR whitespace/tracked-file integrity and recovered
+migration integrity. This is independently observed Linux CI, not a Codex-local
+run. The final follow-up aligns JSON depth validation with the complete canonical
+package envelope and adds a passing PostgreSQL rollback regression (55 SQL
+assertions); application/editor source is unchanged. Final-head hosted checks
+must be read from [PR #22](https://github.com/Gypsysystems/Spextar-Studio/pull/22).
+The draft PR remains unmerged, titled exactly
+`feat: freeze review dependency packages for publishing`, and links Issue #19.
+
+UI reuses StructuredEditor,
+ReferenceBody, VariableValue, ConditionLabels, BrandedText and existing border/
+muted/destructive tokens; the linked label identifies its submitted revision.
+No new visual pattern/layout, logo/font/vector/color changes. Manual UAT, actual
+multi-session races, live Supabase schema/Auth/RLS and product-owner acceptance
+remain external gates. The PR must remain unmerged.
+
+**Zero live Supabase changes, zero Replit changes, zero deployment/publication,
+zero domain/DNS/production changes.** No migration was applied/replayed/reset/
+repaired/rolled back against live Supabase. No AI, History, Style Guide or unrelated
+refactor was implemented.

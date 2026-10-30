@@ -101,7 +101,7 @@ test('Author inserts semantic references, saves/reopens, inspects usage and remo
   await noOverflow(page);
 });
 for (const role of ['reviewer', 'viewer'] as const)
-  test(`${role} sees linked previews and missing references with no writes`, async ({ page, backend }) => {
+  test(`${role} sees current Author previews and frozen Review references with no writes`, async ({ page, backend }) => {
     seed(backend);
     backend.setRole(role);
     backend.db.topic_drafts[0].content = linkedBody();
@@ -125,10 +125,12 @@ for (const role of ['reviewer', 'viewer'] as const)
     backend.db.project_variables = [];
     backend.db.reusable_contents = [];
     backend.db.condition_values = [];
+    backend.reads.length = 0;
     await page.reload();
-    await expect(body).toContainText('Missing variable');
-    await expect(body).toContainText('Missing reusable content');
-    await expect(page.getByLabel('Applied conditional tags')).toContainText('Missing conditional tag');
+    await expect(body).toContainText('Updated product');
+    await expect(body).toContainText('Updated safety notice');
+    await expect(page.getByLabel('Applied conditional tags')).toContainText('Audience: Developer');
+    expect(backend.reads.filter(r => ['project_variables','condition_categories','condition_values','reusable_contents','reusable_content_drafts'].includes(r.table))).toHaveLength(0);
     expect(await body.innerText()).not.toMatch(/var-a|reuse-a|val-a/);
     expect(backend.writes).toEqual([]);
     await noOverflow(page);

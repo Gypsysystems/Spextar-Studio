@@ -7,6 +7,7 @@ import { createSupabaseServices } from '@/services/supabase-adapter';
 import { supabaseDouble } from './supabase-double';
 import { reviewFixture, reviewAt as at } from './review-fixtures';
 import { checkedReview } from '@/domain/reviews';
+import { packageFixture, semanticBody } from './review-package-fixtures';
 
 function backend(role: string | null = 'admin', status = 'in_review') {
   const fake = supabaseDouble();
@@ -20,6 +21,28 @@ function backend(role: string | null = 'admin', status = 'in_review') {
   return { ...fake, services, user: userEvent.setup(), mount: () => render(<App services={services} />) };
 }
 describe('Submitted review lifecycle', () => {
+  it('renders frozen semantics after catalog changes without any mutable dependency reads', async () => {
+    const f = backend();
+    const review = f.db.document_reviews[0];
+    review.dependency_package = packageFixture();
+    (review.topics_snapshot as Record<string, unknown>[])[0].content = semanticBody();
+    f.db.project_variables = []; f.db.condition_categories = []; f.db.condition_values = [];
+    f.db.reusable_contents = []; f.db.reusable_content_drafts = [];
+    f.mount();
+    const body = await screen.findByRole('textbox', { name: 'Topic body' });
+    expect(body).toHaveTextContent('Frozen product value');
+    expect(screen.getByLabelText('Applied conditional tags')).toHaveTextContent('Audience: Technician');
+    expect(body).toHaveTextContent('submitted revision 2');
+    expect(body).toHaveAttribute('contenteditable','false');
+    await f.user.click(screen.getByRole('button',{name:'Refresh'}));
+    expect(await screen.findByText('Audience: Technician')).toBeVisible();
+    expect(f.calls.filter(c => ['project_variables','condition_categories','condition_values','reusable_contents','reusable_content_drafts','topic_drafts'].includes(c.table))).toEqual([]);
+  });
+  it('does not resolve legacy review semantics from current catalogs', async () => {
+    const f = backend(); (f.db.document_reviews[0].topics_snapshot as Record<string, unknown>[])[0].content = semanticBody(); f.mount();
+    expect(await screen.findByRole('alert')).toHaveTextContent('older review has no frozen dependencies');
+    expect(f.calls.filter(c => ['project_variables','condition_categories','condition_values','reusable_contents'].includes(c.table))).toEqual([]);
+  });
   it.each(['submit', 'decide', 'startDraft'] as const)('%s rejects stale and unconfirmed transitions without retries or fallback writes', async action => {
     const f = backend();
     const perform = () => action === 'submit' ? f.services.reviews!.submit('project-a', 'doc-a', at)

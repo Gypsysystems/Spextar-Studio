@@ -14,6 +14,10 @@ import { resolveVariable } from '@/domain/project-variables';
 import type { ConditionCategory, ConditionValue } from '@/domain/project-conditions';
 import type { ReusableItem } from '@/domain/reusable-content';
 import { BrandedText } from '@/components/brand/logo';
+import type { ReviewPackage } from '@/domain/review-package';
+import { parseVariableRow } from '@/domain/project-variables';
+import { parseCategory, parseConditionValue } from '@/domain/project-conditions';
+import { parseReusable, parseReusableDraft, type ReusableDraft } from '@/domain/reusable-content';
 
 export interface ReferenceCatalog {
   scope: ReferenceScope;
@@ -25,9 +29,23 @@ export interface ReferenceCatalog {
   loading: boolean;
   error: boolean;
   retry: () => void;
+  frozenDrafts?: ReadonlyMap<string, ReusableDraft>;
 }
 const Context = createContext<ReferenceCatalog | null>(null);
 export const useReferenceCatalog = () => useContext(Context);
+/** No queries or Services calls: approved semantics resolve only from this package. */
+export function FrozenReferenceProvider({ package: p, children }: { package: ReviewPackage; children: ReactNode }) {
+  const services = useServices();
+  const scope = { workspaceId: p.workspaceId, projectId: p.projectId };
+  return <Context.Provider value={{ scope, services,
+    variables: p.variables.map(v => parseVariableRow(v, p.projectId)),
+    categories: p.categories.map(c => parseCategory(c, p.projectId)),
+    values: p.values.map(v => parseConditionValue(v, String(v.category_id))),
+    reusable: p.reusable.map(r => parseReusable(r.item, scope, { workspace: false, project: false })),
+    frozenDrafts: new Map(p.reusable.map(r => [String(r.item.id), parseReusableDraft(r.draft, String(r.item.id))])),
+    loading: false, error: false, retry: () => {},
+  }}>{children}</Context.Provider>;
+}
 export function ReferenceProvider({ scope, children }: { scope: ReferenceScope; children: ReactNode }) {
   const services = useServices();
   const variables = useQuery({
@@ -145,6 +163,11 @@ export function ReusablePreview({ id, trail }: { id: string; trail: string[] }) 
   if (!item) return <p className="text-destructive">Missing reusable content</p>;
   if (trail.includes(id) || trail.length >= 8)
     return <p className="text-destructive">Linked content cycle or nesting limit reached</p>;
+  if (catalog.frozenDrafts) {
+    const draft = catalog.frozenDrafts.get(id);
+    return <div><p className="mb-2 text-xs font-medium text-muted-foreground">Linked reusable content · <BrandedText>{item.name}</BrandedText> · submitted revision {draft?.revision}</p>
+      {draft ? <ReferenceBody content={draft.content} trail={[...trail, id]} /> : <p className="text-destructive">Submitted linked content unavailable</p>}</div>;
+  }
   return <ResolvedReusable catalog={catalog} item={item} trail={[...trail, id]} />;
 }
 function ResolvedReusable({

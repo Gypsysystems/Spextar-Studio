@@ -100,3 +100,10 @@ in an authorized disposable database, then perform explicit multi-account tenant
 role, direct-write, race/rollback and recovery checks. Backend-candidate readiness,
 live security review, product UAT, merge and deployment remain separate gates.
 Exact command results for this engineering run are recorded in PROJECT_STATE.md.
+# Dependency freezing extension
+
+Issue #19 adds a source-only immutable `dependency_package` to new submissions.
+See [REVIEW_DEPENDENCY_PACKAGES.md](REVIEW_DEPENDENCY_PACKAGES.md) for atomic
+transitive capture, frozen Review rendering, scope/cycle/size rules, canonical
+encoding and legacy evidence behavior. This supersedes older current-catalog
+resolution descriptions in this document. No live migration application is claimed.
