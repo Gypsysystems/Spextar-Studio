@@ -142,13 +142,20 @@ describe('foundation routes and navigation', () => {
     await mount(path);
     expect(await screen.findByTestId('state-not-found')).toBeVisible();
   });
-  it.each(['publish', 'style-guide', 'history', 'brand-outputs'])(
+  it.each(['style-guide', 'history', 'brand-outputs'])(
     'preserves the %s route as a labelled placeholder', async (section) => {
       await mount(`${base}/${section}`);
       expect(await screen.findByText('Coming soon')).toBeVisible();
       expect(window.location.pathname).toBe(`${base}/${section}`);
     },
   );
+  it('preserves the Publish route with explicit demo-unavailable behavior', async()=>{
+    await mount(`${base}/publish`);
+    expect(await screen.findByRole('heading',{name:'Publish',exact:true})).toBeVisible();
+    expect(await screen.findByText('Publishing requires an authenticated backend with release support. Demo content cannot be published.')).toBeVisible();
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe(`${base}/publish`);
+  });
   it('signs out, closes project views, and prevents reopening a deep link without demo entry', async () => {
     const view = await mount(base + '/documents');
     await screen.findByText('Getting started with the Meridian X4');

@@ -1,6 +1,6 @@
 # Publishing & Releases: design and readiness
 
-Status: proposed specification for product-owner review, 2026-10-29. No implementation authorization is implied. Companion: [future implementation issue](PUBLISHING_RELEASES_ISSUE_DRAFT.md).
+Status: historical design specification, 2026-10-29. D1–D3 and first-scope implementation were subsequently authorized through Issue #20 and the explicit implementation request. See [source implementation contract](../artifacts/spextar-studio/PUBLISHING_RELEASES.md); deployment/live migration remains separately authorized. Companion: [future implementation issue](PUBLISHING_RELEASES_ISSUE_DRAFT.md).
 
 ## 1. Evidence, scope and readiness
 

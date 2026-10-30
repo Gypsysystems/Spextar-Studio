@@ -1,3 +1,13 @@
+## Immutable Publishing — Issue #20
+
+Explicit Project Admin can publish the latest valid Approved frozen Review package
+into an immutable numbered release, inspect retained releases and safely recover
+uncertain publication requests. Author/Reviewer/Viewer remain read-only. Published
+content needs a new Draft/review cycle before another release. Source migration
+is unapplied; backend rollout and live acceptance require separate authorization.
+See [PUBLISHING_RELEASES.md](PUBLISHING_RELEASES.md) for exact RPC/schema, canonical
+digests, renderer, retention, concurrency and validation limitations.
+
 # SPEXTAR Studio
 
 ## Organization, workspace and project lifecycle

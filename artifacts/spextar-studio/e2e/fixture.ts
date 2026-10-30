@@ -48,6 +48,7 @@ export class Backend {
     project_members: [{ project_id: 'project-a', user_id: 'user-a', role: 'author' }],
     documents: [{ id: 'doc-a', project_id: 'project-a', title: 'QA document', slug: 'qa-document', description: 'Controlled test only', status: 'draft', settings: {}, created_by: 'user-a', created_at: at, updated_at: at }],
     document_reviews: [],
+    document_releases: [],
     topics: [
       { id: 'topic-a', document_id: 'doc-a', parent_topic_id: null, title: 'QA topic', slug: 'qa-topic', status: 'draft', sort_order: 0, settings: { kind: 'task' }, created_by: 'user-a', created_at: at, updated_at: at },
       { id: 'topic-b', document_id: 'doc-a', parent_topic_id: 'topic-a', title: 'Child topic', slug: 'child-topic', status: 'draft', sort_order: 0, settings: {}, created_by: 'user-a', created_at: at, updated_at: at },
@@ -138,7 +139,7 @@ export class Backend {
     }
     if (['GET', 'HEAD'].includes(request.method())) {
       const scopedField: Record<string, string> = {
-        documents: 'project_id', topics: 'document_id', topic_drafts: 'topic_id', document_reviews: 'document_id',
+        documents: 'project_id', topics: 'document_id', topic_drafts: 'topic_id', document_reviews: 'document_id', document_releases: 'project_id',
         project_variables: 'project_id', condition_categories: 'project_id', condition_values: 'category_id',
         reusable_contents: 'workspace_id', reusable_content_drafts: 'reusable_content_id',
       };

@@ -15,7 +15,7 @@ const review = JSON.parse(readFileSync(resolve(repositoryRoot, 'supabase/readine
 };
 const tables = contract as BackendContract;
 const adapter = (file: string) => `${serviceDirectory}/supabase-${file}.ts`;
-const reviewedDomains = ['project-variables', 'project-conditions', 'reusable-content', 'project-settings', 'topic-content', 'structured-content', 'semantic-references', 'reviews', 'review-package']
+const reviewedDomains = ['project-variables', 'project-conditions', 'reusable-content', 'project-settings', 'topic-content', 'structured-content', 'semantic-references', 'reviews', 'review-package', 'releases', 'release-renderer']
   .map(name => `${domainDirectory}/${name}.ts`);
 
 describe('offline backend contract readiness (not live migration/RLS certification)', () => {

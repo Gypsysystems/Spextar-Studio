@@ -48,3 +48,5 @@ export const ReusableContentRoute = createManagementRoute('Reusable Content', ()
 export const VariablesConditionsRoute = createManagementRoute('Variables & Conditions', () => import('@/pages/variables-conditions'));
 export const ProjectSettingsRoute = createManagementRoute('Project settings', () => import('@/pages/project-settings'));
 export const ReviewRoute = createManagementRoute('Review', () => import('@/pages/review'));
+
+export const PublishRoute = createManagementRoute('Publish', () => import('@/pages/publish'));

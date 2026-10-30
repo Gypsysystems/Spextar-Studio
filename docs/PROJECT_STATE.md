@@ -594,3 +594,57 @@ remain external gates. The PR must remain unmerged.
 zero domain/DNS/production changes.** No migration was applied/replayed/reset/
 repaired/rolled back against live Supabase. No AI, History, Style Guide or unrelated
 refactor was implemented.
+
+## Issue #20 — immutable Publishing & Releases — 2026-10-30
+
+Authorized scope: [Issue #20](https://github.com/Gypsysystems/Spextar-Studio/issues/20),
+accepted design D1–D3 and explicit implementation request. Fresh branch
+`codex/feature-publishing-releases` starts from verified GitHub main
+`0bc97737a027af45ef28aa42a22a06160a1fa0bf`. Initial checkout was clean.
+
+Source adds the unapplied CLI-generated forward migration
+`20261030001220_immutable_document_releases.sql`: immutable numbered release rows,
+SELECT-only current-project RLS, restrictive retention, frozen-only validation,
+canonical SHA-256 package/manifest digests and one authenticated exact signature:
+`publish_document_release(uuid,uuid,uuid,timestamptz,uuid) -> uuid`.
+Explicit Project Admin only; membership/document locking, latest Approved review,
+expected timestamp, stable request key and approval uniqueness serialize publication
+and idempotent retries. The forward migration extends the existing checked new-Draft
+transition to Published without editing accepted SQL. All 21 recovered originals,
+three accepted migrations and provenance manifest remain unchanged.
+
+The lazy Publish route provides confirmation/progress/blocked/stale/uncertain/error,
+numbered success, immutable release list and read-only inspector. Pure resolver and
+pinned React renderer v1 use only frozen default variables, neutral conditions and
+nested frozen reusable bodies; missing/unsupported/cyclic/deep/excessive expansion
+fails closed. The canonical package boundary, manifest fields, fixed UTC timestamp
+encoding, vectors, grants, retention and exact request contract are documented in
+[Publishing contract](../artifacts/spextar-studio/PUBLISHING_RELEASES.md).
+Source-review inventory changes are intentional new/changed consumed adapters and
+validators, after reviewing the extended application contract.
+
+UI reuses ProjectScope/PageHeader, Button, Dialog, ErrorState/ListSkeleton,
+UserIdentity, BrandedText, existing editor CSS and semantic card/border/muted/focus
+tokens. New composition is release history/inspection and frozen reusable provenance
+grouping. No branding/vector/font/color changes or exact Figma-fidelity claim.
+Keyboard Escape/focus restoration, responsive overflow, dark/light and axe are in
+the controlled browser suite. Product UAT remains external.
+
+Initial focused regression: **105 passed / 4 files**. First publishing browser run:
+**24 passed, 4 failed / 28**, duplicate success status during Dialog closing; the UI
+was corrected without weakening assertions/timeouts/skips. Combined Publishing/Review lifecycle rerun: **60 passed / 60**, all four
+profiles on installed Chrome, including keyboard/focus, axe and responsive overflow.
+The later nonvisual resource-budget hardening is separately covered by unit/SQL checks.
+Disposable PGlite uses synthetic Auth and memory only; final **63 SQL assertions**
+passed, including atomic rollback, exact frozen source after mutable catalog edits,
+roles, RLS/grants, immutability, retention, idempotency across later cycles, sequence
+1/2 and independent cross-language canonical SHA vectors. Resource-bound, Unicode-required-value, cyclic-outline and invalid-order checks
+also pass. Queued competing calls are not
+actual concurrent-session evidence. Native PostgreSQL/Docker was unavailable.
+Typecheck passed; final unit/build/bundle/hosted results follow separately.
+
+**Zero live Supabase, Replit, deployment, production, domain or DNS changes.** No
+live migration application/replay/reset/repair/rollback; no AI, History, Style Guide,
+Brand Outputs, PDF/Word or public portal work. No live Auth/RLS/parity certification,
+actual multi-session race certification, merge, release acceptance or deployment is
+claimed. Keep the PR unmerged for independent product-owner/security acceptance.

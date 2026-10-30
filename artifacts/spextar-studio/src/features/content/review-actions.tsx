@@ -21,9 +21,9 @@ export function ReviewActions({ doc, canAct }: { doc: DocumentRecord; canAct: bo
   // canEdit is intentionally false in Approved. Explicit project permission comes from the parent.
   if (!services.reviews) return null;
   const targetStatus = open && confirmation ? confirmation.status : doc.status;
-  const action = targetStatus === 'draft' ? 'Submit for review' : targetStatus === 'approved' ? 'Start new draft' : null;
+  const action = targetStatus === 'draft' ? 'Submit for review' : ['approved','published'].includes(targetStatus) ? 'Start new draft' : null;
   return <div className="space-y-2 text-sm">
-    <p className="text-muted-foreground">{doc.status === 'draft' ? 'Only saved content is submitted. Save all topic and metadata changes first.' : doc.status === 'in-review' ? 'In review · Author is read-only while the submitted content is reviewed.' : doc.status === 'approved' ? 'Approved · Start a new draft to edit this document.' : 'Published · Author is read-only.'}</p>
+    <p className="text-muted-foreground">{doc.status === 'draft' ? 'Only saved content is submitted. Save all topic and metadata changes first.' : doc.status === 'in-review' ? 'In review · Author is read-only while the submitted content is reviewed.' : doc.status === 'approved' ? 'Approved · Start a new draft to edit this document.' : 'Published · Start a new draft to edit. Existing releases stay unchanged.'}</p>
     {latest.data?.status === 'changes_requested' && <p className="rounded-md border bg-muted p-3">Changes requested: {latest.data.decision_note}</p>}
     {latest.isError && <p role="alert">Review status could not load. <Button variant="outline" size="sm" onClick={() => void latest.refetch()}>Refresh review status</Button></p>}
     {action && canAct && <Dialog open={open} onOpenChange={value => { if (!mutation.isPending) {
@@ -35,7 +35,7 @@ export function ReviewActions({ doc, canAct }: { doc: DocumentRecord; canAct: bo
         {(error || mutation.error) && <p role="alert" className="text-sm text-destructive">{error || mutation.error?.message}</p>}
         <div className="flex flex-wrap gap-2"><Button disabled={mutation.isPending} onClick={() => {
           if (!confirmation || doc.status !== confirmation.status || doc.updatedAt !== confirmation.updatedAt
-            || (confirmation.status === 'approved' && latest.data?.id !== confirmation.reviewId)) {
+            || (['approved','published'].includes(confirmation.status) && latest.data?.id !== confirmation.reviewId)) {
             setError('This document or review changed. Close this confirmation and refresh before continuing.'); return;
           }
           if (doc.status === 'draft') {

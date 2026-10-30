@@ -15,7 +15,7 @@
     "artifacts/spextar-studio/src/domain/reusable-content.ts": "b0728a01c97665888f042e3e23b5d0e770b7e12b530b7a8e09c6e9d019d02880",
     "artifacts/spextar-studio/src/domain/structured-content.ts": "89b8dd36d7fdb8f3c301c7670793f7e8138704855ba1dbf29413e44d435b9e39",
     "artifacts/spextar-studio/src/domain/topic-content.ts": "5155d0270d223cc638e80dbdbfb179d4e22bd2f92572ec047d3b3696652ec731",
-    "artifacts/spextar-studio/src/services/supabase-adapter.ts": "362a0a349151dc7dc8c3b8ea6efcf40c590ffbc46e16bcab6892240e3f573af4",
+    "artifacts/spextar-studio/src/services/supabase-adapter.ts": "b0fa941ddc3154bd6b4e16179a1d3474ae5a60e71792889f4f5f6d45c30e4557",
     "artifacts/spextar-studio/src/services/supabase-atomic.ts": "b96bb0cc62daca79df708c32e9304785a714d8b5c15a985a50977e72a86f0156",
     "artifacts/spextar-studio/src/services/supabase-client.ts": "3ba484fd1f41d20b50c29b77f133a1590cbe793f8c8fe1d8cd5c240c88f00ae6",
     "artifacts/spextar-studio/src/services/supabase-conditions.ts": "f66f07dc6a6c9170f2004b920c1f679a78280a1cfb15414e6fdd11776e72a204",
@@ -32,7 +32,10 @@
     "artifacts/spextar-studio/src/services/semantic-references.ts": "c6bcac7d3c0cf76b7715ec94bc33c98a118eda17698ddfe5d72c63c28fd08615",
     "artifacts/spextar-studio/src/domain/reviews.ts": "2edb8eae2ade1c24408ca8a1dc6c89c5fad5fe0393c19e70889fe3bcd073eb30",
     "artifacts/spextar-studio/src/services/supabase-reviews.ts": "bd17586d8f58d8040c8415cabf2a4011730fdf49c684c0a184ecd4ce833f86b1",
-    "artifacts/spextar-studio/src/domain/review-package.ts": "ce30675a884b56d541da60f6a37f5106436cc786084d05ab125d27cc37044063"
+    "artifacts/spextar-studio/src/domain/review-package.ts": "ce30675a884b56d541da60f6a37f5106436cc786084d05ab125d27cc37044063",
+    "artifacts/spextar-studio/src/services/supabase-releases.ts": "5aa1058b7a75647bd9f5fb5f2a1abe53723c2e799feabc577c5760096a74bd6a",
+    "artifacts/spextar-studio/src/domain/releases.ts": "7b93d2b12dc1b3fed5a489818b0241600b684a3dda2e7152214ac04a989b2705",
+    "artifacts/spextar-studio/src/domain/release-renderer.ts": "57462a7beb1550011025a2e879ca17835ee19c8687b8eb0f5fd12489446907fe"
   },
   "reviewDependencyPackages": {
     "issue": 19,
@@ -40,5 +43,12 @@
     "migration": "20261029184603_freeze_review_dependency_packages.sql",
     "scope": "Reviewed new SELECT projection and package schema/closure/canonical validator; exact roles and RPC signatures unchanged. Forward-only private capture trigger, one STABLE catalog snapshot, existing immutable evidence guard and parent RLS. Only these three changed/new source digests updated.",
     "evidence": "Offline source checks and disposable PGlite SQL with synthetic Auth; no live schema/Auth/RLS or concurrency certification."
+  },
+  "publishingReleases": {
+    "issue": 20,
+    "base": "0bc97737a027af45ef28aa42a22a06160a1fa0bf",
+    "migration": "20261030001220_immutable_document_releases.sql",
+    "review": "SELECT-only scoped release table; one exact publish RPC with identifiers/time/key only. Pinned package parser, canonical digests and pure renderer. No direct release writes or catalog content reads.",
+    "evidence": "Source review only; execution evidence documented separately. No live certification."
   }
 }
