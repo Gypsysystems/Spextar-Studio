@@ -10,7 +10,8 @@ const docker = (args, input) => {
   if (r.status !== 0) throw new Error(`docker ${args[0]}: ${r.error ?? r.stderr}`);
   return r.stdout.trim();
 };
-const sql = text => docker(['exec','-i',pg,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-At'], text);
+// TCP becomes ready only after the image's temporary initialization server exits.
+const sql = text => docker(['exec','-i','-e','PGPASSWORD=disposable-only',pg,'psql','-h','127.0.0.1','-U','postgres','-v','ON_ERROR_STOP=1','-At'], text);
 const pause = ms => new Promise(resolve => setTimeout(resolve,ms));
 const directory = new URL('../migrations/', import.meta.url);
 const secret = 'disposable-test-signing-key-no-live-use-27';
