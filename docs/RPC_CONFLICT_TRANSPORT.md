@@ -121,3 +121,35 @@ found, stop rollout and prepare a reviewed compensating forward migration. Rever
 the additive browser recognition is unnecessary for database rollback compatibility.
 No product/permission/UI/brand/lifecycle change or independent product acceptance
 is claimed. No secrets/private UAT logs are tracked.
+
+## Local completion evidence
+
+Node 24.22.1 / pnpm 10.34.9 prepared Windows toolchain:
+- Full repository units: **1,112 passed, 4 failed, 54 setup-blocked/skipped / 1,170**,
+  58 passed files / 3 failed files. All four failures are the unchanged Windows
+  symlink EPERM cases in predeploy-cli/readiness; predeploy-server's 54 tests cannot
+  enter their symlink setup. No assertion/skip/retry was weakened. An earlier
+  sandbox run encountered the same failures and was stopped before completion;
+  the prepared full run is the complete local result.
+- Workspace typecheck and **both demo production builds pass**; bundle guard passes
+  at **740,820 / 975,000** initial JavaScript bytes with all lazy boundaries retained.
+  Existing non-failing chunk/sourcemap warnings remain. No standalone application
+  lint script is configured; new JavaScript harnesses also pass `node --check`.
+- Review + Publishing controlled browsers: **64 / 64 passed**, all four desktop/
+  mobile dark/light profiles, installed Chrome; includes stale conflict states,
+  valid lifecycle, immutable frozen rendering, permissions, keyboard/focus,
+  accessibility and overflow assertions. No UI/branding/CSS/asset changes or new
+  visual patterns; existing components and tokens remain untouched. This is
+  controlled browser verification, not live product UAT.
+- Raw byte comparison against accepted main passes for **all 25 SQL files**;
+  provenance manifest Git blob unchanged (its Windows working checkout uses CRLF).
+  Only the CLI-generated 26th migration is added. Git whitespace checks pass.
+
+Hosted CI results and exact final head are retained on [unmerged PR #28](https://github.com/Gypsysystems/Spextar-Studio/pull/28).
+The backend job additionally runs native PostgreSQL 16.15 on Ubuntu as a compatibility
+check; Windows native and actual Docker HTTP replay above use PostgreSQL 17.11.
+Initial CI uncovered two new harness startup issues (unprivileged Unix socket path
+and image temporary initialization server); the harness now disables Unix sockets
+on Linux only and waits for final TCP readiness before any replay. No application
+SQL/assertions/timeouts were changed to hide these failures. Final CI must be green
+before handoff; no merge or live rollout is authorized by CI.

@@ -808,3 +808,10 @@ Security advisor output matches baseline (pgcrypto in public warning only); port
 Windows database lint lacks plpgsql_check. Full validation/CI evidence follows in the report.
 No live Supabase, Auth, Replit, deployment/domain/production change, merge or UAT approval.
 Issue #26 remains open and rollout/UAT blocked pending independent review and explicit authorization.
+
+Issue #27 local completion: full prepared Windows units 1112 passed / 4 known
+symlink EPERM failures / 54 setup-blocked (1170 total); all workspace typechecks,
+both production builds and 740820/975000 bundle guard pass. Review/Publishing
+controlled browsers pass 64/64 across all four profiles. No UI/brand changes.
+Final hosted checks/head are retained on unmerged PR #28; technical evidence is
+separate from independent product-owner acceptance and live rollout authorization.
