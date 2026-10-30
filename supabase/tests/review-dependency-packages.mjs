@@ -1,12 +1,11 @@
-// Disposable in-memory PostgreSQL only. No URL, credentials, remote connection,
-// Supabase CLI or application environment is used. Optional PGlite 0.5.13 runner;
-// set PGLITE_MODULE_PATH to an installed module's dist/index.js when not on PATH.
+// Disposable PostgreSQL only: fresh native loopback cluster or PGlite 0.5.13.
+// See docs/PRIVATE_BETA_BACKEND_VALIDATION.md for binary/driver selection.
+// No URL, credentials, Supabase CLI or application environment is consumed.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-const moduleName = process.env.PGLITE_MODULE_PATH;
-const { PGlite } = await import(moduleName ? pathToFileURL(moduleName).href : '@electric-sql/pglite');
-const db = new PGlite();
+import { fileURLToPath } from 'node:url';
+import { openDatabase, recordReplay } from './disposable-postgres.mjs';
+const db = await openDatabase();
 const root = fileURLToPath(new URL('../migrations/', import.meta.url));
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -23,11 +22,13 @@ try {
     grant execute on function auth.uid() to authenticated,anon;`);
   for (const file of fs.readdirSync(root).filter(f => f.endsWith('.sql')).sort()) {
     // PGlite has built-in gen_random_uuid; pgcrypto is unused by these migrations.
-    // Only this in-memory input copy omits extension installation. Source bytes
-    // are never rewritten; this is not full Supabase migration replay certification.
-    const sql = fs.readFileSync(`${root}/${file}`, 'utf8').replace('create extension if not exists pgcrypto;', '');
+    // Only the PGlite input copy omits extension installation. Native executes
+    // the entire file unchanged. Source bytes are never rewritten.
+    const original = fs.readFileSync(`${root}/${file}`, 'utf8');
+    const sql = db.native ? original : original.replace('create extension if not exists pgcrypto;', '');
     try { await db.exec(sql); } catch (e) { throw new Error(`Offline migration compilation: ${file}: ${e.message}`, { cause: e }); }
   }
+  await recordReplay(db, fs.readdirSync(root).filter(f => f.endsWith('.sql')).sort());
   const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
   const user = id(1), outsider = id(2), org = id(10), ws = id(11), project = id(12), doc = id(13), topic = id(14);
   const variable = id(20), category = id(21), value = id(22), reusable = id(23), nested = id(24);
@@ -167,5 +168,5 @@ try {
   await db.exec('drop function app_private.test_catalog_edit()');
   check(await scalar(`select provolatile from pg_proc where oid='app_private.review_dependency_walk(jsonb,uuid,uuid,uuid[],jsonb)'::regprocedure`)==='s','walker uses shared statement snapshot');
   check(await scalar(`select provolatile from pg_proc where oid='app_private.review_dependency_package(uuid,uuid,uuid,jsonb)'::regprocedure`)==='s','whole closure uses shared statement snapshot');
-  console.log(`${checks} offline PostgreSQL package/lifecycle/security assertions passed (PGlite; no live Supabase).`);
+  console.log(`${checks} offline PostgreSQL package/lifecycle/security assertions passed (${db.native ? 'native' : 'PGlite'}; no live Supabase).`);
 } finally { await db.close(); }

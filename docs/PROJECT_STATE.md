@@ -4,6 +4,8 @@ Recorded: 2026-10-30. Refresh this document when code, backend provenance, stagi
 
 ## Evidence and authority
 
+- Issue #24 validation base: GitHub main `3197174fc3d80ad0e3df1b4d3f653a55ec33a532`, fetched on 2026-10-30; branch `codex/private-beta-backend-validation`, clean initial checkout. PR #23 is merged; older unmerged/placeholder statements below describe historical checkpoints. The current source has 25 SQL migrations (21 recovered plus four accepted forward migrations) and implemented Review/frozen dependencies/Publishing. No fresh live ledger was inspected. Native PostgreSQL 17.11 disposable replay and new true multi-session checks supersede the older unavailable-native/single-session limitations only for the covered cases. See [Private Beta backend validation](PRIVATE_BETA_BACKEND_VALIDATION.md) and [executable UAT plan](PRIVATE_BETA_UAT.md) for current evidence, scope, gaps and pending external rollout gates. No live Supabase/Replit/deployment/domain/DNS changes.
+
 - Issue #20 implementation base: GitHub `main` verified at `0bc97737a027af45ef28aa42a22a06160a1fa0bf`, including accepted Review, explicit Project Admin management and Issue #19 dependency packages. Branch `codex/feature-publishing-releases`; [PR #23](https://github.com/Gypsysystems/Spextar-Studio/pull/23) remains unmerged. Source-only immutable Publishing is implemented; no live migration/deployment changes. See final evidence below.
 
 - Issue #19 implementation base: GitHub `main` verified at `3529a9cc2f802e3c91e75d4ad23a654fd8d9863b`, including merged Review and explicit Project Admin RLS correction. Fresh branch `codex/review-publishing-dependency-freeze`; no worktree or live-service changes. See the package implementation/verification entry below. Older pending/merge statements describe their historical checkpoints.
@@ -733,3 +735,57 @@ passed both required jobs on that source. The subsequent commit records evidence
 only; current-head checks remain available on PR #23. All 24 accepted SQL raw Git
 blobs, 21 recovered MD5/length pairs and the provenance manifest Git blob remain
 unchanged. The PR remains draft and unmerged; no live/deployment changes.
+
+## Issue #24 — pre-rollout Private Beta validation — 2026-10-30
+
+[PR #25](https://github.com/Gypsysystems/Spextar-Studio/pull/25) remains draft and
+unmerged. Base is GitHub main `3197174fc3d80ad0e3df1b4d3f653a55ec33a532`;
+branch `codex/private-beta-backend-validation`. See the linked validation report
+for reproduction and exact operational gates; the UAT matrix is a plan, not
+completed product acceptance.
+
+Native portable PostgreSQL 17.11 (x86_64 Windows, msvc-19.44.35229), pgcrypto 1.3,
+replayed all 25 unchanged SQL files from empty local clusters with synthetic Auth.
+Repeated schema-contract SHA256:
+`f5e48af6401fcdfc2dc694ec7292c9758e79edb32b74557e6bb787aee718abe6`.
+All 15 inventoried RPC names/argument lists match without overloads. Native release
+75 + dependency 55 + additional persona/concurrency 138 assertions passed. The
+last native release/matrix run also passed with invalid synthetic PG environment
+settings, using only its own loopback cluster. All local PostgreSQL processes
+stopped. PGlite compatibility remains 75+55 passed. All 21 recovered lengths/MD5s,
+25 raw accepted SQL files and provenance manifest tracked blob remain unchanged.
+
+Distinct backend sessions and observed lock waits cover idempotent retry, competing
+publication/numbering, Publish versus New Draft, stale submission, membership
+revocation and last-admin demotions. A concurrent catalog commit preserves the
+STABLE dependency statement snapshot. Synthetic Auth is not Supabase Auth/JWT,
+PostgREST/pooler, live parity or every possible race certification. Accepted
+organization/workspace membership can retain reads after project-role revocation;
+explicit authoring/publication closes, and full membership revocation closes reads.
+
+Prepared Windows units: 1103 passed, 4 symlink EPERM failures, 54 setup-blocked /
+1161. Earlier sandbox run also had two UI timing failures, both passing unchanged
+in the complete prepared run. Final inventory regression 55/55 and workspace
+typecheck passed. Both demo builds and bundle guard passed, 740804/975000 initial
+JS bytes. Existing non-failing sourcemap/chunk notices remain.
+
+Seven controlled browser suites on all four profiles: 212 passed, four failures
+in one unsupported Review fixture scenario (21.4m). The fixture incorrectly mixed
+unknown content with a non-null frozen package. It now additionally asserts frozen
+rejection, then explicitly uses legacy NULL for the original lossless raw-content
+assertions; all four profile follow-ups passed (1.1m). No assertions/timeouts/skips/
+retries were weakened. No full 216-case rerun is claimed. No application/UI/brand
+or migration change; only validation assets/test fixture and evidence corrections.
+
+Hosted quality run 41002756458 on validation commit
+`23534acac7b8a0c9717d8d1d1162bae8a2faa654` passed both jobs, 60 files/1161 tests,
+locked install, typecheck, both builds, bundle and tracked-file/migration integrity.
+Final-head checks are reported on PR #25 and must be distinguished from that run.
+
+Technical recommendation: ready to request a gated staging rollout authorization;
+no accepted source/database defect identified. Actual rollout still requires fresh
+live ledger/schema/platform parity, backup/change approval, Auth warning resolution
+or owner decision, real six-persona/foreign/anon API smoke, backend candidate/session/
+origin/bindings checks, and separate deployment/UAT/security/product acceptance.
+No live Supabase reads/writes, Auth/secrets/infrastructure changes, Replit action,
+deployment, production, domain or DNS change occurred. Do not merge this PR.
