@@ -151,7 +151,7 @@ describe('foundation routes and navigation', () => {
   );
   it('preserves the Publish route with explicit demo-unavailable behavior', async()=>{
     await mount(`${base}/publish`);
-    expect(await screen.findByRole('heading',{name:'Publish',exact:true})).toBeVisible();
+    expect(await screen.findByRole('heading',{name:'Publish'})).toBeVisible();
     expect(await screen.findByText('Publishing requires an authenticated backend with release support. Demo content cannot be published.')).toBeVisible();
     expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
     expect(window.location.pathname).toBe(`${base}/publish`);

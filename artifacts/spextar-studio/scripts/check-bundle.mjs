@@ -7,7 +7,8 @@ const manifest = JSON.parse(await readFile(new URL('.vite/manifest.json', root),
 const entry = Object.keys(manifest).find((key) => manifest[key].isEntry);
 const author = 'src/pages/author.tsx';
 const reviewViewer = 'src/features/review/review-draft-viewer.tsx';
-const management = ['reusable-content', 'variables-conditions', 'project-settings', 'review'].map(name => `src/pages/${name}.tsx`);
+const releaseViewer = 'src/features/publishing/release-body-v1.tsx';
+const management = ['reusable-content', 'variables-conditions', 'project-settings', 'review', 'publish'].map(name => `src/pages/${name}.tsx`);
 const creationForms = ['workspaces/create-workspace-dialog', 'projects/create-project-dialog'].map(name => `src/features/${name}.tsx`);
 assert.ok(entry, 'Missing application entry');
 assert.ok(manifest[author]?.isDynamicEntry, 'Author must remain a dynamic route entry');
@@ -29,6 +30,9 @@ assert.ok(initialBytes <= budget.maxInitialBytes,
   `Initial JavaScript graph is ${initialBytes} bytes, exceeding the ${budget.maxInitialBytes}-byte budget`);
 console.log(`Initial graph budget: ${initialBytes}/${budget.maxInitialBytes} bytes (previous baseline ${budget.previousInitialBytes})`);
 assert.ok(!initial.has(author), 'Author must not be statically reachable from the application entry');
+assert.ok(manifest[releaseViewer]?.isDynamicEntry, 'Release inspector must remain a dynamic entry');
+assert.ok(!initial.has(releaseViewer), 'Release inspector leaked into the initial graph');
+assert.ok(manifest['src/pages/publish.tsx']?.dynamicImports?.includes(releaseViewer), 'Missing lazy Release inspector import');
 assert.ok(manifest[reviewViewer]?.isDynamicEntry, 'Review viewer must remain a dynamic entry');
 assert.ok(!initial.has(reviewViewer), 'Review viewer must not be statically reachable from the application entry');
 assert.ok(manifest['src/pages/review.tsx']?.dynamicImports?.includes(reviewViewer), 'Missing lazy Review viewer import from the Review shell');
@@ -38,7 +42,8 @@ for (const page of management) {
   assert.ok(!initial.has(page), `${page} leaked into the initial graph`);
   assert.ok([...initial].some(key => manifest[key].dynamicImports?.includes(page)), `Missing lazy import: ${page}`);
   assert.ok(!staticGraph(page).has(author), `${page} must not statically import Author`);
-  assert.ok(!staticGraph(page).has(reviewViewer), `${page} must not statically import the Review viewer`);
+  assert.ok(!staticGraph(page).has(releaseViewer), `${page} must not statically import the Release inspector`);
+    assert.ok(!staticGraph(page).has(reviewViewer), `${page} must not statically import the Review viewer`);
 }
 for (const key of initial) {
   const source = await readFile(new URL(manifest[key].file, root), 'utf8');

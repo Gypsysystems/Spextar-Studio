@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useRef } from 'react';
+import { lazy, Suspense, useState, useRef, useMemo } from 'react';
 import { useParams } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ProjectScope, PageHeader } from '@/features/project/project-scope';
@@ -79,12 +79,20 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
     retry: false,
     staleTime: 0,
   });
-  let blocked = document.status !== 'approved' ? 'Approve a new review before publishing.' : '';
-  try {
-    publishCandidate(latest.data ?? null);
-  } catch (error) {
-    blocked = error instanceof Error ? error.message : 'Approved content is unavailable.';
-  }
+  const preflight = useMemo(() => {
+    if (document.status !== 'approved')
+      return { blocked: 'Approve a new review before publishing.', warnings: [] as string[] };
+    try {
+      const resolved = renderReleaseV1(publishCandidate(latest.data ?? null));
+      return { blocked: '', warnings: resolved.warnings };
+    } catch (error) {
+      return {
+        blocked: error instanceof Error ? error.message : 'Approved content is unavailable.',
+        warnings: [] as string[],
+      };
+    }
+  }, [latest.data, document.status]);
+  const blocked = preflight.blocked;
   const refresh = async () => {
     await Promise.all([
       client.invalidateQueries({ queryKey: ['documents', project.id] }),
@@ -141,6 +149,15 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
             <p className="text-sm text-muted-foreground">Only an explicit Project Admin may publish.</p>
           )}
           {blocked && <p className="text-sm text-muted-foreground">{blocked}</p>}
+          {preflight.warnings.length > 0 && (
+            <ul aria-label="Publishing warnings" className="space-y-1 text-sm text-muted-foreground">
+              {preflight.warnings.map((w) => (
+                <li key={w}>
+                  <BrandedText>{w}</BrandedText>
+                </li>
+              ))}
+            </ul>
+          )}
           <Dialog
             open={open}
             onOpenChange={(v) => {
@@ -183,7 +200,7 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
               )}
               <div className="flex flex-wrap gap-2">
                 <Button
-                  disabled={pending || uncertain || !!blocked}
+                  disabled={pending || uncertain || !!blocked || !request}
                   onClick={() => {
                     if (
                       !request ||

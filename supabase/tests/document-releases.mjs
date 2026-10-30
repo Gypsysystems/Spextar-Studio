@@ -111,6 +111,14 @@ try {
   await denied(()=>query(`delete from projects where id=$1`,[project]),['23001']);
   await denied(()=>query(`update document_releases set sequence=2`));
   await denied(()=>query(`delete from document_releases`));
+  for (const role of ['author','reviewer','viewer']) {
+    await query(`insert into project_members(project_id,user_id,role) values($1,$2,$3)`,[project,outsider,role]);
+    await query(`select set_config('request.jwt.claim.sub',$1,false)`,[outsider]);await db.exec('set role authenticated');
+    check(await scalar(`select count(*) from document_releases`)===1,`${role} reads retained release with current project access`);
+    await denied(publish);
+    await db.exec('reset role');await query(`delete from project_members where project_id=$1 and user_id=$2`,[project,outsider]);
+    await query(`select set_config('request.jwt.claim.sub',$1,false)`,[user]);
+  }
   const canonical = v => v===null || typeof v!=='object' ? JSON.stringify(v) : Array.isArray(v) ? `[${v.map(canonical).join(',')}]` : `{${Object.keys(v).sort().map(k=>`${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
   const hash = s => createHash('sha256').update(s,'utf8').digest('hex');
   for (const vector of [{}, {z:[3,true,null],a:'line\n"\\'}, {'\u{1f600}':1,'\uffff':2,'a':-1}, [0,9007199254740991,-9007199254740991], {é:'e\u0301'}]) {

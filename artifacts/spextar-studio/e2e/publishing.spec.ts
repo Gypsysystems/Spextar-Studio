@@ -187,3 +187,105 @@ test('release service errors block publication and recover through Refresh', asy
   await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeEnabled();
   await accessible(page);
 });
+test('frozen defaults, optional warnings, neutral tags and nested reusable bodies survive catalog changes', async ({
+  page,
+  backend,
+}) => {
+  const at = '2026-10-27T10:00:00Z';
+  const frozenValue = String(backend.db.project_variables[0].value);
+  backend.db.project_variables.push({
+    ...backend.db.project_variables[0],
+    id: 'var-b',
+    name: 'Optional note',
+    key: 'optional_note',
+    required: false,
+    value: '',
+    output_values: {},
+  });
+  const ref = (id: string) => ({ type: 'reusableReference', attrs: { referenceVersion: 1, reusableId: id } });
+  backend.db.reusable_contents = ['reuse-a', 'reuse-b'].map((id) => ({
+    id,
+    workspace_id: 'ws-a',
+    project_id: 'project-a',
+    scope: 'project',
+    name: 'Frozen linked notice',
+    slug: id,
+    description: null,
+    settings: {},
+    status: 'draft',
+    update_policy: 'notify',
+    tags: [],
+    created_by: 'user-a',
+    created_at: at,
+    updated_at: at,
+  }));
+  backend.db.reusable_content_drafts = [
+    {
+      reusable_content_id: 'reuse-a',
+      revision: 2,
+      updated_at: at,
+      updated_by: 'user-a',
+      content: { type: 'doc', version: 1, content: [ref('reuse-b')] },
+    },
+    {
+      reusable_content_id: 'reuse-b',
+      revision: 3,
+      updated_at: at,
+      updated_by: 'user-a',
+      content: {
+        type: 'doc',
+        version: 1,
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Frozen nested safety notice' }] }],
+      },
+    },
+  ];
+  const content = backend.db.topic_drafts[0].content as { content: unknown[] };
+  content.content.push(
+    {
+      type: 'paragraph',
+      attrs: { conditions: { version: 1, values: [{ categoryId: 'cat-a', valueId: 'val-a' }] } },
+      content: ['var-a', 'var-b'].map((variableId) => ({
+        type: 'variableReference',
+        attrs: { referenceVersion: 1, variableId },
+      })),
+    },
+    ref('reuse-a'),
+  );
+  const review = prepare(backend);
+  backend.db.project_variables = [];
+  backend.db.condition_categories = [];
+  backend.db.condition_values = [];
+  backend.db.reusable_contents = [];
+  backend.db.reusable_content_drafts = [];
+  backend.reads.length = 0;
+  await page.route('**/rest/v1/rpc/publish_document_release', async (route) => {
+    const args = route.request().postDataJSON() as Row,
+      row = release(review, String(args.p_request_key));
+    backend.db.document_releases.push(row);
+    backend.db.documents[0].status = 'published';
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(row.id) });
+  });
+  await login(page, projectPath + '/publish');
+  await expect(page.getByLabel('Publishing warnings')).toContainText('Optional note');
+  await activate(page, page.getByRole('button', { name: 'Publish', exact: true }));
+  await activate(page, page.getByRole('button', { name: 'Confirm publish' }));
+  const inspector = page.getByRole('article', { name: 'Release 1' });
+  await expect(inspector).toContainText(frozenValue);
+  await expect(inspector).toContainText('Frozen nested safety notice');
+  await expect(inspector).toContainText('Audience: Developer');
+  await expect(inspector).toContainText('Frozen revision 3');
+  expect(
+    backend.reads.filter((r) =>
+      [
+        'project_variables',
+        'condition_categories',
+        'condition_values',
+        'reusable_contents',
+        'reusable_content_drafts',
+        'topic_drafts',
+      ].includes(r.table),
+    ),
+  ).toEqual([]);
+  await noOverflow(page);
+  await accessible(page);
+});
