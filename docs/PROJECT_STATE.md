@@ -677,7 +677,7 @@ motion on the shared tooltip. Existing colors/geometry and normal-motion styling
 are preserved. No assertions/timeouts/skips were weakened to obtain the final pass.
 
 Final workspace typecheck, both demo production builds and strengthened bundle
-guard passed. Initial JS **740709 / 975000 bytes**; Publish and its read-only
+guard passed. Initial JS **740804 / 975000 bytes**; Publish and its read-only
 inspector now have explicit lazy-boundary assertions alongside existing Author,
 editor, management and Review guards. Existing non-failing sourcemap/chunk notices
 remain. The incidental sandbox generated-file line-ending rewrite was restored.
@@ -723,3 +723,13 @@ locked install, typecheck, both builds, 740709/975000 bundle guard and migration
 tracked-file integrity. The final inspection/focus follow-up and current-head
 checks are retained on PR #23. These are independent hosted Linux results; the
 Windows symlink limitations above remain recorded. No live or deployment action.
+
+Executable handoff source: `6fbe11a415003dbe549978f1c89b45832d11e5b6`.
+Final four-profile Publish run including strengthened cancellation and immutable
+approval numbering: **36 / 36 passed**. Final local typecheck, both production
+builds and bundle guard pass at **740804 / 975000 initial JS bytes**. Hosted
+[quality run 40992470631](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40992470631)
+passed both required jobs on that source. The subsequent commit records evidence
+only; current-head checks remain available on PR #23. All 24 accepted SQL raw Git
+blobs, 21 recovered MD5/length pairs and the provenance manifest Git blob remain
+unchanged. The PR remains draft and unmerged; no live/deployment changes.
