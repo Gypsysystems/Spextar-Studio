@@ -11,14 +11,14 @@
     "schema": "schemaVersion=1, resolverVersion=1, canonicalization=spextar-json-v1; organization/workspace/project IDs; neutral conditions/default variables/no selected output; UUID-ordered variables/categories/values/reusable arrays. Safe-integer JSON canonical domain, UTF-16 sorted object keys, significant array order, UTF-8 encoding; no digest execution.",
     "bounds": "Eight reusable levels; ancestor cycles/ninth level fail; repeated DAG paths permitted. 256 distinct reusable IDs, 4096 body visits, 30000 nodes/body, 100000 visited nodes, JSON depth<100, dependency JSONB text<=16MiB. Missing/unsupported/unsafe/out-of-scope dependencies fail closed.",
     "review": "Frozen provider performs no mutable dependency or reusable-body reads; Author/demo continue current resolution. Legacy semantic reviews show an explicit unavailable notice. Approval/Start New Draft preserve evidence; resubmission captures a new package.",
-    "limits": "No live migration/schema/Auth/RLS certification, multi-session race execution, release creation/digest, deployment or UAT. Optional in-memory PGlite SQL harness uses synthetic Auth, not live Supabase."
+    "limits": "Issue #24 native PostgreSQL 17.11 replay and concurrent statement-snapshot checks use synthetic Auth; see docs/PRIVATE_BETA_BACKEND_VALIDATION.md for exact coverage. No live schema/Auth/RLS/platform, deployment or UAT certification."
   },
   "reviewLifecycle": {
     "authority": "Issue #9; source-reviewed only",
     "snapshot": "Document metadata and ordered topic graph with nullable persisted revision/content; JSONB is copied without resolving references.",
-    "transitions": "Admin/Author submits Draft or starts new Draft from latest Approved; Reviewer/Admin decides expected active review. Changes requested requires note.",
+    "transitions": "Admin/Author submits Draft or starts new Draft from latest Approved review while document is Approved/Published; Reviewer/Admin decides expected active review. Changes requested requires note.",
     "enforcement": "One document row lock per transition; working-write triggers serialize direct/tree/body writes. Explicit project role checked under membership row lock. Private definer implementation, empty search_path, postgres owner, authenticated EXECUTE only; invoker public wrappers. Browser must not send raw lifecycle status changes.",
-    "limits": "No migration application/replay, live RLS/Auth/multi-session validation or deployment performed. Restrictive review FKs preserve evidence and can block parent deletion."
+    "limits": "Issue #24 native disposable replay/roles/selected concurrent transitions use synthetic Auth; no live RLS/Auth/platform or deployment certification. Restrictive review FKs preserve evidence and can block parent deletion. See docs/PRIVATE_BETA_BACKEND_VALIDATION.md."
   },
   "publicClientConfiguration": {
     "requiredModeForBackendStaging": "backend",
@@ -42,7 +42,7 @@
     "enforcement": "is_project_admin reads current project_members for auth.uid(), exact project_id and role admin. Its only consumers are projects UPDATE/DELETE and project_members INSERT/UPDATE/DELETE policies; UPDATE checks both existing and proposed scope. Parent administration alone does not grant these mutations.",
     "bootstrap": "create_project remains an invoker atomic RPC. The creator may insert only their own first admin membership into a project with no memberships. Established projects retain the last-admin trigger; removed/demoted creators cannot use bootstrap to regain administration.",
     "preserved": "Inherited parent administration/read visibility, explicit Admin/Author content writes, Review submit/start-Draft Admin/Author and decide Admin/Reviewer, organization-owner safeguards, last-project-admin trigger and restrictive review evidence FKs.",
-    "limits": "No PostgreSQL execution, replay, live RLS/Auth or concurrent-session verification. Revocations committed before the statement are checked from database membership, not cached client/JWT roles; this does not claim serialization of every concurrent revocation. Parent deletion cascades retain historical behavior. No new member-onboarding or project-relocation contract."
+    "limits": "Issue #24 native disposable role/member/bootstrap/owner checks and concurrent last-admin demotions pass with synthetic Auth. No live RLS/Auth/platform certification or claim of serialization of every management/revocation/deletion race. Parent deletion cascades retain historical behavior. No new member-onboarding or project-relocation contract. See docs/PRIVATE_BETA_BACKEND_VALIDATION.md."
   },
   "tables": {
     "document_releases": {
@@ -344,11 +344,11 @@
     "authority": "Source-reviewed application behavior; no live DB changes or live RLS certification. See artifacts/spextar-studio/SEMANTIC_REFERENCES.md"
   },
   "unresolved": [
-    "21 historical originals were recovered in Issue #2; replay/current live parity and application of the new review migration remain uncertified",
-    "Exact constraints, indexes, FK ON DELETE actions, triggers, private helpers and grants/policy definitions",
-    "Installed atomic RPC security-definer configuration and authenticated-only execution grants (F0/F1 callable names/parameters confirmed)",
+    "21 historical originals plus four accepted forward source migrations replay unchanged in native PostgreSQL 17.11 with synthetic Auth; current live parity/platform compatibility and forward application remain uncertified",
+    "Current live constraints, indexes, FK ON DELETE actions, triggers, private helpers and grants/policy parity; native disposable source inventory is documented separately",
+    "Live installed RPC ownership/search paths and execution grants; all 15 source RPC name/argument lists match native replay catalog without overloads",
     "Live multi-identity RLS coverage for all management/draft tables; fixtures are not live certification",
-    "Atomic last-project-admin and dependency-delete protections under concurrent sessions",
+    "Native concurrent last-project-admin demotions passed; live concurrency/pooling and unexercised dependency-delete/body-write race permutations remain external gates",
     "General project reader accepts legacy in_review/in-review; this does not expand the active/archived writable database contract",
     "No threaded comments, global History or brand/output contract; Review and immutable Publishing are source-only and unapplied; semantic references use the version-1 body contract"
   ]

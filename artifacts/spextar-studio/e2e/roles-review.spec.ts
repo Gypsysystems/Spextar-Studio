@@ -38,7 +38,7 @@ for (const role of ['admin', 'author', 'reviewer', 'viewer', null] satisfies Rol
   });
 }
 
-test('Review saved hierarchy, error/retry, lossless unsupported content and empty eligibility', async ({ page, backend }) => {
+test('Review saved hierarchy, error/retry, frozen validation, lossless legacy content and empty eligibility', async ({ page, backend }) => {
   await login(page, projectPath + '/review');
   const body = page.getByRole('textbox', { name: 'Topic body' });
   await expect(body).toContainText('Current saved QA topic');
@@ -53,6 +53,12 @@ test('Review saved hierarchy, error/retry, lossless unsupported content and empt
   await expect(body).toContainText('Current saved QA topic');
   const unknown = { ...bodyContent(), content: [{ type: 'futureModule', attrs: { opaque: 'never flatten' } }] };
   (backend.db.document_reviews[0].topics_snapshot as Record<string, unknown>[])[0].content = unknown;
+  await page.reload();
+  // Versioned frozen packages reject unsupported content. Legacy NULL packages
+  // retain the original lossless read-only inspection contract instead.
+  await expect(page.getByText('Submitted review did not load', { exact: true })).toBeVisible();
+  await expect(body).toHaveCount(0);
+  backend.db.document_reviews[0].dependency_package = null;
   await page.reload();
   await expect(body).toHaveAttribute('aria-readonly', 'true');
   expect(await body.evaluate(el => el.tagName)).toBe('PRE');

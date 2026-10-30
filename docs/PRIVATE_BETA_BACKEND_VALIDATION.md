@@ -14,6 +14,13 @@ No live Supabase inspection/write, migration apply/replay/reset/repair/rollback,
 Auth/settings/secret change, Replit action, deployment, infrastructure, production,
 domain or DNS change occurred. No product UAT, merge or release approval is claimed.
 
+**Technical recommendation: ready to request authorization for a gated staging
+rollout.** No accepted source/database defect was found by the executed checks.
+The older browser fixture mismatch is corrected with stronger assertions and no
+application change. Actual rollout remains blocked until the external ledger,
+backup, Auth/security and candidate prerequisites below are cleared; this is not
+Private Beta acceptance or a statement of current live parity.
+
 ## Disposable database and reproducibility
 
 Native PostgreSQL **17.11**, x86_64 Windows, compiled by **msvc-19.44.35229**, 64-bit;
@@ -44,6 +51,11 @@ file is submitted as one query/transaction, not a simulation of Supabase's ledge
 runner. The database starts with PostgreSQL defaults and synthetic Auth, not a
 complete Supabase distribution.
 
+Windows PostgreSQL/no-locale is not proof of Linux/Supabase collation, managed
+extension placement/default grants, GoTrue schema/triggers, PostgREST authorization
+or pooler behavior. Those require the fresh platform inventory and real Auth/API
+smoke gates below. Synthetic auth claims are test inputs, not verified JWTs.
+
 The existing PGlite branch still omits the unused extension installation only in
 its in-memory copy; that branch is separately labeled and never replay certification.
 Native fixture arrays are explicitly serialized as JSONB. Native 17 reports
@@ -55,6 +67,8 @@ a trusted portable/native PostgreSQL bin directory and separately installed pinn
 `pg@8.16.3` outside application dependencies:
 
 ```powershell
+# Optional isolated test-driver install; no application dependency/lock change:
+pnpm --dir generated-artifacts/issue24-pg --ignore-workspace add pg@8.16.3
 $env:SPEXTAR_TEST_POSTGRES_BIN = '<absolute PostgreSQL bin directory>'
 $env:SPEXTAR_TEST_PG_MODULE = '<absolute pg/lib/index.js>'
 node supabase/tests/document-releases.mjs
@@ -218,15 +232,16 @@ scope. No live ledger, Auth or hosting check was performed for Issue #24.
    `pnpm check:readiness` only on an explicitly configured backend candidate under
    its documented controlled testing scope; retain bundle/exposure/network evidence.
 9. Keep the upcoming [TLS cipher deprecation](https://supabase.com/changelog/cbc-tls-ciphers-deprecated)
-   on 2026-11-10 in client compatibility checks (modern browser/SDK stack). Changelog
+   starting 2026-11-10 at the earliest in client compatibility checks (modern browser/SDK stack). Changelog
    was reviewed on validation date; no source update is required by this task.
-10. Before requesting Replit staging deployment/acceptance, collect green exact-head
+10. Before requesting Replit staging deployment, collect green exact-head
     hosted CI, migration/parity and security evidence, configured-candidate readiness,
     disposable six-persona smoke results, concurrency results/gaps, backup/forward-fix
-    owner, runtime settings/SPA fallback/asset checks and the completed
-    [UAT matrix](PRIVATE_BETA_UAT.md). Verify deployed SHA after separately authorized
-    deployment; a Git publication commit or old URL is insufficient. Product-owner
-    UAT/security acceptance and domain/production approval remain separate gates.
+    owner and the prepared [UAT matrix](PRIVATE_BETA_UAT.md). After separately
+    authorized deployment, verify deployed SHA, runtime settings/SPA fallback/assets
+    and complete candidate UAT before Replit staging acceptance; a Git publication
+    commit or old URL is insufficient. Product-owner UAT/security acceptance and
+    domain/production approval remain separate gates.
 
 ## Executed checks and open gates
 
@@ -236,19 +251,36 @@ scope. No live ledger, Auth or hosting check was performed for Issue #24.
 | Replay inventory SHA-256 | `f5e48af6401fcdfc2dc694ec7292c9758e79edb32b74557e6bb787aee718abe6` |
 | Native release suite | 75 passed |
 | Native persona/concurrency extension | 138 passed, including separate non-owner Org Admin and per-persona member INSERT/UPDATE/DELETE boundaries |
-| Native dependency suite | 55 passed in a separate empty cluster; same inventory hash. Its first console summary hardcoded PGlite, corrected to report selected engine; engine/replay lines establish this was native |
+| Native dependency suite | 55 passed in a separate empty cluster; same inventory hash; final summary reports native engine |
 | PGlite compatibility | 75 release + 55 dependency assertions passed with native flags absent |
+| Native environment isolation | Final 75+138 assertions passed with synthetic invalid PGHOST/PGPORT/PGUSER/PGDATABASE/PGPASSWORD/PGSSLMODE/PGOPTIONS; explicit loopback config still used, UTC session pinned, normal shutdown verified |
 | Historical/source integrity | 21 recovered lengths/MD5s match; all 25 raw SQL files match accepted Git base byte-for-byte; provenance manifest tracked blob unchanged |
 | Full prepared Windows units/source contracts | 1103 passed, 4 failed, 54 setup-blocked/skipped / 1161, 57 passed files / 3 failed. All remaining failures are symlink EPERM in predeploy CLI/readiness; server setup blocks its 54 assertions |
 | Earlier sandboxed full run | 1101 passed, 6 failed, 54 setup-blocked/skipped / 1161; same four symlink failures plus F2 autosave and frozen Review viewer timing failures. Those two UI tests passed in the complete prepared run, unchanged |
-| Evidence-count contract follow-up | 55/55 backend-contract tests passed after correcting pending source count from 3 to 4; semantic digests unchanged |
+| Final evidence inventory follow-up | 55/55 backend-contract tests and final workspace typecheck passed after readiness evidence corrections and browser-fixture change; semantic digests unchanged |
 | Typecheck/build/bundle | Workspace typecheck and Studio/sandbox demo production builds passed. Bundle 740804 / 975000 initial JS bytes; existing lazy boundaries passed; existing sourcemap/chunk notices remain non-failing |
-| Controlled browsers | Seven suites, 216 cases across all four profiles are running; final outcome follows in the final evidence update |
-| Hosted CI | Exact PR-head checks pending publication of this validation PR; will be read independently from GitHub |
+| Controlled browsers | Seven suites, 216 cases, Chrome 155.0.8059.85, one worker, four desktop/mobile dark/light profiles: 212 passed / 4 failed (21.4m). All four failures were the same older unsupported Review fixture. Corrected scenario then passed 4/4 profiles (1.1m). No entire 216-case rerun or all-spec browser sweep is claimed |
+| Hosted CI | [Quality run 41002756458](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/41002756458) passed both required jobs on `23534acac7b8a0c9717d8d1d1162bae8a2faa654`: 60 files / 1161 tests, locked install, typecheck, both builds, bundle 740804/975000, tracked-file and migration integrity. Final-head checks are reported on [unmerged PR #25](https://github.com/Gypsysystems/Spextar-Studio/pull/25), independently of this earlier run |
 
 Windows symlink creation is an existing environment limitation; no assertion,
 timeout, skip or retry policy is weakened. Controlled browsers intercept all
 backend traffic and do not certify actual Supabase Auth/PostgREST/RLS behavior.
+
+Browser classification: the old test replaced a topic with an unknown node while
+retaining a non-null versioned dependency package. Accepted package validation
+correctly rejected that invalid evidence before rendering; the test expected the
+legacy raw viewer. The fixture now first asserts rejection/no body, then explicitly
+sets the package to legacy NULL and retains every original raw PRE/JSON equality,
+read-only, error/retry, empty-state, overflow and zero-write assertion. No timeout,
+retry, skip or application behavior changes. Initial four failure traces/screenshots
+and logs are retained only in ignored local validation output.
+
+No production UI, design pattern, component, token, font, logo or branding change.
+Existing Publish/Review/Author/Settings/semantic/session screens were exercised at
+desktop and mobile in dark/light, including their embedded axe, keyboard/focus,
+read-only, error/recovery and overflow assertions. This is automated coverage,
+not manual visual or assistive-technology UAT. Approved brand assets and semantic
+tokens are unchanged.
 
 Remaining gates before authorized staging rollout: exact-head green hosted checks;
 fresh live ledger/schema/extension/platform parity; verified backup/change plan;

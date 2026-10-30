@@ -45,7 +45,12 @@ export async function openDatabase() {
   }
   const clients = [];
   const connect = async () => {
-    const client = new pg.Client({ host: '127.0.0.1', port, user: 'postgres', database: 'postgres', password: '', connectionTimeoutMillis: 10000 });
+    const client = new pg.Client({
+      host: '127.0.0.1', port, user: 'postgres', database: 'postgres',
+      // Truthy explicit values also prevent pg's empty-value environment fallback.
+      password: () => '', ssl: false, options: '-c timezone=UTC',
+      application_name: 'spextar-disposable-validation', connectionTimeoutMillis: 10000,
+    });
     await client.connect(); clients.push(client);
     await client.query("set statement_timeout='15s'; set lock_timeout='5s'");
     return client;
