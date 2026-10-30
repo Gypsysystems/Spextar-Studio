@@ -18,8 +18,9 @@ export function approved() {
     topics_snapshot: [{ ...reviewFixture().topics_snapshot[0], content: semanticBody() }],
   });
 }
-export async function releaseFixture() {
+export async function releaseFixture(sequence = 1) {
   const r = approved();
+  r.sequence = sequence;
   const source = {
     schemaVersion: 1,
     rendererVersion: 1,
@@ -51,7 +52,7 @@ export async function releaseFixture() {
     published_by: 'user-a',
     published_at: reviewAt,
     request_key: '00000000-0000-4000-8000-000000000002',
-    audit: { action: 'publish', publishedAt: reviewAt },
+    audit: { action: 'publish', publishedAt: reviewAt, reviewSequence: r.sequence },
   };
   row.manifest_digest = await sha256Canonical({
     schemaVersion: 1,
@@ -170,6 +171,13 @@ describe('pinned immutable releases', () => {
     await expect(checkedRelease(row, 'foreign', 'doc-a')).rejects.toThrow();
     row.frozen_source.document.title = 'Changed';
     await expect(checkedRelease(row, 'project-a', 'doc-a')).rejects.toThrow();
+  });
+  it('retains the actual approved review sequence from immutable audit evidence', async () => {
+    const row = await releaseFixture(5);
+    expect((await checkedRelease(row, 'project-a', 'doc-a')).review.sequence).toBe(5);
+    await expect(
+      checkedRelease({ ...row, audit: { ...row.audit, reviewSequence: 0 } }, 'project-a', 'doc-a'),
+    ).rejects.toThrow();
   });
   it('recovers only the exact scoped review/request identity', async () => {
     const f = supabaseDouble(),

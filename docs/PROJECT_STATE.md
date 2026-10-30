@@ -654,8 +654,8 @@ claimed. Keep the PR unmerged for independent product-owner/security acceptance.
 ### Issue #20 final validation and remaining boundaries
 
 Final focused application regression: **140 passed / 8 files**. A subsequent
-exact-review recovery/read-only renderer/backend-contract check passed **71 tests /
-3 files**, including the added request/review scoping assertion. The complete
+exact-review recovery/read-only renderer/backend-contract check passed **72 tests /
+3 files**, including exact request/review scoping and retained approval-sequence assertions. The complete
 prepared-Windows unit run finished **1101 passed, 4 failed, 54 setup-blocked/skipped /
 1159**, 57 passed files / 3 failed files. Failures are the unchanged symlink EPERM
 cases in predeploy-cli/readiness and predeploy-server setup. No skip/timeout/retry
@@ -706,3 +706,20 @@ reload); eager verification of paginated complete histories can be expensive.
 Actual multi-session races, live Supabase Auth/RLS/schema parity, external product
 UAT and migration rollout remain separate gates. Zero live Supabase/Replit,
 deployment/production/domain/DNS changes; no merge or product acceptance is claimed.
+
+### Final handoff follow-up
+
+Inspection uses the retained audit review sequence, and Cancel returns focus to
+Publish even while an older release is selected. The strengthened cancellation
+regression first reproduced the fault in all four profiles, then passed **4 / 4**
+after the narrow focus fix. Recovery outside a dialog explicitly focuses its
+confirmed status. Final audit-reader/backend-contract/renderer regression:
+**72 passed / 3 files**. No source schema/RPC or historical SQL changes follow the
+75-assertion disposable verification.
+
+Hosted [quality run 40983908631](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/40983908631)
+on `21df6fdf37f9c423dc72f5b5a7cd03326080df5b` passed **60 files / 1160 tests**,
+locked install, typecheck, both builds, 740709/975000 bundle guard and migration/
+tracked-file integrity. The final inspection/focus follow-up and current-head
+checks are retained on PR #23. These are independent hosted Linux results; the
+Windows symlink limitations above remain recorded. No live or deployment action.

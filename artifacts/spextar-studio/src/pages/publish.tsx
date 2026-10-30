@@ -61,6 +61,7 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
   const services = useServices(),
     client = useQueryClient();
   const statusRef = useRef<HTMLDivElement>(null);
+  const successFocus = useRef(false);
   const [open, setOpen] = useState(false),
     [pending, setPending] = useState(false);
   const [request, setRequest] = useState<PublishRequest | null>(null);
@@ -102,6 +103,7 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
   };
   const execute = async (r: PublishRequest, recover = false) => {
     if (pending) return;
+    const wasOpen = open;
     setPending(true);
     setMessage('');
     try {
@@ -110,11 +112,13 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
       const result = await releases.refetch();
       const confirmed = result.data?.find((v) => v.id === id) ?? (await services.releases!.findRequest(r));
       if (!confirmed) throw new ServiceError('Publication could not be confirmed.', 'network');
+      successFocus.current = true;
       setSelected(confirmed.id);
       setMessage(`Published Release ${confirmed.sequence}.`);
       setUncertain(false);
       setRequest(null);
       setOpen(false);
+      if (!wasOpen) statusRef.current?.focus();
       await refresh();
     } catch (error) {
       const known =
@@ -162,6 +166,10 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
             open={open}
             onOpenChange={(v) => {
               if (!pending) {
+                if (v) {
+                  successFocus.current = false;
+                  setMessage('');
+                }
                 if (v && latest.data)
                   setRequest({
                     projectId: project.id,
@@ -179,7 +187,8 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
             </DialogTrigger>
             <DialogContent
               onCloseAutoFocus={(event) => {
-                if (selected) {
+                if (successFocus.current || uncertain) {
+                  successFocus.current = false;
                   event.preventDefault();
                   statusRef.current?.focus();
                 }

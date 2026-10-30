@@ -84,7 +84,8 @@ The independent manifest hash is SHA256(canonical({...})) over exactly:
 
 Here publishedAt is the canonical UTC string retained in audit.publishedAt, avoiding
 session timezone and HTTP timestamp formatting dependence. The client verifies
-both hashes before inspection, and checks publication time against the audit instant.
+both hashes before inspection, retains the actual review sequence from immutable
+audit evidence, and checks publication time against the audit instant.
 Neither digest is a signature or proof of authorization.
 
 Pinned vectors include:

@@ -85,13 +85,15 @@ export async function checkedRelease(raw: unknown, projectId: string, documentId
     s.reviewId !== r.review_id
   )
     return fail();
+  const reviewSequence = r.audit.reviewSequence;
+  if (typeof reviewSequence !== 'number' || !Number.isSafeInteger(reviewSequence) || reviewSequence < 1) return fail();
   const review = publishCandidate(
     checkedReview(
       {
         id: s.reviewId,
         project_id: projectId,
         document_id: documentId,
-        sequence: 1,
+        sequence: reviewSequence,
         status: 'approved',
         submitted_by: s.submittedBy,
         submitted_at: s.submittedAt,

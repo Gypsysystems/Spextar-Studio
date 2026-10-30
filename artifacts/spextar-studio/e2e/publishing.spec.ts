@@ -45,7 +45,7 @@ function release(r: Row, key: string) {
     published_by: 'user-a',
     published_at: '2026-10-30T00:00:00Z',
     request_key: key,
-    audit: { action: 'publish', publishedAt: '2026-10-30T00:00:00Z' },
+    audit: { action: 'publish', publishedAt: '2026-10-30T00:00:00Z', reviewSequence: r.sequence },
   };
   row.manifest_digest = digest({
     schemaVersion: 1,
@@ -124,6 +124,16 @@ test('publish confirmation, numbered success and retained read-only inspection',
   ).toEqual([]);
   await noOverflow(page);
   await accessible(page);
+  backend.db.documents[0].status = 'approved';
+  backend.db.documents[0].updated_at = '2026-10-30T00:01:00Z';
+  backend.db.document_reviews = [{ ...review, id: 'review-next', sequence: 2 }];
+  await page.reload();
+  await activate(page, page.getByRole('button', { name: 'Release 1', exact: true }));
+  const nextPublish = page.getByRole('button', { name: 'Publish', exact: true });
+  await activate(page, nextPublish);
+  await activate(page, page.getByRole('button', { name: 'Cancel', exact: true }));
+  await expect(nextPublish).toBeFocused();
+  expect(backend.db.document_releases).toHaveLength(1);
 });
 test('uncertain committed response recovers by request key without another publication', async ({ page, backend }) => {
   const review = prepare(backend);
