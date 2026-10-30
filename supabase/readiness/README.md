@@ -201,3 +201,7 @@ it is not live certification. Three source migrations now follow the 21 recovere
 originals; none was applied by this task, and no fresh live ledger was inspected.
 The historical limitation prose below is superseded where these extensions and
 the recovered migration manifest provide newer source evidence.
+
+## Immutable Publishing source contract
+
+Issue #20 adds SELECT-only `document_releases` and the exact five-parameter authenticated `publish_document_release` RPC. Explicit Project Admin only; source content is the latest valid Approved Review and frozen dependency package. No current catalogs are read for release content. See [Publishing contract](../../artifacts/spextar-studio/PUBLISHING_RELEASES.md). The new migration is unapplied; disposable/synthetic SQL evidence is distinct from live RLS and multi-session acceptance.

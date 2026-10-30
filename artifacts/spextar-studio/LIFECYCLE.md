@@ -63,4 +63,6 @@ metadata dropdowns. In Review and Approved authoring is read-only. Approved edit
 require Admin/Author to start a new Draft. See [REVIEW_LIFECYCLE.md](REVIEW_LIFECYCLE.md)
 for permissions, immutable evidence, recovery and source-only migration limits.
 Parent deletion may be rejected by restrictive review-evidence foreign keys.
-Publishing/releases remain outside this foundation.
+Immutable Publishing now extends the source lifecycle; see
+[PUBLISHING_RELEASES.md](PUBLISHING_RELEASES.md). Published documents may start a
+new Draft through the same expected-time operation; releases remain unchanged.

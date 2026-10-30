@@ -148,3 +148,7 @@ revoked/demoted creator and foreign tenant identities; initial bootstrap,
 last-admin races/cascades, parent reads, content authoring and all Review roles
 also require disposable database acceptance. No replay/application or live
 Supabase, Replit, deployment or domain changes are authorized by this source PR.
+
+## Issue #20 source addition
+
+`20261030001220_immutable_document_releases.sql` adds immutable numbered releases, frozen-only validation/canonical SHA-256 helpers, a checked publication RPC, restrictive retention and Published-to-new-Draft support. CLI-generated forward-only source, unapplied. The 21 recovered originals, manifest and three accepted forward migrations are unchanged. There are now 25 source SQL files; this is not a fresh live ledger/parity claim. See the [Publishing contract](../../artifacts/spextar-studio/PUBLISHING_RELEASES.md).

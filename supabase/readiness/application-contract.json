@@ -45,6 +45,40 @@
     "limits": "No PostgreSQL execution, replay, live RLS/Auth or concurrent-session verification. Revocations committed before the statement are checked from database membership, not cached client/JWT roles; this does not claim serialization of every concurrent revocation. Parent deletion cascades retain historical behavior. No new member-onboarding or project-relocation contract."
   },
   "tables": {
+    "document_releases": {
+      "columns": [
+        "id",
+        "project_id",
+        "document_id",
+        "review_id",
+        "sequence",
+        "state",
+        "package_schema_version",
+        "resolver_version",
+        "renderer_version",
+        "canonicalization",
+        "frozen_source",
+        "package_digest",
+        "manifest_digest",
+        "published_by",
+        "published_at",
+        "request_key",
+        "audit"
+      ],
+      "operations": [
+        "select"
+      ],
+      "scope": [
+        "project_id",
+        "document_id"
+      ],
+      "authorization": "Current authorized project access only. No anon reads or direct authenticated writes. Explicit Project Admin publication through the exact checked RPC.",
+      "concurrency": [
+        "request_key",
+        "sequence"
+      ],
+      "serverBehavior": "Immutable numbered releases from latest Approved frozen package only. Restrictive parent FKs; document lock, request idempotency, atomic lifecycle. Forward-only source, unapplied."
+    },
     "document_reviews": {
       "columns": [
         "id",
@@ -228,6 +262,15 @@
     "stableKeyPattern": "^[a-z][a-z0-9_]{0,79}(?![\\s\\S])"
   },
   "rpcs": {
+    "releaseOperations": {
+      "publish_document_release": [
+        "p_project_id",
+        "p_document_id",
+        "p_review_id",
+        "p_expected_updated_at",
+        "p_request_key"
+      ]
+    },
     "reviewOperations": {
       "submit_document_review": [
         "p_project_id",
@@ -277,6 +320,18 @@
     "authority": "Atomic F0/F1 and document/topic callable names and named parameters are confirmed by the supplied authoritative live contracts; this does not certify current live SQL/RLS implementation. Review lifecycle RPCs are new source-only contracts, not applied or live-certified.",
     "returns": "F2 creators/duplicators require a nonempty UUID string. Move/promote/demote do not consume a return value. Atomic F0/F1 create accepts string or id/entity_id record, then verifies bootstrap membership."
   },
+  "releases": {
+    "migration": "20261030001220_immutable_document_releases.sql",
+    "versions": {
+      "package": 1,
+      "resolver": 1,
+      "renderer": 1,
+      "canonicalization": "spextar-json-v1"
+    },
+    "digest": "SHA-256 UTF-8 canonical frozen_source; separate canonical immutable manifest hash. See PUBLISHING_RELEASES.md.",
+    "retention": "Immutable rows, restrictive document/project/review/user FKs; current project read authority. New Draft from Published retains releases.",
+    "authority": "Source only. No live application or certification."
+  },
   "semanticReferences": {
     "version": 1,
     "storage": "Existing topic_drafts.content and reusable_content_drafts.content JSONB; no reference index table or new RPC",
@@ -295,6 +350,6 @@
     "Live multi-identity RLS coverage for all management/draft tables; fixtures are not live certification",
     "Atomic last-project-admin and dependency-delete protections under concurrent sessions",
     "General project reader accepts legacy in_review/in-review; this does not expand the active/archived writable database contract",
-    "No threaded comments, release/global History, brand/output or publishing execution contract; bounded review/approval is source-only and unapplied; semantic references use the version-1 body contract"
+    "No threaded comments, global History or brand/output contract; Review and immutable Publishing are source-only and unapplied; semantic references use the version-1 body contract"
   ]
 }

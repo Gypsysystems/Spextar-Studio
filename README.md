@@ -38,8 +38,9 @@ heading navigation for long Topics.
 Advanced table tools add safe merge/split, header controls and keyboard/range
 selection through the same revision-safe topic-draft JSON path.
 Demo body edits remain session-only.
-See [the F3 contract](artifacts/spextar-studio/F3.md). Publishing execution and
-document import are not implemented as backend persistence.
+See [the F3 contract](artifacts/spextar-studio/F3.md). Immutable Publishing is implemented as unapplied source; see the application
+[PUBLISHING_RELEASES.md](artifacts/spextar-studio/PUBLISHING_RELEASES.md).
+Document import is not implemented as backend persistence.
 Authenticated live creation-function contracts and two-account RLS acceptance
 checks still require verification; passing contract tests does not prove those
 live database behaviors.

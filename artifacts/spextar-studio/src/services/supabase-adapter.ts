@@ -17,6 +17,7 @@ import { supabaseReusable } from './supabase-reusable';
 import { supabaseProjectSettings } from './supabase-project-settings';
 import { supabaseLifecycle } from './supabase-lifecycle';
 import { supabaseReviews } from './supabase-reviews';
+import { supabaseReleases } from './supabase-releases';
 
 const orgRole = z.enum(['owner', 'admin', 'member']);
 const workspaceRole = z.enum(['admin', 'member', 'viewer']);
@@ -192,6 +193,7 @@ export function createSupabaseServices(client: SupabaseClient): Services {
       return { userId: after.userId, workspace: workspace.role === 'admin', project: project.canEditContent === true };
     }),
     reviews: supabaseReviews(client),
+    releases: supabaseReleases(client),
     topicDrafts: supabaseTopicDrafts(client, () => context(false), requireProject),
     auth: {
       getSession: restore,

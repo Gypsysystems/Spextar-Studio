@@ -14,7 +14,7 @@ import ProjectsPage from '@/pages/projects';
 import ProjectHomePage from '@/pages/project-home';
 import DocumentsPage from '@/pages/documents';
 import { AuthorRoute } from '@/routes/author-route';
-import { ReusableContentRoute, VariablesConditionsRoute, ProjectSettingsRoute, ReviewRoute } from '@/routes/management-routes';
+import { ReusableContentRoute, VariablesConditionsRoute, ProjectSettingsRoute, ReviewRoute, PublishRoute } from '@/routes/management-routes';
 import { SectionPlaceholderPage } from '@/pages/section-placeholder';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 
@@ -42,7 +42,7 @@ function ApplicationRoutes() {
         <Route path={`${P}/author`} component={AuthorRoute} />
         <Route path={`${P}/author/:documentId`} component={AuthorRoute} />
         <Route path={`${P}/review`} component={ReviewRoute} />
-        <Route path={`${P}/publish`}>{() => <SectionPlaceholderPage section="publish" />}</Route>
+        <Route path={`${P}/publish`} component={PublishRoute} />
         <Route path={`${P}/reusable-content`} component={ReusableContentRoute} />
         <Route path={`${P}/variables-conditions`} component={VariablesConditionsRoute} />
         <Route path={`${P}/style-guide`}>{() => <SectionPlaceholderPage section="style-guide" />}</Route>

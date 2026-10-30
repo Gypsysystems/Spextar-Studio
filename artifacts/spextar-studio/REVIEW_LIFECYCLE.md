@@ -107,3 +107,7 @@ See [REVIEW_DEPENDENCY_PACKAGES.md](REVIEW_DEPENDENCY_PACKAGES.md) for atomic
 transitive capture, frozen Review rendering, scope/cycle/size rules, canonical
 encoding and legacy evidence behavior. This supersedes older current-catalog
 resolution descriptions in this document. No live migration application is claimed.
+
+## Subsequent accepted extensions
+
+Issue #19 freezes dependencies at submission; see [REVIEW_DEPENDENCY_PACKAGES.md](REVIEW_DEPENDENCY_PACKAGES.md). Issue #20 adds immutable releases and permits a new Draft from Published while retaining approval/release evidence; see [PUBLISHING_RELEASES.md](PUBLISHING_RELEASES.md). These source migrations remain unapplied. Earlier baseline limitations above describe the original foundation.
