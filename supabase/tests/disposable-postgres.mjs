@@ -1,7 +1,7 @@
 // Optional native test backend. Always creates its own empty, loopback-only
 // cluster; never consumes PGHOST, DATABASE_URL, Supabase config or credentials.
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, openSync, closeSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -26,8 +26,13 @@ export async function openDatabase() {
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (/^PG/.test(key)) delete env[key];
   const run = (name, args) => {
-    const result = spawnSync(executable(name), args, { env, windowsHide: true, encoding: 'utf8', timeout: 60000 });
-    if (result.status !== 0) throw new Error(`${name}: ${result.error ?? result.stderr ?? result.stdout}`);
+    // Windows postgres descendants can retain pg_ctl's pipe handles indefinitely.
+    // A file captures diagnostics without waiting for server-owned pipes to close.
+    const output = path.join(directory, `${name}.log`), fd = openSync(output, 'w');
+    let result;
+    try { result = spawnSync(executable(name), args, { env, windowsHide: true, stdio: ['ignore', fd, fd], timeout: 60000 }); }
+    finally { closeSync(fd); }
+    if (result.status !== 0) throw new Error(`${name}: ${result.error ?? readFileSync(output, 'utf8')}`);
   };
   run('initdb', ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-locale', '-E', 'UTF8']);
   const server = net.createServer();
@@ -61,6 +66,8 @@ export async function openDatabase() {
     console.log('New local cluster:', directory, 'port', port);
     return {
       native: true, connect,
+      // Always a newly allocated synthetic loopback cluster; useful for local CLI checks.
+      localConnectionString: `postgresql://postgres@127.0.0.1:${port}/postgres?sslmode=disable`,
       // Fixture arrays are JSONB values, not PostgreSQL array parameters.
       query: (sql, args) => client.query(sql, args?.map(v => Array.isArray(v) ? JSON.stringify(v) : v)),
       exec: sql => client.query(sql),
@@ -96,4 +103,5 @@ export async function recordReplay(db, files) {
   })) contract[name] = (await db.query(sql)).rows;
   console.log('Exact ordered native replay:', files.length, 'migrations; pgcrypto', (await db.query("select extversion from pg_extension where extname='pgcrypto'")).rows[0].extversion);
   console.log('Replayed contract SHA256:', createHash('sha256').update(JSON.stringify(contract)).digest('hex'));
+  return contract;
 }

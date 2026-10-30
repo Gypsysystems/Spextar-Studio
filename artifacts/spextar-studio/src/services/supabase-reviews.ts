@@ -16,7 +16,7 @@ export function supabaseReviews(client: SupabaseClient): ReviewService {
     if (!parameters || parameters.length !== Object.keys(args).length || parameters.some(p => !Object.hasOwn(args, p))) throw new ServiceError('This review action could not be prepared. Refresh and try again.', 'unavailable');
     const result = await client.rpc(name, args);
     if (result.error) {
-      if (['40001', '23505'].includes(result.error.code)) throw new ServiceError('This document or review changed. Refresh before trying again.', 'conflict');
+      if (['PT409', '40001', '23505'].includes(result.error.code)) throw new ServiceError('This document or review changed. Refresh before trying again.', 'conflict');
       if (name === 'submit_document_review' && ['23514', '22P02', '22023'].includes(result.error.code)) throw new ServiceError('Review dependencies could not be frozen. Check saved content and linked definitions before submitting again.', 'validation');
       if (result.error.code === '22023' && name === 'request_document_changes') throw new ServiceError('Enter a decision note before requesting changes.', 'validation');
       throw backendError(result.error);

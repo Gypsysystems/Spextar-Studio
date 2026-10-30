@@ -789,3 +789,22 @@ or owner decision, real six-persona/foreign/anon API smoke, backend candidate/se
 origin/bindings checks, and separate deployment/UAT/security/product acceptance.
 No live Supabase reads/writes, Auth/secrets/infrastructure changes, Replit action,
 deployment, production, domain or DNS change occurred. Do not merge this PR.
+
+## Issue #27 — deterministic RPC conflict transport — 2026-10-31
+
+Accepted base `a307c8afebcfc9310c9de162834842e1a2ec6bc8`; clean separate branch
+`codex/fix-rpc-conflict-27`. [Issue #27](https://github.com/Gypsysystems/Spextar-Studio/issues/27)
+fixes the PostgREST 14 retry defect blocking [Issue #26](https://github.com/Gypsysystems/Spextar-Studio/issues/26).
+See [exact audit, current-doc check, test evidence and rollout plan](RPC_CONFLICT_TRANSPORT.md).
+All 25 accepted migration files and provenance manifest remain unchanged. New CLI-generated
+`20261030213342_non_retryable_rpc_conflicts.sql` replaces nine deterministic 40001
+RAISEs in three current private functions with PT409/HTTP 409; historical superseded
+occurrences remain intact. No genuine authored serialization/deadlock handling found.
+Adapters add PT409 recognition with legacy compatibility; no retries/fallbacks added.
+Native 17.11 clean replay/catalog delta, 16 conflict, 75 release, 55 dependency and
+138 persona/concurrency checks pass. Actual PostgREST 14 stale HTTP request returns
+409/PT409 in 20 ms, one measured server execution and no evidence/state change.
+Security advisor output matches baseline (pgcrypto in public warning only); portable
+Windows database lint lacks plpgsql_check. Full validation/CI evidence follows in the report.
+No live Supabase, Auth, Replit, deployment/domain/production change, merge or UAT approval.
+Issue #26 remains open and rollout/UAT blocked pending independent review and explicit authorization.

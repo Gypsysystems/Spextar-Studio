@@ -351,5 +351,12 @@
     "Native concurrent last-project-admin demotions passed; live concurrency/pooling and unexercised dependency-delete/body-write race permutations remain external gates",
     "General project reader accepts legacy in_review/in-review; this does not expand the active/archived writable database contract",
     "No threaded comments, global History or brand/output contract; Review and immutable Publishing are source-only and unapplied; semantic references use the version-1 body contract"
-  ]
+  ],
+  "rpcConflictTransport": {
+    "migration": "20261030213342_non_retryable_rpc_conflicts.sql",
+    "sqlstate": "PT409",
+    "httpStatus": 409,
+    "scope": "Deterministic Review, dependency-scope, new-Draft and Publishing stale/request conflicts only. Safe messages, signatures, authorization 42501, locking and idempotency unchanged. Adapters also recognize legacy 40001 and unique violation 23505; never automatically retry writes.",
+    "authority": "Issue #27 source contract; live rollout remains blocked under Issue #26 pending independent approval."
+  }
 }
