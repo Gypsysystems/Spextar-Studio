@@ -4,6 +4,52 @@ Recorded: 2026-10-31. Refresh this document when code, backend provenance, stagi
 
 ## Evidence and authority
 
+- Post-PR33 focused staging continuation (2026-10-31): accepted main
+  `39d856b5c6d6af3de8f864f8a11e9c61bf9f8ae6` verified clean locally and by
+  Replit read-only inspection; tree `41e1c1701ac984b0afb274a82fb5497b877ad4b6`
+  exactly matches PR #33 head. Reused successful hosted quality run
+  `41184432333` (all three jobs); no repeated backend certification. Live browser
+  initially served older assets. Republished the SAME private deployment
+  `44b9136b-383c-4b9d-b9c8-39b9efae34fe` in Repl
+  `193f969b-94a1-469c-8d4c-fa51dc7fe80e`; publish status is success at
+  `https://spextar-studio.replit.app`. Live JS/CSS filenames now match Replit's
+  accepted-source retained build: `index-BdpfFWev.js` / `index-N7gkqwDW.css`.
+  Exported served CSS SHA256 matches exactly:
+  `0b53361c4fd5548fc0766dc24a3cf9bded971d460b9a10ac604fb0cbf815a24a`.
+  Replit reports retained JS SHA256
+  `4322cd970713da40440b25308773bad6f33cfc215a0cd77d24e23b6abefa73d4`;
+  deployed JS byte equality/source SHA is not exposed by the browser/platform.
+- Focused live Viewer session restoration, Workspace → Projects → Home, complete
+  three-document hub/Project Stats, all five in-place filters including empty
+  states, direct read-only editor and document-specific Review passed. Projects
+  omits Manage Workspace/backend Import; create dialog uses contained Preparing
+  form state and hides key/slug. No warnings/errors in inspected browser logs.
+  No returned-review fixture is currently available; fresh sign-in, live Admin
+  rename/archive/restore, remaining settings/publish and mobile checks stopped
+  at the new source defect rather than claiming full smoke or manual UAT.
+- New tablet defect blocks this handoff: with expanded 240px navigation at 768px,
+  Projects' five-column grid leaves the name zero width, stacking characters and
+  preventing normal title-click navigation. Branch
+  `codex/fix-project-rows-tablet-32` keeps the established compact rows below
+  1024px; header/detail columns switch together. Focused controlled regression
+  fails before the fix (title width 0) and checks readable title bounds, reachable
+  Admin controls, normal hub navigation, axe and overflow after it. Reuses
+  InlineProjectName, Button/Tooltip, AppShell and existing semantic tokens;
+  no new visual pattern, font/color/vector/branding, role or lifecycle change.
+  Fix remains unmerged and undeployed; product-owner review is required.
+  Focused hub browsers pass 16/16 across desktop/mobile dark/light (including
+  explicit 768px checks), covering keyboard rename, role states, axe and overflow;
+  corrected tablet screenshot visually inspected. Hub units pass 12/12.
+  Workspace typecheck, both demo production builds and bundle guard pass
+  (727340/975000 bytes; lazy boundaries preserved). Initial browser setup failed
+  on missing Windows native Rollup resolution; retained NODE_PATH setup resolved
+  it. The pre-fix regression then failed at width 0 as expected. Existing build
+  warnings remain. No full local regression/backend recertification repeated;
+  new PR hosted CI is the final required gate.
+  No Supabase/schema/migration/RLS/Auth, DNS/domain, billing, visibility or
+  production change; no second deployment created. Issue #32's deeper
+  pre-production verification remains separate and incomplete.
+
 - Issue #29 resumed staging acceptance (2026-10-31): PR #30 is merged; accepted main is `3c8ed5dde8cc5ff99f6f4da611369f3185731156`, verified clean locally before testing, with a tree identical to accepted PR head `c7bc7a2`. Hosted quality run `41166254379` remains successful. Replit prepared that exact SHA with a clean checkout and republished the SAME private deployment `44b9136b-383c-4b9d-b9c8-39b9efae34fe` successfully at `https://spextar-studio.replit.app`. No new deployment/settings/cost/visibility/Auth/domain changes. Local and Replit backend builds agree on `index-DEzyNANC.js` SHA256 `d4136a395fd8605358475e7e823ed18db11b58b8f5fde95d27404ffaca61094c`; authenticated browser observes that filename and matching lazy chunk names. Exported deployed CSS matches the accepted build SHA256 `2ed124fe62b0576a75fba45a0be09370206c68f71cd93ce8229a99d4287ff990`. Platform metadata exposes no source SHA; direct deployed-JavaScript byte comparison remains unavailable. Both obsolete PR #30 messages are absent in the tested live UI.
 - Exact accepted candidate: workspace typecheck/both backend-configured production builds, 964,952/975,000-byte bundle guard, client exposure scan, 19 targeted units, 20 migration-contract tests and four controlled workflow browser profiles pass. All 26 migration files match accepted Git raw bytes. Fresh Supabase status is ACTIVE_HEALTHY; Issue #26 remains closed/completed. Its accepted ledger-26 certification was reused rather than repeated.
 - Real staging coverage reused all six existing disposable personas, with no new identities or membership changes. Browser work covered workspace/project navigation, refresh/session restoration, sign-out/Back closure, a handled incorrect password and retry, foreign-workspace not-found, Variables/Reusable screens, and one new disposable document/topic. Unicode/bold text, variable/condition/reusable references, unsafe-link rejection, table Undo/Redo and refresh persistence passed. Draft → In Review → Changes Requested → Draft → resubmission → Approved → explicit Admin Publish produced Releases 1/2; Approved and Published require explicit new Draft. A competing review decision retained its note and showed a refresh conflict. Two editors reproduced revision-safe body conflict, blocked submission, reload/recovery offer and discard, preserving the winning save. The new fixture ends Draft at body revision 10 with its immutable releases retained; earlier fixture evidence was not edited.

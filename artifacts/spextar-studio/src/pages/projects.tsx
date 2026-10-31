@@ -152,7 +152,7 @@ export default function ProjectsPage() {
             </EmptyState>
           ) : (
             <div className="overflow-hidden rounded-lg border bg-card">
-              <div className="hidden grid-cols-[minmax(0,1fr)_110px_100px_100px_90px] gap-4 border-b bg-muted/50 px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground md:grid">
+              <div className="hidden grid-cols-[minmax(0,1fr)_110px_100px_100px_90px] gap-4 border-b bg-muted/50 px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground lg:grid">
                 <span>Project</span><span>Documents</span><span>Status</span><span>Updated</span><span />
               </div>
               <ul className="divide-y">
@@ -160,7 +160,7 @@ export default function ProjectsPage() {
                   <li key={p.id}>
                     <div
                       data-testid={`row-project-${p.id}`}
-                      className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/40 md:grid-cols-[minmax(0,1fr)_110px_100px_100px_90px]"
+                      className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/40 lg:grid-cols-[minmax(0,1fr)_110px_100px_100px_90px]"
                     >
                       <span className="min-w-0">
                         <span className="flex flex-wrap items-center gap-2">
@@ -169,11 +169,11 @@ export default function ProjectsPage() {
                         </span>
                         <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">{p.description || p.product || 'No description'}</span>
                       </span>
-                      <span className="hidden text-sm md:block">
+                      <span className="hidden text-sm lg:block">
                         {p.documentCount} <span className="text-muted-foreground">· {p.topicCount} topics</span>
                       </span>
-                      <span className="hidden md:block"><StatusPill status={p.status} label={PROJECT_STATUS_LABEL[p.status]} /></span>
-                      <span className="hidden text-[13px] text-muted-foreground md:block">{relative(p.updatedAt)}</span>
+                      <span className="hidden lg:block"><StatusPill status={p.status} label={PROJECT_STATUS_LABEL[p.status]} /></span>
+                      <span className="hidden text-[13px] text-muted-foreground lg:block">{relative(p.updatedAt)}</span>
                       <span className="flex flex-wrap items-center gap-1">{canManageProject(p) && <><Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon"><Link href={projectBase(workspace.id, p.id) + '/settings'} aria-label={`Settings for ${p.name}`}><Settings className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>Project settings</TooltipContent></Tooltip></>}</span>
                     </div>
                   </li>

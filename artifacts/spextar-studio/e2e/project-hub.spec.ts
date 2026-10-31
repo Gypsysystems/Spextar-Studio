@@ -4,6 +4,25 @@ async function accessible(page: Parameters<typeof login>[0]) {
   await noOverflow(page);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 }
+
+test('tablet project rows retain readable titles and reachable admin actions with expanded navigation', async ({ page, backend }) => {
+  backend.setRole('admin'); backend.settings.enabled = true;
+  backend.db.projects[0].name = 'SPEXTAR UAT';
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await login(page, '/workspaces/ws-a/projects');
+  const row = page.getByTestId('row-project-project-a');
+  const title = row.getByRole('link', { name: 'SPEXTAR UAT', exact: true });
+  await expect(page.getByRole('button', { name: 'Collapse navigation', exact: true })).toBeVisible();
+  const bounds = await title.boundingBox();
+  expect(bounds?.width).toBeGreaterThan(100);
+  expect(bounds?.height).toBeLessThan(60);
+  await expect(row.getByRole('button', { name: 'Edit project name' })).toBeVisible();
+  await expect(row.getByRole('link', { name: 'Settings for SPEXTAR UAT' })).toBeVisible();
+  await accessible(page);
+  await page.screenshot({ path: test.info().outputPath('tablet-project-actions.png'), fullPage: true });
+  await title.click();
+  await expect(page.getByRole('heading', { name: 'Project Stats' })).toBeVisible();
+});
 test('project hub filters documents in place and legacy links retain direct authoring', async ({ page, backend }) => {
   const first = backend.db.documents[0];
   for (const [i, status] of ['in_review', 'approved', 'published'].entries()) backend.db.documents.push({ ...first, id: `doc-${i}`, title: `Status document ${i}`, slug: `status-${i}`, status });
