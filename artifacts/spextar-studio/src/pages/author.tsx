@@ -301,7 +301,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
             <Link href={`${base}/history`}>View History</Link>
           </Button>
           <p className="text-[12px] text-muted-foreground" data-testid="author-workflow-scope">
-            {backend ? 'Draft bodies autosave. Submission for review is not available yet.' : 'Demo edits are session-only. Submission for review is not available yet.'}
+            {backend ? 'Draft bodies autosave. Use Submit for review on a saved draft to start review.' : 'Demo edits are session-only. Review shows sample content.'}
           </p>
         </div>
       </aside>
