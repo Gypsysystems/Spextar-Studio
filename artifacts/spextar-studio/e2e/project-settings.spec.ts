@@ -17,21 +17,18 @@ test('admin metadata validation, explicit save, cache refresh and reload preserv
   await login(page, settingsPath);
   await expect(page.getByTestId('input-name')).toBeEnabled();
   await page.getByTestId('input-name').fill(' ');
-  await page.getByTestId('input-slug').fill('Wrong_Slug');
   await activate(page, page.getByTestId('button-save-details'));
   await expect(page.getByTestId('error-name')).toBeVisible();
-  await expect(page.getByTestId('error-slug')).toBeVisible();
   expect(backend.writes).toHaveLength(0);
   const longName = 'P'.repeat(160);
   await page.getByTestId('input-name').fill(`  ${longName}  `);
-  await page.getByTestId('input-slug').fill('qa-project-settings');
   await page.getByTestId('input-description').fill('  Confirmed settings  ');
   expect(backend.writes).toHaveLength(0); // No metadata autosave on this explicit-save screen.
   await activate(page, page.getByTestId('button-save-details'));
   await expect(page.getByTestId('status-success')).toHaveText('Project details saved.');
   expect(backend.writes).toHaveLength(1);
   expect(backend.writes[0]).toMatchObject({ table: 'projects', method: 'PATCH',
-    body: { name: longName, slug: 'qa-project-settings', description: 'Confirmed settings', status: 'active' } });
+    body: { name: longName, slug: 'pa', description: 'Confirmed settings', status: 'active' } });
   const query = new URLSearchParams(backend.writes[0].query);
   expect(Object.fromEntries(['id', 'workspace_id', 'updated_at'].map(key => [key, query.get(key)])))
     .toEqual({ id: 'eq.project-a', workspace_id: 'eq.ws-a', updated_at: 'eq.2026-10-27T10:00:00Z' });
@@ -43,7 +40,6 @@ test('admin metadata validation, explicit save, cache refresh and reload preserv
   await page.goto(settingsPath);
   await expect(page.getByTestId('input-name')).toHaveValue(longName);
   await page.reload();
-  await expect(page.getByTestId('input-slug')).toHaveValue('qa-project-settings');
   await page.getByTestId('input-description').fill(' ');
   await activate(page, page.getByTestId('button-save-details'));
   await expect(page.getByTestId('status-success')).toBeVisible();
@@ -213,7 +209,8 @@ for (const role of ['author', 'reviewer', 'viewer', null] satisfies Role[]) {
     backend.db.workspace_members[0].role = 'admin';
     await login(page, settingsPath);
     await expect(page.getByTestId('text-readonly')).toBeVisible();
-    for (const field of ['name', 'slug', 'description']) await expect(page.getByTestId(`input-${field}`)).toBeDisabled();
+    await expect(page.getByTestId('input-slug')).toHaveCount(0);
+    for (const field of ['name', 'description']) await expect(page.getByTestId(`input-${field}`)).toBeDisabled();
     for (const action of ['save-details', 'archive', 'add-member', 'remove-user-a', 'save-role-user-a'])
       await expect(page.getByTestId(`button-${action}`)).toHaveCount(0);
     await expect(page.getByTestId('panel-add-member')).toHaveCount(0);

@@ -14,7 +14,7 @@ test('approved semantic package survives catalog changes without mutable depende
   ]};
   backend.captureReview(); backend.db.documents[0].status='in_review'; backend.setRole('reviewer');
   const evidence=structuredClone(backend.db.document_reviews[0]);
-  await login(page,projectPath+'/review');
+  await login(page,projectPath+'/review?document=doc-a');
   const body=page.getByRole('textbox',{name:'Topic body'});
   await expect(body).toContainText('QA Product');
   await expect(body).toContainText('Frozen nested safety notice');
@@ -22,7 +22,7 @@ test('approved semantic package survives catalog changes without mutable depende
   await expect(page.getByRole('group', { name: 'Applied conditional tags', exact: true })).toContainText('Audience: Developer');
   await activate(page,page.getByRole('button',{name:'Approve',exact:true})); await accessible(page);
   await activate(page,page.getByRole('button',{name:'Confirm approve'}));
-  await expect(page.getByText('Approved · Review 1')).toBeVisible();
+  await expect(page.getByText('Reviewed · Review 1')).toBeVisible();
   for (const table of ['project_variables','condition_categories','condition_values','reusable_contents','reusable_content_drafts']) backend.db[table]=[];
   backend.reads.length=0; await page.reload();
   await expect(body).toContainText('QA Product'); await expect(body).toContainText('Frozen nested safety notice');
@@ -39,7 +39,7 @@ test('legacy semantic evidence has an explicit unavailable state without catalog
   const legacy=backend.db.document_reviews[0]; legacy.dependency_package=null;
   (legacy.topics_snapshot as Record<string,unknown>[])[0].content={type:'doc',version:1,content:[{type:'paragraph',content:[{type:'variableReference',attrs:{referenceVersion:1,variableId:'var-a'}}]}]};
   backend.reads.length=0;
-  await login(page,projectPath+'/review');
+  await login(page,projectPath+'/review?document=doc-a');
   await expect(page.getByRole('alert')).toContainText('older review has no frozen dependencies');
   await expect(page.getByRole('textbox',{name:'Topic body'})).toHaveCount(0);
   expect(backend.reads.filter(r=>['project_variables','condition_categories','condition_values','reusable_contents'].includes(r.table))).toEqual([]);
@@ -60,12 +60,12 @@ test('saved Draft submission, Author lock, Reviewer approval, explicit new Draft
   await expect(page.getByRole('button', { name: 'Create topic', exact: true })).toHaveCount(0);
   expect(backend.db.documents[0].status).toBe('in_review');
   const evidence = structuredClone(backend.db.document_reviews[0]);
-  backend.setRole('reviewer'); await page.goto(projectPath + '/review');
+  backend.setRole('reviewer'); await page.goto(projectPath + '/review?document=doc-a');
   await expect(page.getByRole('textbox', { name: 'Topic body' })).toContainText('Current saved QA topic');
   await activate(page, page.getByRole('button', { name: 'Approve', exact: true }));
   await accessible(page);
   await activate(page, page.getByRole('button', { name: 'Confirm approve' }));
-  await expect(page.getByText('Approved · Review 1')).toBeVisible();
+  await expect(page.getByText('Reviewed · Review 1')).toBeVisible();
   expect(backend.db.document_reviews[0].topics_snapshot).toEqual(evidence.topics_snapshot);
   backend.setRole('author'); await page.goto(projectPath + '/author/doc-a');
   await activate(page, page.getByRole('button', { name: 'Start new draft', exact: true }));
@@ -75,7 +75,7 @@ test('saved Draft submission, Author lock, Reviewer approval, explicit new Draft
   await expect(body).toHaveAttribute('contenteditable', 'true');
   await body.press('ControlOrMeta+End'); await page.keyboard.type(' New draft only');
   await expect.poll(() => JSON.stringify(backend.db.topic_drafts[0].content)).toContain('New draft only');
-  await page.goto(projectPath + '/review');
+  await page.goto(projectPath + '/review?document=doc-a');
   await expect(page.getByRole('textbox', { name: 'Topic body' })).not.toContainText('New draft only');
   expect(backend.db.document_reviews[0].topics_snapshot).toEqual(evidence.topics_snapshot);
   await noOverflow(page); await accessible(page);
@@ -83,12 +83,12 @@ test('saved Draft submission, Author lock, Reviewer approval, explicit new Draft
 
 test('changes note validation, request changes returns Draft, decision denial and immutable missing body', async ({ page, backend }) => {
   backend.db.documents[0].status = 'in_review'; backend.setRole('reviewer');
-  await login(page, projectPath + '/review');
-  await activate(page, page.getByRole('button', { name: 'Request changes', exact: true }));
-  const confirm = page.getByRole('button', { name: 'Confirm request changes' });
+  await login(page, projectPath + '/review?document=doc-a');
+  await activate(page, page.getByRole('button', { name: 'Recommend changes', exact: true }));
+  const confirm = page.getByRole('button', { name: 'Confirm recommend changes' });
   await expect(confirm).toBeDisabled(); await page.getByLabel('Decision note').fill('   '); await expect(confirm).toBeDisabled();
   await page.getByLabel('Decision note').fill('Clarify the warning'); await accessible(page);
-  await activate(page, confirm); await expect(page.getByText('Changes requested · Review 1')).toBeVisible();
+  await activate(page, confirm); await expect(page.getByText('Changes Recommended · Review 1')).toBeVisible();
   expect(backend.db.documents[0].status).toBe('draft');
   expect(backend.db.topics.every(t => t.status === 'draft')).toBe(true);
   await activate(page, page.getByRole('button', { name: 'Child topic', exact: true }));
@@ -96,7 +96,7 @@ test('changes note validation, request changes returns Draft, decision denial an
   for (const role of ['author', 'viewer'] as const) {
     backend.setRole(role); await page.reload();
     await expect(page.getByRole('button', { name: 'Approve', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Request changes', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Recommend changes', exact: true })).toHaveCount(0);
   }
   expect(backend.writes.every(w => w.table.startsWith('rpc/'))).toBe(true);
   await noOverflow(page); await accessible(page);
@@ -112,7 +112,7 @@ test('unsaved/error body blocks submission and snapshot reads fail closed', asyn
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Save or resolve');
   expect(backend.writes.some(w => w.table === 'rpc/submit_document_review')).toBe(false);
   await page.keyboard.press('Escape');
-  backend.failures.add('document_reviews'); await page.goto(projectPath + '/review');
+  backend.failures.add('document_reviews'); await page.goto(projectPath + '/review?document=doc-a');
   await expect(page.getByText('Submitted review did not load')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Topic body' })).toHaveCount(0);
   await noOverflow(page);
@@ -120,7 +120,7 @@ test('unsaved/error body blocks submission and snapshot reads fail closed', asyn
 
 test('a competing decision rejects the stale confirmation without retries or content writes', async ({ page, backend }) => {
   backend.db.documents[0].status = 'in_review'; backend.setRole('reviewer');
-  await login(page, projectPath + '/review');
+  await login(page, projectPath + '/review?document=doc-a');
   await activate(page, page.getByRole('button', { name: 'Approve', exact: true }));
   const snapshot = structuredClone(backend.db.document_reviews[0].topics_snapshot);
   // Another authorized browser completed the review after this dialog opened.

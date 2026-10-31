@@ -4,7 +4,7 @@ import { accessible, tabTo, trapped, visibleFocus, inputBoundaryContrast } from 
 const screens = [
   ['Workspaces', '/workspaces', 'card-workspace-ws-a'],
   ['Projects', '/workspaces/ws-a/projects', 'input-search-projects'],
-  ['Project Home', projectPath, 'nav-documents'],
+  ['Project Home', projectPath, 'nav-home'],
   ['Documents', projectPath + '/documents', 'input-search-documents'],
   ['Author', projectPath + '/author/doc-a', 'input-topic-body'],
   ['Review', projectPath + '/review', 'review-draft-revision'],

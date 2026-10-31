@@ -65,7 +65,7 @@ describe('lazy Author route boundary', () => {
     const pending = deferred();
     const { user } = await mount(pending.load);
     await screen.findByRole('status', { name: 'Loading Author' });
-    await user.click(screen.getByTestId('nav-documents'));
+    await user.click(screen.getByTestId('nav-home'));
     await screen.findByText('Documents destination');
     await act(async () => pending.resolve({ default: () => <p>Loaded Author</p> }));
     expect(screen.queryByText('Loaded Author')).toBeNull();

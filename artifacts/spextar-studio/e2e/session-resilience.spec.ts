@@ -178,7 +178,7 @@ test('Review permission denial retries safely; role upgrades never enable mutati
   await activate(page, page.getByTestId('review-topic-topic-a'));
   await expect(body).toHaveAttribute('contenteditable', 'false');
   await noOverflow(page);
-  await navigate(page, 'nav-documents');
+  await navigate(page, 'nav-home');
   await expect(page.getByRole('heading', { name: 'Documents', exact: true })).toBeVisible();
   await navigate(page, 'nav-review');
   await expect(body).toHaveAttribute('contenteditable', 'false');

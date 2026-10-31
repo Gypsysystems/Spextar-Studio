@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useRef, useMemo } from 'react';
-import { useParams } from 'wouter';
+import { useParams, useSearch } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ProjectScope, PageHeader } from '@/features/project/project-scope';
 import { useServices } from '@/providers/services-provider';
@@ -268,6 +268,7 @@ function DocumentPublishing({ project, document }: { project: ProjectSummary; do
   );
 }
 function Publishing({ project }: { project: ProjectSummary }) {
+  const requested = new URLSearchParams(useSearch()).get('document');
   const services = useServices(),
     docs = useDocuments(project.id);
   if (!services.releases || !services.reviews)
@@ -285,7 +286,8 @@ function Publishing({ project }: { project: ProjectSummary }) {
           No documents yet. Create a document and complete review to publish.
         </p>
       )}
-      {docs.data?.map((document) => (
+      {requested && docs.data && !docs.data.some(d => d.id === requested) && <p role="status">This document is unavailable in this project.</p>}
+      {docs.data?.filter(document => !requested || document.id === requested).map((document) => (
         <DocumentPublishing key={document.id} project={project} document={document} />
       ))}
     </div>

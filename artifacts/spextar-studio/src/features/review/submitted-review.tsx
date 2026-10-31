@@ -1,3 +1,4 @@
+import { useSearch } from 'wouter';
 import { useEffect, useState, type ComponentType } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDocuments } from '@/hooks/use-studio-data';
@@ -23,7 +24,7 @@ function Decision({ review, decision }: { review: Review; decision: 'approved' |
   const mutation = useContentMutation(review.project_id);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
-  const title = decision === 'approved' ? 'Approve' : 'Request changes';
+  const title = decision === 'approved' ? 'Approve' : 'Recommend changes';
   return <Dialog open={open} onOpenChange={v => { if (!mutation.isPending) { setOpen(v); setNote(''); mutation.reset(); } }}>
     <DialogTrigger asChild><Button size="sm" variant={decision === 'approved' ? 'default' : 'outline'}>{title}</Button></DialogTrigger>
     <DialogContent><DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>{decision === 'approved' ? 'Approve the immutable submitted content. Editing requires a new draft.' : 'Return the working document to Draft. Explain the changes needed.'}</DialogDescription></DialogHeader>
@@ -47,8 +48,9 @@ function Decision({ review, decision }: { review: Review; decision: 'approved' |
 
 export function SubmittedReview({ project, Viewer, onDoc }: { project: ProjectSummary; Viewer: ComponentType<{ content: TopicContent; frozenPackage?: ReviewPackage | null }>; onDoc?: (doc: DocumentRecord | null) => void }) {
   const docs = useDocuments(project.id);
-  const [selection, setSelection] = useState('');
-  const eligible = (docs.data ?? []).filter(d => d.status !== 'published');
+  const requested = new URLSearchParams(useSearch()).get('document');
+  const [selection, setSelection] = useState(requested ?? '');
+  const eligible = (docs.data ?? []).filter(d => requested ? d.id === requested : d.status !== 'published');
   const doc = eligible.find(d => d.id === selection) ?? eligible.find(d => d.status === 'in-review') ?? eligible[0];
   const services = useServices();
   const [topicId, setTopicId] = useState('');
@@ -76,7 +78,7 @@ export function SubmittedReview({ project, Viewer, onDoc }: { project: ProjectSu
       <div className="space-y-3 rounded-lg border bg-card p-4">
         <h2 className="text-lg font-semibold [overflow-wrap:anywhere]">{review.document_snapshot.title}</h2>
         <p className="text-sm text-muted-foreground">{documentVersionLabel(typeof review.document_snapshot.settings.version === 'string' ? review.document_snapshot.settings.version : undefined)}</p>
-        <p className="text-sm" role="status">{review.status === 'in_review' ? 'In review' : review.status === 'approved' ? 'Approved' : 'Changes requested'} · Review {review.sequence}</p>
+        <p className="text-sm" role="status">{review.status === 'in_review' ? 'In review' : review.status === 'approved' ? 'Reviewed' : 'Changes Recommended'} · Review {review.sequence}</p>
         <p className="text-sm text-muted-foreground">Submitted by <span data-testid="text-draft-updated-by"><UserIdentity userId={review.submitted_by} /></span> · {new Date(review.submitted_at).toLocaleString()}</p>
         <p className="text-sm text-muted-foreground">Immutable submitted content. Working draft changes do not alter this review.</p>
         {review.decided_at && <p className="text-sm">Decision by <UserIdentity userId={review.decided_by ?? undefined} /> · {new Date(review.decided_at).toLocaleString()}</p>}

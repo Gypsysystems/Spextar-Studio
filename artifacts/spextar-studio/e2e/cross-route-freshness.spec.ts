@@ -42,7 +42,7 @@ test('create and conservative delete refresh Project Home counts and Documents h
   await expect(page.getByTestId('text-doc-count')).toHaveText('1');
   const summary = page.getByRole('complementary', { name: 'Project summary' });
   await expect(summary.locator('dt').filter({ hasText: /^Topics$/ }).locator('+ dd')).toHaveText('2');
-  await navigate(page, 'nav-documents');
+  await navigate(page, 'nav-home');
   await activate(page, page.getByRole('button', { name: /^Create document$/ }).first());
   await page.getByLabel(/create document title/i).fill('Cross-route document');
   await save(page);
@@ -57,7 +57,7 @@ test('create and conservative delete refresh Project Home counts and Documents h
   await expect(page.getByTestId('text-doc-count')).toHaveText('2');
   await expect(summary.locator('dt').filter({ hasText: /^Topics$/ }).locator('+ dd')).toHaveText('3');
   await expect(page.getByTestId('text-stage-count-author')).toHaveText('1');
-  await navigate(page, 'nav-documents');
+  await navigate(page, 'nav-home');
   await activate(page, page.getByTestId(`button-expand-${doc.id}`));
   await expect(page.getByRole('link', { name: 'Cross-route topic', exact: true })).toBeVisible();
   await activate(page, page.getByRole('link', { name: 'Cross-route topic', exact: true }));

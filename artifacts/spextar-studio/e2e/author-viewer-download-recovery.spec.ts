@@ -140,7 +140,7 @@ for (const role of ['admin', 'author', 'reviewer', 'viewer', null] satisfies Rol
       await expect(page.getByTestId('review-draft-missing')).toBeVisible();
       await activate(page, page.getByTestId('review-topic-topic-a'));
       await expect(failed).toBeVisible();
-      await navigate(page, 'nav-documents');
+      await navigate(page, 'nav-home');
       await expect(page.getByRole('heading', { name: 'Documents', exact: true })).toBeVisible();
       await navigate(page, 'nav-review');
       await expect(failed).toBeVisible();

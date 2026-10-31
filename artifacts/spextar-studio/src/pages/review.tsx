@@ -1,7 +1,7 @@
 import { documentVersionLabel } from '@/lib/presentation';
 import { UserIdentity } from '@/components/user-identity';
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
-import { useParams } from 'wouter';
+import { useParams, useSearch } from 'wouter';
 
 import { AlertTriangle, FileSearch, FileText, RefreshCw, RotateCw } from 'lucide-react';
 import { ProjectScope, PageHeader } from '@/features/project/project-scope';
@@ -85,10 +85,11 @@ function DraftPanel({ topic }: { projectId: string; doc: DocumentRecord; topic: 
 }
 function ReviewBody({ projectId, onDoc }: { projectId: string; onDoc: (d: DocumentRecord | null) => void }) {
   const docs = useDocuments(projectId);
-  const [docId, setDocId] = useState<string | null>(null);
+  const requested = new URLSearchParams(useSearch()).get('document');
+  const [docId, setDocId] = useState<string | null>(requested);
   const [topicId, setTopicId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const eligible = useMemo(() => (docs.data ?? []).filter((d) => d.status === 'in-review'), [docs.data]);
+  const eligible = useMemo(() => (docs.data ?? []).filter((d) => d.status === 'in-review' && (!requested || d.id === requested)), [docs.data]);
   const doc = docs.isError ? null : eligible.find((d) => d.id === docId) ?? eligible[0] ?? null;
   const topic = doc ? doc.topics.find((t) => t.id === topicId) ?? doc.topics[0] ?? null : null;
   useEffect(() => { onDoc(doc); }, [doc, onDoc]);

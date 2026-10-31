@@ -109,7 +109,7 @@ for (const item of managementPages) {
       await activate(page, page.getByRole('link', { name: /Second identity project/ }).first());
       await expect(page.getByRole('heading', { name: 'Second identity project', exact: true })).toBeVisible();
       await expect(page.getByTestId('text-doc-count')).toHaveText('0');
-      await navigate(page, 'nav-documents');
+      await navigate(page, 'nav-home');
       await expect(page.getByRole('heading', { name: 'Documents', exact: true })).toBeVisible();
       await expect(page.getByText('A project admin or author can create documents.', { exact: true })).toBeVisible();
       await expect(page.getByText('QA document', { exact: true })).toHaveCount(0);

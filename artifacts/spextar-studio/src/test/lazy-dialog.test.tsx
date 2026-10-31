@@ -23,7 +23,9 @@ describe('on-demand creation dialogs', () => {
     const view = render(<Lazy workspaceId="workspace-a" open={false} onOpenChange={close} />);
     expect(load).not.toHaveBeenCalled();
     view.rerender(<Lazy workspaceId="workspace-a" open onOpenChange={close} />);
-    expect(screen.getByRole('status')).toHaveTextContent('Please wait');
+    expect(screen.getByRole('status')).toBeVisible();
+    expect(screen.getByLabelText('Preparing form')).toBeVisible();
+    expect(screen.queryByText(/Loading/)).not.toBeInTheDocument();
     expect(screen.getByRole('dialog')).toHaveAccessibleName('Create project');
     await act(async () => finish({ default: Form }));
     expect(screen.getByText('workspace-a')).toBeVisible();

@@ -27,7 +27,6 @@ export function MetadataEditor({ projectId, doc, topic, controls }: { projectId:
   return (
     <div role="group" className="space-y-3" onBlur={() => void save.flush()} aria-label={topic ? 'Topic metadata' : 'Document metadata'}>
       {!controls && <label className="block text-xs">Title<Input aria-label={topic ? 'Persisted topic title' : 'Document title'} value={save.draft.title} disabled={disabled} onChange={(e) => update({ title: e.target.value })} /></label>}
-      <label className="block text-xs">Slug<Input aria-label={topic ? 'Topic slug' : 'Document slug'} value={save.draft.slug} disabled={disabled} onChange={(e) => update({ slug: e.target.value })} /></label>
       <label className="block text-xs">Status
         <select className="mt-1 h-9 w-full rounded-md border bg-background px-2" aria-label={topic ? 'Topic status' : 'Document status'} disabled value={save.draft.status}>
           {Object.entries(DOC_STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

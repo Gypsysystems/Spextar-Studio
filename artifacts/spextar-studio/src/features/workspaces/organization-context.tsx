@@ -41,7 +41,6 @@ export function OrganizationContext() {
           <DialogHeader><DialogTitle>Create organization</DialogTitle><DialogDescription>Create a home for your workspaces and projects. You will be its owner.</DialogDescription></DialogHeader>
           <form onSubmit={onCreate} className="space-y-4">
             <div className="space-y-1.5"><Label htmlFor="organization-name">Name</Label><Input id="organization-name" required minLength={3} maxLength={80} value={name} onChange={(e) => { setName(e.target.value); setSlug(slugify(e.target.value)); }} /></div>
-            <div className="space-y-1.5"><Label htmlFor="organization-slug">Slug</Label><Input id="organization-slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} value={slug} onChange={(e) => setSlug(e.target.value)} /></div>
             {create.isError && <p role="alert" className="text-sm text-destructive">{create.error.message}</p>}
             <Button type="submit" disabled={create.isPending}>{create.isPending ? 'Creating…' : 'Create organization'}</Button>
           </form>

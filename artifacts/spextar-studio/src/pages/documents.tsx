@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
-import { Link, useParams } from 'wouter';
-import { ChevronDown, Files, PenLine, Search } from 'lucide-react';
-import { ProjectScope, PageHeader } from '@/features/project/project-scope';
-import { EmptyState, ErrorState, ListSkeleton, ScopeMarker } from '@/components/states';
+import { DocumentFeedback } from '@/features/project/document-feedback';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useParams, useSearch } from 'wouter';
+import { ChevronDown, Files, Search } from 'lucide-react';
+import { ProjectScope } from '@/features/project/project-scope';
+import { EmptyState, ErrorState, ListSkeleton } from '@/components/states';
 import { StatusPill } from '@/components/status-pill';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,12 +18,16 @@ import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
 import { UserIdentity } from '@/components/user-identity';
 import { documentVersionLabel } from '@/lib/presentation';
 
-function DocumentsBody({ project, base }: { project: ProjectSummary; base: string }) {
+export function DocumentsBody({ project, base }: { project: ProjectSummary; base: string }) {
   const backend = useServices().mode === 'backend';
   const canEdit = backend && project.canEditContent === true;
   const docs = useDocuments(project.id);
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('all');
+  const search = useSearch();
+  const initialStatus = new URLSearchParams(search).get('status') ?? 'all';
+  const [status, setStatus] = useState(['draft', 'in-review', 'approved', 'published'].includes(initialStatus) ? initialStatus : 'all');
+  useEffect(() => { setStatus(['draft', 'in-review', 'approved', 'published'].includes(initialStatus) ? initialStatus : 'all'); }, [initialStatus]);
+  const [sort, setSort] = useState('updated');
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const list = useMemo(() => {
@@ -31,25 +36,13 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
       (d) =>
         (status === 'all' || d.status === status) &&
         (!q || d.title.toLowerCase().includes(q) || d.topics.some((t) => t.title.toLowerCase().includes(q))),
-    );
-  }, [docs.data, query, status]);
+    ).sort((a, b) => sort === 'title' ? a.title.localeCompare(b.title) : b.updatedAt.localeCompare(a.updatedAt));
+  }, [docs.data, query, status, sort]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-10">
-      <PageHeader
-        eyebrow={backend ? canEdit ? undefined : <ScopeMarker kind="read-only" /> : <ScopeMarker kind="demo">Demo · session-only</ScopeMarker>}
-        title="Documents"
-        description="Documents assemble topics into a deliverable. Expand a document to see its topic outline."
-        actions={
-          <>
-          {canEdit && <ContentDialog action="document" projectId={project.id} />}
-          <Button asChild data-testid="link-documents-author">
-            <Link href={`${base}/author`}><PenLine className="mr-1.5 h-4 w-4" /> Open Author</Link>
-          </Button>
-          </>
-        }
-      />
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+    <section className="mt-8 min-w-0" aria-label="Project documents">
+      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Documents</h2>{canEdit && <ContentDialog action="document" projectId={project.id} />}</div>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search documents and topics" aria-label="Search documents" className="pl-9" data-testid="input-search-documents" />
@@ -59,13 +52,13 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="in-review">In review</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="draft">In Progress</SelectItem>
+            <SelectItem value="in-review">In Review</SelectItem>
+            <SelectItem value="approved">Reviewed</SelectItem>
             <SelectItem value="published">Published</SelectItem>
           </SelectContent>
-        </Select>
+        </Select><Select value={sort} onValueChange={setSort}><SelectTrigger className="w-full sm:w-44" aria-label="Sort documents"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="updated">Recently updated</SelectItem><SelectItem value="title">Title</SelectItem></SelectContent></Select>
       </div>
 
       <div className="mt-5">
@@ -85,7 +78,7 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
               const open = expanded === d.id;
               return (
                 <li key={d.id} className="rounded-lg border bg-card" data-testid={`row-document-${d.id}`}>
-                  <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="flex flex-wrap items-center gap-3 px-4 py-3.5">
                     <button
                       type="button"
                       onClick={() => setExpanded(open ? null : d.id)}
@@ -97,16 +90,18 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
                     >
                       <ChevronDown className={cn('h-4 w-4 transition-transform', !open && '-rotate-90')} />
                     </button>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{d.title}</p>
+                    <div className="min-w-0 flex-1 basis-32">
+                      <Link href={`${base}/author/${d.id}`} className="block truncate font-medium hover:text-primary focus-visible:outline-2 focus-visible:outline-ring">{d.title}</Link>
                       <p className="truncate text-[12.5px] text-muted-foreground">
                         {DOC_TYPE_LABEL[d.type]} · {d.topics.length} topics · {documentVersionLabel(d.version, true)} · <UserIdentity userId={d.ownerId} name={d.owner} /> · {relative(d.updatedAt)}
                       </p>
                     </div>
-                    <StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} className="hidden sm:inline-flex" />
+                    <DocumentFeedback projectId={project.id} documentId={d.id} draft={d.status === 'draft'} /><StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} className="shrink-0" />
                     {backend && <div className="hidden lg:flex gap-2"><DocumentMetadataDialog doc={d} />{d.canEdit && <><ContentDialog action="duplicate-document" projectId={project.id} doc={d} /><DeleteContentDialog doc={d} /></>}</div>}
+                    {d.status === 'in-review' && <Button variant="outline" size="sm" asChild><Link href={`${base}/review?document=${encodeURIComponent(d.id)}`}>Review</Link></Button>}
+                    {(d.status === 'approved' || d.status === 'published') && <Button variant="outline" size="sm" asChild><Link href={`${base}/publish?document=${encodeURIComponent(d.id)}`}>{d.status === 'published' ? 'Releases' : 'Publish / releases'}</Link></Button>}
                     <Button variant="ghost" size="sm" asChild data-testid={`link-author-${d.id}`}>
-                      <Link href={`${base}/author/${d.id}`}>Author</Link>
+                      <Link href={`${base}/author/${d.id}`}>Open</Link>
                     </Button>
                   </div>
                   {open && (
@@ -126,7 +121,7 @@ function DocumentsBody({ project, base }: { project: ProjectSummary; base: strin
           </ul>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 

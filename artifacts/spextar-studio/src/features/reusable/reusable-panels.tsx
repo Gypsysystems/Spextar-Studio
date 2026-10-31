@@ -36,7 +36,7 @@ export function ReusableList({ items, total, query, onQuery, scope, onScope, sta
         <Label htmlFor="reusable-search" className="text-[12.5px] text-muted-foreground">Search</Label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input id="reusable-search" type="search" value={query} onChange={(e) => onQuery(e.target.value)} placeholder="Name, slug, tag" className="pl-9" data-testid="reusable-search" />
+          <Input id="reusable-search" type="search" value={query} onChange={(e) => onQuery(e.target.value)} placeholder="Name or tag" className="pl-9" data-testid="reusable-search" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -81,7 +81,6 @@ export function ReusableList({ items, total, query, onQuery, scope, onScope, sta
                     active && 'border-primary bg-primary text-primary-foreground ring-1 ring-primary [&_p]:text-primary-foreground [&_span]:border-primary-foreground/40 [&_span]:text-primary-foreground')}
                   data-testid={`reusable-card-${r.id}`}>
                   <p className="break-words text-[14px] font-medium [overflow-wrap:anywhere]">{r.name}</p>
-                  <p className="mt-0.5 break-all font-mono text-[12px] text-muted-foreground">{r.slug}</p>
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
                     <span className="rounded border px-1.5 py-0.5 text-muted-foreground">{scopeLabels[r.scope]}</span>
                     <span className="rounded border px-1.5 py-0.5 text-muted-foreground">{statusLabels[r.status]}</span>
@@ -112,7 +111,6 @@ export function ReusableDetails({ item, pending, onEdit, onRename, onDuplicate, 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="break-words text-[20px] font-semibold [overflow-wrap:anywhere]" data-testid="reusable-name">{item.name}</h2>
-          <code className="mt-1 inline-block break-all rounded bg-muted px-1.5 py-0.5 font-mono text-[12.5px]" data-testid="reusable-slug">{item.slug}</code>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onEdit} disabled={disabled} data-testid="reusable-edit">Edit</Button>

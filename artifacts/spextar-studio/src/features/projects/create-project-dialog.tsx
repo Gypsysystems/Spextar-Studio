@@ -1,180 +1,32 @@
-import { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { Loader2 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { ScopeMarker } from '@/components/states';
-import { useServices } from '@/providers/services-provider';
 import { useCreateProject } from '@/hooks/use-studio-data';
-import { useToast } from '@/hooks/use-toast';
-import { suggestKey } from '@/domain/project-identifiers';
 import { projectBase } from '@/features/project/sections';
 
-const schema = z.object({
-  name: z.string().trim().min(3, 'Use at least 3 characters').max(80, 'Keep it under 80 characters'),
-  key: z
-    .string()
-    .trim()
-    .regex(/^[A-Z][A-Z0-9]{1,9}$/, '2–10 uppercase letters or digits, starting with a letter'),
-  product: z.string().trim().max(80),
-  description: z.string().trim().max(400, 'Keep it under 400 characters'),
-});
-type Values = z.infer<typeof schema>;
-
-export function CreateProjectDialog({
-  workspaceId,
-  open,
-  onOpenChange,
-}: {
-  workspaceId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
+export function CreateProjectDialog({ workspaceId, open, onOpenChange }: { workspaceId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const create = useCreateProject(workspaceId);
-  const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { mode } = useServices();
-  const keyTouched = useRef(false);
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
-    defaultValues: { name: '', key: '', product: '', description: '' },
-  });
-
-  useEffect(() => {
-    if (open) {
-      form.reset({ name: '', key: '', product: '', description: '' });
-      keyTouched.current = false;
-      create.reset();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  const onSubmit = (values: Values) => {
-    create.mutate(values, {
-      onSuccess: (project) => {
-        toast({ title: 'Project created', description: `${project.name} (${project.key}) is saved ${mode === 'demo' ? 'in this browser' : 'to your workspace'}.` });
-        onOpenChange(false);
-        navigate(projectBase(workspaceId, project.id));
-      },
-      onError: (err) => {
-        form.setError('key', { message: err instanceof Error ? err.message : 'Could not create project' });
-      },
-    });
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]" data-testid="dialog-create-project">
-        <DialogHeader>
-          <DialogTitle>Create project</DialogTitle>
-          <DialogDescription>
-            A project holds the documents and topics for one deliverable set.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Project name</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      autoFocus
-                      placeholder="Meridian X5 Installation Guide"
-                      data-testid="input-project-name"
-                      onChange={(e) => {
-                        field.onChange(e);
-                        if (!keyTouched.current) form.setValue('key', e.target.value.trim() ? suggestKey(e.target.value) : '');
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className={mode === 'demo' ? 'grid gap-4 sm:grid-cols-[140px_1fr]' : 'grid gap-4 sm:max-w-xs'}>
-              <FormField
-                control={form.control}
-                name="key"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Key</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="font-mono uppercase"
-                        maxLength={10}
-                        placeholder="MX5"
-                        data-testid="input-project-key"
-                        onChange={(e) => {
-                          keyTouched.current = true;
-                          field.onChange(e.target.value.toUpperCase());
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {mode === 'demo' && <FormField
-                control={form.control}
-                name="product"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product (optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Meridian X5" data-testid="input-project-product" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />}
-            </div>
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} rows={3} placeholder="Audience, scope and release this project covers." data-testid="input-project-description" />
-                  </FormControl>
-                  <FormDescription>{mode === 'demo' ? 'Choose a key that is unique within this workspace.' : 'Appears in project links as a lowercase address (MX5 becomes mx5). Keys must be unique within this workspace.'}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter className="items-center gap-2 sm:justify-end">
-              {mode === 'demo' && <ScopeMarker kind="demo" className="sm:mr-auto">Demo · session-only</ScopeMarker>}
-              <div className="flex gap-2">
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} data-testid="button-cancel-create">
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={create.isPending} data-testid="button-submit-create-project">
-                  {create.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                  Create project
-                </Button>
-              </div>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  useEffect(() => { if (open) { setName(''); setDescription(''); create.reset(); } }, [open]);
+  return <Dialog open={open} onOpenChange={next => { if (!create.isPending) onOpenChange(next); }}>
+    <DialogContent className="sm:max-w-[520px]" data-testid="dialog-create-project">
+      <DialogHeader><DialogTitle>Create project</DialogTitle><DialogDescription>A project holds the documents and topics for one deliverable set.</DialogDescription></DialogHeader>
+      <form className="space-y-4" onSubmit={e => {
+        e.preventDefault();
+        // A random suffix avoids same-name collisions without retrying ambiguous writes.
+        const key = 'P' + crypto.randomUUID().replaceAll('-', '').slice(0, 9).toUpperCase();
+        create.mutate({ name: name.trim(), key, description: description.trim(), product: '' }, { onSuccess: project => { onOpenChange(false); navigate(projectBase(workspaceId, project.id)); } });
+      }}>
+        <label className="block text-sm">Project name<Input autoFocus required minLength={3} maxLength={80} value={name} onChange={e => setName(e.target.value)} data-testid="input-project-name" /></label>
+        <label className="block text-sm">Description (optional)<Textarea rows={3} maxLength={400} value={description} onChange={e => setDescription(e.target.value)} data-testid="input-project-description" /></label>
+        {create.error && <p role="alert" className="text-sm text-destructive">{create.error.message}</p>}
+        <DialogFooter><Button variant="ghost" type="button" disabled={create.isPending} onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" disabled={create.isPending || name.trim().length < 3} data-testid="button-submit-create-project">{create.isPending ? 'Creating…' : 'Create project'}</Button></DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>;
 }

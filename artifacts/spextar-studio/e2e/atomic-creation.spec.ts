@@ -17,7 +17,6 @@ test('new identity creates its first organization, workspace and project using o
   await page.goto(`/workspaces/${workspaceId}/projects`);
   await activate(page, page.getByTestId('button-create-project'));
   await page.getByTestId('input-project-name').fill('First Project');
-  await page.getByTestId('input-project-key').fill('FP');
   await activate(page, page.getByRole('dialog').getByRole('button', { name: 'Create project', exact: true }));
   await expect(page.getByRole('heading', { name: 'First Project', exact: true })).toBeVisible();
   await page.reload();
@@ -27,7 +26,7 @@ test('new identity creates its first organization, workspace and project using o
   ]);
   expect(backend.writes[0].body).toEqual({ p_name: 'First Organization', p_slug: 'first-organization' });
   expect(backend.writes[1].body).toMatchObject({ p_organization_id: backend.db.organizations[0].id, p_name: 'First Workspace', p_slug: 'first-workspace' });
-  expect(backend.writes[2].body).toMatchObject({ p_workspace_id: workspaceId, p_name: 'First Project', p_slug: 'fp' });
+  expect(backend.writes[2].body).toMatchObject({ p_workspace_id: workspaceId, p_name: 'First Project', p_slug: expect.stringMatching(/^p[a-f0-9]{9}$/) });
   await noOverflow(page);
 });
 
@@ -39,7 +38,6 @@ for (const entity of ['organization', 'workspace', 'project'] as const) {
     await activate(page, page.getByTestId(`button-create-${entity}`));
     if (entity === 'organization') await page.getByLabel('Name', { exact: true }).fill('Retry Organization');
     else await page.getByTestId(`input-${entity}-name`).fill(`Retry ${entity}`);
-    if (entity === 'project') await page.getByTestId('input-project-key').fill('RP');
     const submit = page.getByRole('dialog').getByRole('button', { name: `Create ${entity}`, exact: true });
     await activate(page, submit);
     await expect(page.getByText(/This action is temporarily unavailable. Nothing was added/)).toBeVisible();

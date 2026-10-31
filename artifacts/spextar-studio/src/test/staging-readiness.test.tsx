@@ -37,16 +37,16 @@ describe('Staging authentication/navigation regression', () => {
   it('returns backend users to the requested protected deep link after real sign-in contract success', async () => {
     const fake = supabaseDouble(null);
     const services = createSupabaseServices(fake.client);
-    window.history.replaceState(null, '', base + '/review');
+    window.history.replaceState(null, '', base + '/review?document=doc-a');
     render(<App services={services} />);
     await screen.findByRole('heading', { name: 'Sign in to SPEXTAR' });
-    expect(new URLSearchParams(window.location.search).get('returnTo')).toBe(base + '/review');
+    expect(new URLSearchParams(window.location.search).get('returnTo')).toBe(base + '/review?document=doc-a');
     const user = userEvent.setup();
     await user.type(screen.getByTestId('input-email'), 'writer@example.test');
     await user.type(screen.getByTestId('input-password'), 'test-only-password');
     await user.click(screen.getByTestId('button-sign-in'));
     expect(await screen.findByText('No documents to review')).toBeVisible();
-    expect(window.location.pathname).toBe(base + '/review');
+    expect(window.location.pathname + window.location.search).toBe(base + '/review?document=doc-a');
   });
   it('preserves deep links in isolated demo entry too', async () => {
     const services = createDemoServices({ latencyMs: 0 });
@@ -68,7 +68,7 @@ describe('Staging authentication/navigation regression', () => {
   it('never carries a signed-out project return path into the next user login', async () => {
     const fake = supabaseDouble();
     const services = createSupabaseServices(fake.client);
-    window.history.replaceState(null, '', base + '/review');
+    window.history.replaceState(null, '', base + '/review?document=doc-a');
     render(<App services={services} />);
     await screen.findByText('No documents to review');
     const user = userEvent.setup();
@@ -84,8 +84,8 @@ describe('Staging authentication/navigation regression', () => {
     window.history.replaceState(null, '', '/workspaces/ws-a/projects');
     render(<App services={services} />);
     await screen.findByText('No projects in this workspace');
-    expect(screen.getAllByRole('button', { name: 'Import project' })).toHaveLength(2);
-    screen.getAllByRole('button', { name: 'Import project' }).forEach((button) => expect(button).toBeDisabled());
+    expect(screen.queryAllByRole('button', { name: 'Import project' })).toHaveLength(0);
+
     expect(screen.getByText(/Import is not available yet/)).toBeVisible();
     expect(fake.raw.rpc).not.toHaveBeenCalled();
   });
@@ -95,14 +95,14 @@ describe('Staging authentication/navigation regression', () => {
     window.history.replaceState(null, '', '/workspaces/product-docs/projects');
     render(<App services={services} />);
     await screen.findByText('No projects in this workspace');
-    screen.getAllByRole('button', { name: 'Import project' }).forEach((button) => expect(button).toBeEnabled());
+    screen.getAllByRole('button', { name: 'Import demo project' }).forEach((button) => expect(button).toBeEnabled());
   });
   it('shows retryable route read errors rather than stale workspace content', async () => {
     const fake = supabaseDouble();
     const services = createSupabaseServices(fake.client);
     const read = services.workspaces.getWorkspace;
     const scoped = vi.spyOn(services.workspaces, 'getWorkspace').mockRejectedValue(new ServiceError('Scoped staging access failure', 'forbidden'));
-    window.history.replaceState(null, '', base + '/review');
+    window.history.replaceState(null, '', base + '/review?document=doc-a');
     render(<App services={services} />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Scoped staging access failure');
     expect(screen.queryByTestId('review-page')).not.toBeInTheDocument();

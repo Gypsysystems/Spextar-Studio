@@ -72,7 +72,7 @@ function ReusableForm({ mode, item, scopes, pending, error, onClose, onSubmit }:
   const allowed = (s: ReusableScope) => !scopes.loading && !scopes.error && scopes[s];
   const [name, setName] = useState(item?.name ?? '');
   const [slug, setSlug] = useState(item?.slug ?? '');
-  const [slugTouched, setSlugTouched] = useState(false);
+
   const [scope, setScope] = useState<ReusableScope | ''>(allowed('project') ? 'project' : allowed('workspace') ? 'workspace' : '');
   const [description, setDescription] = useState(item?.description ?? '');
   const [status, setStatus] = useState<ReusableStatus>(item?.status ?? 'draft');
@@ -112,16 +112,9 @@ function ReusableForm({ mode, item, scopes, pending, error, onClose, onSubmit }:
           <div className="space-y-1.5">
             <Label htmlFor="ru-name">Name</Label>
             <Input id="ru-name" maxLength={120} value={name} data-testid="reusable-field-name"
-              onChange={(e) => { const v = e.target.value; setName(v); if (mode === 'create' && !slugTouched) setSlug(suggestSlug(v)); }} />
+              onChange={(e) => { const v = e.target.value; setName(v); if (mode === 'create') setSlug(suggestSlug(v)); }} />
           </div>
-          {mode === 'create' ? (
-            <div className="space-y-1.5">
-              <Label htmlFor="ru-slug">Slug</Label>
-              <Input id="ru-slug" className="font-mono" maxLength={80} value={slug} aria-describedby="ru-slug-help" data-testid="reusable-field-slug"
-                onChange={(e) => { setSlugTouched(true); setSlug(e.target.value); }} />
-              <p id="ru-slug-help" className="text-xs text-muted-foreground">Lowercase letters, digits, single hyphens. Cannot change later.</p>
-            </div>
-          ) : <Readonly label="Slug" value={item?.slug ?? ''} testId="reusable-field-slug-readonly" />}
+
         </div>
         {mode === 'create' ? (
           <div className="space-y-1.5">
@@ -185,7 +178,7 @@ export function ReusableFormDialog(props: Parameters<typeof ReusableForm>[0] & {
   const { open, ...rest } = props;
   return (
     <Shell open={open} pending={rest.pending} onClose={rest.onClose} title={rest.mode === 'create' ? 'New reusable content' : 'Edit reusable content'}
-      description={rest.mode === 'create' ? 'Defines metadata. Open the draft afterwards to write the body.' : 'Scope, slug and IDs stay unchanged.'}>
+      description={rest.mode === 'create' ? 'Defines metadata. Open the draft afterwards to write the body.' : 'Scope and identity stay unchanged.'}>
       {open && <ReusableForm key={rest.item?.id ?? 'new'} {...rest} />}
     </Shell>
   );
@@ -214,14 +207,9 @@ function IdentityForm({ mode, item, pending, error, onClose, onSubmit }: {
       <fieldset disabled={pending} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="ru-id-name">Name</Label>
-          <Input id="ru-id-name" maxLength={120} value={name} onChange={(e) => setName(e.target.value)} data-testid="reusable-field-name" />
+          <Input id="ru-id-name" maxLength={120} value={name} onChange={(e) => { setName(e.target.value); if (mode === 'duplicate') setSlug(suggestSlug(e.target.value)); }} data-testid="reusable-field-name" />
         </div>
-        {mode === 'duplicate' ? (
-          <div className="space-y-1.5">
-            <Label htmlFor="ru-id-slug">New slug</Label>
-            <Input id="ru-id-slug" className="font-mono" maxLength={80} value={slug} onChange={(e) => setSlug(e.target.value)} data-testid="reusable-field-slug" />
-          </div>
-        ) : <Readonly label="Slug" value={item.slug} testId="reusable-field-slug-readonly" />}
+
       </fieldset>
       {localError && <p role="alert" className="text-[13px] text-destructive" data-testid="reusable-form-error">{localError}</p>}
       <ReusableMutationError error={error} />
@@ -234,7 +222,7 @@ export function ReusableIdentityDialog(props: Parameters<typeof IdentityForm>[0]
   const { open, ...rest } = props;
   return (
     <Shell open={open} pending={rest.pending} onClose={rest.onClose} title={rest.mode === 'rename' ? 'Rename' : 'Duplicate'}
-      description={rest.mode === 'rename' ? 'Changes the display name only. Slug, scope and ID are preserved.' : 'Creates a new item in the same scope with its own slug. The body draft is copied when possible.'}>
+      description={rest.mode === 'rename' ? 'Changes the display name only. Scope and identity are preserved.' : 'Creates a new item in the same scope. The body draft is copied when possible.'}>
       {open && <IdentityForm key={`${rest.mode}-${rest.item.id}`} {...rest} />}
     </Shell>
   );

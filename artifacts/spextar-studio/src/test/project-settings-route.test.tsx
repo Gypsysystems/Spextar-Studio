@@ -27,7 +27,7 @@ describe('Project Settings route', () => {
   it('renders existing shell, real metadata and readable members without invitations', async () => {
     await mount();
     expect(screen.getByTestId('project-settings-page')).toBeVisible();
-    expect(screen.getByTestId('input-slug')).toHaveValue('pa');
+    expect(screen.queryByTestId('input-slug')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId(`text-member-id-${testUser.id}`)).toHaveTextContent('Technical Writer'));
     expect(screen.getByTestId(`text-member-id-${testUser.id}`)).not.toHaveTextContent(testUser.id);
     expect(screen.queryByRole('button', { name: /invite/i })).not.toBeInTheDocument();
@@ -41,10 +41,9 @@ describe('Project Settings route', () => {
     await f.user.click(screen.getByTestId('button-save-details'));
     expect(await screen.findByTestId('error-name')).toHaveTextContent('2–160');
     await f.user.clear(screen.getByTestId('input-name')); await f.user.type(screen.getByTestId('input-name'), 'Updated project');
-    await f.user.clear(screen.getByTestId('input-slug')); await f.user.type(screen.getByTestId('input-slug'), 'updated-project');
     await f.user.click(screen.getByTestId('button-save-details'));
     await waitFor(() => expect(screen.getByTestId('status-success')).toHaveTextContent('Project details saved'));
-    expect(f.db.projects[0]).toMatchObject({ name: 'Updated project', slug: 'updated-project' });
+    expect(f.db.projects[0]).toMatchObject({ name: 'Updated project', slug: 'pa' });
     await waitFor(() => expect(screen.getByTestId('button-save-details')).toBeDisabled());
     expect(window.location.pathname).toBe(path);
     expect(screen.getAllByText('Updated project').length).toBeGreaterThan(0);

@@ -81,12 +81,14 @@ export function ProjectScope({
 export function PageHeader({
   eyebrow,
   title,
+  titleLabel,
   description,
   actions,
   meta,
 }: {
   eyebrow?: ReactNode;
-  title: string;
+  title: ReactNode;
+  titleLabel?: string;
   description?: string;
   actions?: ReactNode;
   meta?: ReactNode;
@@ -95,7 +97,7 @@ export function PageHeader({
     <div className="flex flex-col gap-4 border-b pb-6 md:flex-row md:items-end md:justify-between fade-up">
       <div className="min-w-0">
         {eyebrow && <div className="mb-2 flex flex-wrap items-center gap-2">{eyebrow}</div>}
-        <h1 className="text-[26px] font-semibold leading-tight md:text-[30px]" data-testid="text-page-title">
+        <h1 aria-label={titleLabel} className="text-[26px] font-semibold leading-tight md:text-[30px]" data-testid="text-page-title">
           {title}
         </h1>
         {description && <p className="mt-2 max-w-2xl text-[14.5px] text-muted-foreground">{description}</p>}

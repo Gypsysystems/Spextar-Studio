@@ -20,7 +20,7 @@ export function DeleteContentDialog({ doc, topic, onTopicDeleted }: {
   const mutation = useContentDeletion(doc.projectId, (target) => {
     setOpen(false);
     if (target.topicId) onTopicDeleted?.(target.topicId);
-    else navigate(`/workspaces/${workspaceId}/projects/${doc.projectId}/documents`, { replace: true });
+    else navigate(`/workspaces/${workspaceId}/projects/${doc.projectId}`, { replace: true });
   });
   if (mode !== 'backend' || !doc.canEdit) return null;
   const label = topic ? 'Delete topic' : 'Delete document';

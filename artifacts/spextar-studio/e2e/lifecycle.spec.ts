@@ -18,7 +18,6 @@ test('organization editing, discard confirmation and owner-only permanent deleti
   await activate(page, page.getByTestId('button-manage-organization'));
   let d = page.getByTestId('dialog-lifecycle');
   await d.getByLabel('Name', { exact: true }).fill('UAT Organization');
-  await d.getByLabel('Address slug').fill('uat-organization');
   await activate(page, d.getByRole('button', { name: 'Save details', exact: true }));
   await expect(d.getByRole('status')).toHaveText('Details saved.');
   await expect(page.getByTestId('text-org-name')).toHaveText('UAT Organization');
@@ -46,7 +45,7 @@ test('organization editing, discard confirmation and owner-only permanent deleti
 
 test('workspace details, archive filter, restore and permanent delete refresh navigation', async ({ page, backend }) => {
   backend.lifecycle.enabled = true; backend.setRole(null);
-  await login(page, '/workspaces/ws-a/projects');
+  await login(page, '/workspaces');
   await activate(page, page.getByTestId('button-manage-workspace'));
   const d = page.getByTestId('dialog-lifecycle');
   await d.getByLabel('Name', { exact: true }).fill('UAT Workspace');
@@ -58,7 +57,6 @@ test('workspace details, archive filter, restore and permanent delete refresh na
   await activate(page, d.getByRole('button', { name: 'Archive workspace', exact: true }));
   await expect(d.getByRole('status')).toContainText('Workspace archived');
   await activate(page, d.getByRole('button', { name: 'Done', exact: true }));
-  await page.goto('/workspaces');
   await expect(page.getByTestId('card-workspace-ws-a')).toHaveCount(0);
   await page.getByLabel('Workspace status', { exact: true }).selectOption('archived');
   await expect(page.getByTestId('card-workspace-ws-a')).toContainText('UAT Workspace');

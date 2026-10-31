@@ -37,11 +37,11 @@ describe('F2 UI persistence and read-only states', () => {
   it('exposes topic and document metadata as named accessible groups', async () => {
     const { user } = setup();
     const topicMetadata = await screen.findByRole('group', { name: 'Topic metadata' });
-    expect(within(topicMetadata).getByLabelText('Topic slug')).toHaveValue('install');
+    expect(within(topicMetadata).queryByLabelText('Topic slug')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Document metadata' }));
     const dialog = await screen.findByRole('dialog');
     const documentMetadata = within(dialog).getByRole('group', { name: 'Document metadata' });
-    expect(within(documentMetadata).getByLabelText('Document slug')).toHaveValue('installation');
+    expect(within(documentMetadata).queryByLabelText('Document slug')).not.toBeInTheDocument();
   });
   it('autosaves F2 metadata separately from F3 body through refetch', async () => {
     const { user, db, calls, raw } = setup();
@@ -94,7 +94,7 @@ describe('F2 UI persistence and read-only states', () => {
     await user.click(await screen.findByRole('button', { name: 'Create document' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText('Create document title'), 'Service manual');
-    expect(within(dialog).getByLabelText('Create document slug')).toHaveValue('service-manual');
+    expect(within(dialog).queryByLabelText('Create document slug')).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Create document' }));
     await waitFor(() => expect(window.location.pathname).toContain('/author/new-document'));
     expect(db.documents).toHaveLength(2);
@@ -148,7 +148,7 @@ describe('F2 destructive confirmation and navigation', () => {
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText('Title to confirm deletion'), 'Installation');
     await user.click(within(dialog).getByRole('button', { name: 'Delete document' }));
-    await waitFor(() => expect(window.location.pathname).toBe('/workspaces/ws-a/projects/project-a/documents'));
+    await waitFor(() => expect(window.location.pathname).toBe('/workspaces/ws-a/projects/project-a'));
     await waitFor(() => expect(db.documents).toHaveLength(0));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Create document' })).toBeVisible();
@@ -163,7 +163,7 @@ describe('F2 destructive confirmation and navigation', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Delete document' }));
     await waitFor(() => expect(screen.queryByText('Installation')).not.toBeInTheDocument());
     expect(db.documents).toHaveLength(0);
-    expect(window.location.pathname).toBe('/workspaces/ws-a/projects/project-a/documents');
+    expect(window.location.pathname).toBe('/workspaces/ws-a/projects/project-a');
   });
   it('deletes a selected topic, clears its deep link, and retains unrelated autosaving body drafts', async () => {
     const { user, db, calls } = setup('author', 'author/doc-a?topic=topic-a');

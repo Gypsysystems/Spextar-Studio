@@ -90,7 +90,7 @@ test('publish confirmation, numbered success and retained read-only inspection',
     backend.db.documents[0].status = 'published';
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(row.id) });
   });
-  await login(page, projectPath + '/publish');
+  await login(page, projectPath + '/publish?document=doc-a');
   const publish = page.getByRole('button', { name: 'Publish', exact: true });
   await expect(publish).toBeEnabled();
   await tabTo(page, publish);
@@ -145,7 +145,7 @@ test('uncertain committed response recovers by request key without another publi
     backend.db.documents[0].status = 'published';
     await route.abort('connectionfailed');
   });
-  await login(page, projectPath + '/publish');
+  await login(page, projectPath + '/publish?document=doc-a');
   await activate(page, page.getByRole('button', { name: 'Publish', exact: true }));
   await activate(page, page.getByRole('button', { name: 'Confirm publish' }));
   await expect(page.getByText(/Publication status is uncertain/).first()).toBeVisible();
@@ -161,7 +161,7 @@ test('stale confirmation fails closed and offers refreshed eligibility', async (
   await page.route('**/rest/v1/rpc/publish_document_release', (route) =>
     route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: 'PT409' }) }),
   );
-  await login(page, projectPath + '/publish');
+  await login(page, projectPath + '/publish?document=doc-a');
   await activate(page, page.getByRole('button', { name: 'Publish', exact: true }));
   await activate(page, page.getByRole('button', { name: 'Confirm publish' }));
   await expect(page.getByRole('dialog')).toContainText('approved document changed');
@@ -172,7 +172,7 @@ for (const role of ['author', 'reviewer', 'viewer'] as const)
   test(`${role} can inspect but cannot publish`, async ({ page, backend }) => {
     prepare(backend);
     backend.setRole(role);
-    await login(page, projectPath + '/publish');
+    await login(page, projectPath + '/publish?document=doc-a');
     await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeDisabled();
     await expect(page.getByText('Only an explicit Project Admin may publish.')).toBeVisible();
     await noOverflow(page);
@@ -180,7 +180,7 @@ for (const role of ['author', 'reviewer', 'viewer'] as const)
   });
 test('legacy package is blocked and empty release history is clear', async ({ page, backend }) => {
   prepare(backend).dependency_package = null;
-  await login(page, projectPath + '/publish');
+  await login(page, projectPath + '/publish?document=doc-a');
   await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeDisabled();
   await expect(page.getByText('A new approved review with frozen dependencies is required.')).toBeVisible();
   await expect(page.getByText('No releases yet.')).toBeVisible();
@@ -189,7 +189,7 @@ test('legacy package is blocked and empty release history is clear', async ({ pa
 test('release service errors block publication and recover through Refresh', async ({ page, backend }) => {
   prepare(backend);
   backend.failures.add('document_releases');
-  await login(page, projectPath + '/publish');
+  await login(page, projectPath + '/publish?document=doc-a');
   await expect(page.getByRole('button', { name: 'Publish', exact: true })).toHaveCount(0);
   await expect(page.getByRole('alert')).toBeVisible();
   backend.failures.delete('document_releases');
@@ -275,7 +275,7 @@ test('frozen defaults, optional warnings, neutral tags and nested reusable bodie
     backend.db.documents[0].status = 'published';
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(row.id) });
   });
-  await login(page, projectPath + '/publish');
+  await login(page, projectPath + '/publish?document=doc-a');
   await expect(page.getByLabel('Publishing warnings')).toContainText('Optional note');
   await activate(page, page.getByRole('button', { name: 'Publish', exact: true }));
   await activate(page, page.getByRole('button', { name: 'Confirm publish' }));

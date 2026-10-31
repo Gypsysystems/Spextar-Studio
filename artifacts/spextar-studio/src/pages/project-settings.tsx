@@ -156,10 +156,10 @@ function SettingsBody({ scope }: { scope: SettingsScope }) {
         </div>
       )}
 
-      <Section title="Project details" description="Name, address slug and description. Saved only when you press Save." testId="section-details">
+      <Section title="Project details" description="Project name and description. Saved only when you press Save." testId="section-details">
         <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); save(); }} noValidate>
           {field('name', 'Name', '2 to 160 characters.')}
-          {field('slug', 'Slug', 'Lowercase letters and digits, separated by single hyphens.')}
+
           {field('description', 'Description', 'Optional.', true)}
           {admin && (
             <div className="flex flex-wrap gap-2">

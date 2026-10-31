@@ -69,7 +69,7 @@ describe.each(pages)('%s lazy boundary', (title, slug) => {
     const pending = deferred();
     const user = await mount(title, slug, pending.load);
     await screen.findByRole('status', { name: `Loading ${title}` });
-    await user.click(screen.getByTestId('nav-documents'));
+    await user.click(screen.getByTestId('nav-home'));
     await screen.findByText('Documents destination');
     await act(async () => pending.resolve({ default: () => <p>Loaded management</p> }));
     expect(screen.queryByText('Loaded management')).toBeNull();

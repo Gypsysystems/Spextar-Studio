@@ -24,7 +24,7 @@ Run `pnpm test:browser` from the repository root for the permanent controlled pr
 
 ## Project Settings
 
-The existing Project settings route now supports explicit saves of project name, slug and nullable description; confirmed active/archived status changes; and administration of existing project memberships. Only an **explicit Project Admin** can mutate these resources. Author content permission, inherited workspace administration and organization ownership do not grant project administration in the client. Authenticated Supabase RLS is the final authority.
+The existing Project settings route now supports explicit saves of project name and nullable description, preserving its technical slug; confirmed active/archived status changes; and administration of existing project memberships. Only an **explicit Project Admin** can mutate these resources. Author content permission, inherited workspace administration and organization ownership do not grant project administration in the client. Authenticated Supabase RLS is the final authority.
 
 - `Services.projectSettings` isolates the typed settings boundary. Backend operations use `projects` and `project_members`, with workspace/project filters and fresh membership checks. Metadata writes match the original `updated_at`; the database controls the next timestamp. Membership changes match the prior role. Atomic project creation is unchanged.
 - Only existing, accessible `workspace_members` are offered for addition. Full user IDs are shown honestly; no directory lookup, invitations, email delivery or invented profile access is implemented.
@@ -86,11 +86,12 @@ SPEXTAR Studio is a structured authoring and content management workspace for te
 | `/sign-in` | Email/password in backend mode; explicit demo entry in demo mode; OAuth providers inactive | Functional |
 | `/workspaces` | Organization selection/creation, workspace search/creation | Supabase or isolated demo |
 | `/workspaces/:workspaceId/projects` | Projects: search, status filter, Create project; document Import project remains demo-only | Supabase or isolated demo |
-| `…/projects/:projectId` | Project Home: lifecycle counts, recent documents, activity, project areas | Functional |
-| `…/documents` | Live document list, expandable topic outlines, create/duplicate, metadata and confirmed empty-document deletion | Supabase or isolated demo |
-| `…/author`, `…/author/:documentId` | Preserved outline/editor/inspector with open-source Tiptap. Backend metadata/tree and structured JSON drafts persist; demo bodies stay session-only | F2 + F3 Slices 1/2A |
-| `…/review` | In-review document/topic selection and read-only current saved structured draft inspection | Supabase / labelled demo samples |
-| `…/publish` | Placeholder that lists approved documents (read-only). Actions are disabled | Placeholder |
+| `…/projects/:projectId` | Project Home: primary searchable/sortable document list, status filters, Project Stats, inline project rename and activity | Functional |
+| `…/documents` | Compatibility redirect to Project Home | Functional |
+| `…/author` | Compatibility redirect to Project Home with In Progress filter | Functional |
+| `…/author/:documentId` | Direct editor/outline/inspector, with existing status/role read-only rules | F2 + F3 |
+| `…/review` | Compatibility redirect to In Review filter; `?document=<id>` opens that document’s retained submitted Review workflow | Supabase / labelled demo samples |
+| `…/publish` | Compatibility redirect to Reviewed filter; `?document=<id>` opens that document’s Publish/immutable Releases context | Backend; demo explicitly unavailable |
 | `…/variables-conditions` | Text variable management, output overrides, scoped validation, category/value management, read-only project-wide variable output preview | Supabase or session-only demo |
 | `…/reusable-content` | Scoped reusable metadata and structured drafts | Supabase / isolated session demo |
 | `…/settings` | Project metadata, existing member roles, confirmed archive/restore; explicit Project Admin only | Supabase or session-only demo |
@@ -219,12 +220,12 @@ The import dialog also has an **Example file** download.
 1. `/` redirects to `/sign-in` without a session. Enter demo explicitly to see Workspaces and Halvorsen Instruments context.
 2. Collapse the nav: it goes from 240px to 72px and shows icon tooltips on hover and focus. Reload the page and the setting persists.
 3. Go to Product Documentation → Projects. Check that search, the status filters and the empty-filter reset all work.
-4. Create project: the form validates, the key is auto-suggested, and duplicate keys are rejected. You land on Project Home. Reload and the project persists.
+4. Create project: the form validates, the technical key is generated internally with a random suffix and database-authoritative uniqueness. You land on Project Home. Reload and the project persists.
 5. Import project with a valid example file: it creates the project and its documents. A malformed file shows the issues and creates nothing.
 6. Use the sidebar workspace switcher to move between workspaces.
-7. Project Home → Documents → expand an outline → open a topic in Author. Promote and Demote work via buttons and Alt+Arrow keys. Discard changes resets the edits.
+7. Project Home lists every document. Filter/search/sort in place, then open a document or expand its outline and open a topic directly in Author. Promote and Demote work via buttons and Alt+Arrow keys. Discard changes resets the edits.
 8. Author at 1280px shows three panes. On mobile the panes stack and the nav opens as a sheet.
-9. Review inspects saved drafts of In-review documents with no workflow writes. Publish remains a placeholder listing approved documents with disabled actions.
+9. Open Review for a document to inspect its submitted evidence; explicit Reviewer/Admin decisions preserve lifecycle rules. Explicit Project Admin alone can publish a valid Reviewed document. Inspect immutable Releases through the document context.
 10. `/workspaces/nope/projects`, an unknown project, `…/author/unknown` and `/random` all show not-found.
 11. `/sign-in` → Enter demo → account menu → Sign out returns you to `/sign-in`.
 
@@ -235,3 +236,25 @@ Reviewer/Admin decisions and starting a new Draft from Approved. Author is
 read-only In Review and Approved; status fields no longer bypass the lifecycle.
 See [REVIEW_LIFECYCLE.md](REVIEW_LIFECYCLE.md). Publishing/releases are not
 implemented. The new migration is source-only and has not been applied.
+
+## Project-centric UX (2026-10-31)
+
+The product-owner direction supersedes the historical frozen list-navigation labels.
+Project Home is the working document list; Author, Review and Publish are individual
+document contexts. History, Releases and administration keep their distinct responsibilities.
+
+Document presentation maps Draft → In Progress, In Review → In Review, Approved →
+Reviewed, Published → Published. A retained backend `changes_requested` review
+decision appears as **Changes Recommended** under In Progress; its note remains
+available in the editor and retained Review. No database status/transition changed.
+
+Explicit Project Admin can rename inline on Project Home or the workspace’s project
+list (Enter/Save, Escape/Cancel, saving/error/saved states). This reads a fresh
+metadata snapshot and saves through existing timestamp conflict checks; identifiers
+remain stable. The adjacent settings action opens deeper configuration.
+Standard organization/project/content/reusable forms hide technical keys/slugs.
+Project creation generates an internal key; the database enforces uniqueness.
+
+Backend project import has no persistence contract and its dead control is removed.
+The existing validated, session-isolated demo import remains labeled “Import demo
+project.” Backend import needs a separately approved capability/format contract.
