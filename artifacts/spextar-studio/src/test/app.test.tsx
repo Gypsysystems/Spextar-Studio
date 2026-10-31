@@ -78,10 +78,12 @@ describe('foundation routes and navigation', () => {
     const project = await screen.findByRole('link', { name: /Meridian X4 User Guide/ });
     await user.click(project);
     expect(await screen.findByTestId('nav-documents')).toBeVisible();
+    expect(screen.queryByText('Actions unavailable')).not.toBeInTheDocument();
     await user.click(screen.getByTestId('nav-documents'));
     await screen.findByText('Getting started with the Meridian X4');
     await user.click(screen.getByTestId('nav-author'));
     await user.click(await screen.findByTestId('link-author-pick-mx4-getting-started'));
+    expect(screen.getByTestId('author-workflow-scope')).toHaveTextContent('Demo edits are session-only. Review shows sample content.');
     const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
     expect(within(crumbs).getByText('Workspaces')).toBeInTheDocument();
     expect(within(crumbs).getByText('Product Documentation')).toBeInTheDocument();
