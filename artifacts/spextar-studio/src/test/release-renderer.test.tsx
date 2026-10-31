@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { within } from '@testing-library/react';
 import ReleaseBodyV1 from '@/features/publishing/release-body-v1';
 import { packageFixture } from './review-package-fixtures';
 import type { TopicContent } from '@/domain/topic-content';
@@ -69,6 +70,9 @@ describe('pinned release HTML safety and structure', () => {
     expect(html).toContain('role="note"');
     expect(html).toContain('Audience: Technician');
     expect(html).toContain('Keep this content');
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    expect(within(container).getByRole('group', { name: 'Applied conditional tags' })).toHaveTextContent('Audience: Technician');
   });
   it('fails closed on unsupported nodes and unsafe links', () => {
     expect(() => render({ type: 'doc', content: [{ type: 'futureNode' }] })).toThrow();

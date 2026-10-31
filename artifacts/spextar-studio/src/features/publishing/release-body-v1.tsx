@@ -19,7 +19,7 @@ export default function ReleaseBodyV1({
     const children = Array.isArray(n.content) ? n.content.map(node) : null;
     const conditions =
       jsonObject(a.conditions) && Array.isArray(a.conditions.values) ? (
-        <span className="se-condition-tags" aria-label="Applied conditional tags">
+        <span role="group" className="se-condition-tags" aria-label="Applied conditional tags">
           {a.conditions.values.map((pair, i) => {
             if (!jsonObject(pair)) throw new Error('Unsupported release conditions.');
             const category = p.categories.find((c) => c.id === pair.categoryId),

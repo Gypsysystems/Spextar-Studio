@@ -283,6 +283,7 @@ test('frozen defaults, optional warnings, neutral tags and nested reusable bodie
   await expect(inspector).toContainText(frozenValue);
   await expect(inspector).toContainText('Frozen nested safety notice');
   await expect(inspector).toContainText('Audience: Developer');
+  await expect(inspector.getByRole('group', { name: 'Applied conditional tags', exact: true })).toContainText('Audience: Developer');
   await expect(inspector).toContainText('Frozen revision 3');
   expect(
     backend.reads.filter((r) =>

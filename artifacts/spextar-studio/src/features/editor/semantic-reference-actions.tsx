@@ -204,7 +204,7 @@ export function SemanticActions({
         </div>
       )}
       {taggedBlocks.length > 0 && (
-        <div aria-label="Applied conditional tags" className="rounded-md border bg-muted/30 p-2">
+        <div role="group" aria-label="Applied conditional tags" className="rounded-md border bg-muted/30 p-2">
           <p className="mb-1 text-xs text-muted-foreground">
             Conditional tags on this body · neutral preview, content remains visible
           </p>

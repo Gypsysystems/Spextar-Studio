@@ -34,6 +34,15 @@ function setup(role = 'author', route = 'author/doc-a') {
 }
 
 describe('F2 UI persistence and read-only states', () => {
+  it('exposes topic and document metadata as named accessible groups', async () => {
+    const { user } = setup();
+    const topicMetadata = await screen.findByRole('group', { name: 'Topic metadata' });
+    expect(within(topicMetadata).getByLabelText('Topic slug')).toHaveValue('install');
+    await user.click(screen.getByRole('button', { name: 'Document metadata' }));
+    const dialog = await screen.findByRole('dialog');
+    const documentMetadata = within(dialog).getByRole('group', { name: 'Document metadata' });
+    expect(within(documentMetadata).getByLabelText('Document slug')).toHaveValue('installation');
+  });
   it('autosaves F2 metadata separately from F3 body through refetch', async () => {
     const { user, db, calls, raw } = setup();
     // Cold Author/editor imports are no longer incidentally warmed by management imports.

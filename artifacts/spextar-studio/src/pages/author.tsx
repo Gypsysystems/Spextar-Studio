@@ -185,7 +185,7 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
                 onClick={() => setSelectedId(t.id)}
                 className={cn(
                   'relative mx-2 flex cursor-pointer items-baseline gap-2 rounded px-2 py-1.5 text-[13px] outline-none transition-colors',
-                  t.id === selectedId ? 'bg-primary text-primary-foreground [&_.topic-num]:text-primary-foreground/75' : 'text-foreground/85 hover:bg-[hsl(var(--surface-raised))]',
+                  t.id === selectedId ? 'bg-primary text-primary-foreground [&_.topic-num]:text-primary-foreground' : 'text-foreground/85 hover:bg-[hsl(var(--surface-raised))]',
                   'focus-visible:ring-2 focus-visible:ring-ring',
                 )}
                 style={{ paddingLeft: 8 + (t.level - 1) * 14 }}

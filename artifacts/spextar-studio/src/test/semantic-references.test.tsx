@@ -175,7 +175,7 @@ describe('versioned semantic references', () => {
     await waitFor(() => expect(area).toHaveTextContent('Resolved product'));
     await waitFor(() => expect(area).toHaveTextContent('Original body'));
     expect(area).toHaveTextContent('Linked reusable content');
-    expect(screen.getByLabelText('Applied conditional tags')).toHaveTextContent('Audience: Developer');
+    expect(screen.getByRole('group', { name: 'Applied conditional tags' })).toHaveTextContent('Audience: Developer');
     expect(screen.getByRole('button', { name: 'Insert variable' })).toBeDisabled();
     expect(area).toHaveAttribute('contenteditable', 'false');
     expect(change).not.toHaveBeenCalled();

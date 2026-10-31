@@ -19,14 +19,14 @@ test('approved semantic package survives catalog changes without mutable depende
   await expect(body).toContainText('QA Product');
   await expect(body).toContainText('Frozen nested safety notice');
   await expect(body).toContainText('submitted revision 4');
-  await expect(page.getByLabel('Applied conditional tags')).toContainText('Audience: Developer');
+  await expect(page.getByRole('group', { name: 'Applied conditional tags', exact: true })).toContainText('Audience: Developer');
   await activate(page,page.getByRole('button',{name:'Approve',exact:true})); await accessible(page);
   await activate(page,page.getByRole('button',{name:'Confirm approve'}));
   await expect(page.getByText('Approved · Review 1')).toBeVisible();
   for (const table of ['project_variables','condition_categories','condition_values','reusable_contents','reusable_content_drafts']) backend.db[table]=[];
   backend.reads.length=0; await page.reload();
   await expect(body).toContainText('QA Product'); await expect(body).toContainText('Frozen nested safety notice');
-  await expect(page.getByLabel('Applied conditional tags')).toContainText('Audience: Developer');
+  await expect(page.getByRole('group', { name: 'Applied conditional tags', exact: true })).toContainText('Audience: Developer');
   expect(backend.reads.filter(r=>['project_variables','condition_categories','condition_values','reusable_contents','reusable_content_drafts','topic_drafts'].includes(r.table))).toEqual([]);
   expect(backend.db.document_reviews[0].dependency_package).toEqual(evidence.dependency_package);
   expect(backend.db.document_reviews[0].topics_snapshot).toEqual(evidence.topics_snapshot);
