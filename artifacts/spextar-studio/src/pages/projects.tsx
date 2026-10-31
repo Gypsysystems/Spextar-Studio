@@ -1,9 +1,13 @@
+import { canManageProject } from '@/features/project/permissions';
+import { InlineProjectName } from '@/features/project/inline-project-name';
+import { Settings } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'wouter';
-import { ChevronRight, FileUp, FolderPlus, Plus, Search } from 'lucide-react';
+import { FileUp, FolderPlus, Plus, Search } from 'lucide-react';
 import { AppShell, type Crumb } from '@/components/shell/app-shell';
 import { EmptyState, ErrorState, ListSkeleton, NotFoundPanel, PageSkeleton, ScopeMarker } from '@/components/states';
-import { KeyChip, StatusPill } from '@/components/status-pill';
+import { StatusPill } from '@/components/status-pill';
 import { PageHeader } from '@/features/project/project-scope';
 import { projectBase } from '@/features/project/sections';
 import { createLazyDialog } from '@/components/lazy-dialog';
@@ -13,7 +17,6 @@ import { Input } from '@/components/ui/input';
 import { usePageTitle, useProjects, useWorkspace } from '@/hooks/use-studio-data';
 import { PROJECT_STATUS_LABEL, relative } from '@/lib/format';
 import { useServices } from '@/providers/services-provider';
-import { LifecycleControl } from '@/features/workspaces/lifecycle-control';
 import type { ProjectStatus } from '@/domain/types';
 import { cn } from '@/lib/utils';
 
@@ -86,10 +89,10 @@ export default function ProjectsPage() {
           meta={workspace.status === 'archived' ? <span>Archived workspace · content is kept until permanently deleted</span> : undefined}
           actions={
             <>
-              <LifecycleControl scope={{ kind: 'workspace', id: workspace.id, parentId: workspace.organizationId }} label="Manage workspace" disabled={workspace.role !== 'admin'} />
-              <Button variant="outline" disabled={mode === 'backend'} title={mode === 'backend' ? 'Project import is not available yet' : undefined} onClick={() => setImportOpen(true)} data-testid="button-import-project">
-                <FileUp className="mr-1.5 h-4 w-4" /> Import project
-              </Button>
+
+              {mode === 'demo' && <Button variant="outline" onClick={() => setImportOpen(true)} data-testid="button-import-project">
+                <FileUp className="mr-1.5 h-4 w-4" /> Import demo project
+              </Button>}
               <Button onClick={() => setCreateOpen(true)} data-testid="button-create-project">
                 <Plus className="mr-1.5 h-4 w-4" /> Create project
               </Button>
@@ -104,7 +107,7 @@ export default function ProjectsPage() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name or key"
+              placeholder="Search projects"
               aria-label="Search projects"
               className="pl-9"
               data-testid="input-search-projects"
@@ -140,7 +143,7 @@ export default function ProjectsPage() {
             <ErrorState error={projects.error} onRetry={() => projects.refetch()} />
           ) : (projects.data?.length ?? 0) === 0 ? (
             <EmptyState icon={FolderPlus} title="No projects in this workspace" body={mode === 'backend' ? 'Create a project from scratch. Import is not available yet.' : 'Create a project from scratch or import an existing structure from a SPEXTAR JSON file.'}>
-              <Button variant="outline" disabled={mode === 'backend'} title={mode === 'backend' ? 'Project import is not available yet' : undefined} onClick={() => setImportOpen(true)}>Import project</Button>
+              {mode === 'demo' && <Button variant="outline" onClick={() => setImportOpen(true)}>Import demo project</Button>}
               <Button onClick={() => setCreateOpen(true)}>Create project</Button>
             </EmptyState>
           ) : list.length === 0 ? (
@@ -149,21 +152,19 @@ export default function ProjectsPage() {
             </EmptyState>
           ) : (
             <div className="overflow-hidden rounded-lg border bg-card">
-              <div className="hidden grid-cols-[72px_1fr_110px_110px_120px_20px] gap-4 border-b bg-muted/50 px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground md:grid">
-                <span>Key</span><span>Project</span><span>Documents</span><span>Status</span><span>Updated</span><span />
+              <div className="hidden grid-cols-[minmax(0,1fr)_110px_100px_100px_90px] gap-4 border-b bg-muted/50 px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground md:grid">
+                <span>Project</span><span>Documents</span><span>Status</span><span>Updated</span><span />
               </div>
               <ul className="divide-y">
                 {list.map((p) => (
                   <li key={p.id}>
-                    <Link
-                      href={projectBase(workspace.id, p.id)}
+                    <div
                       data-testid={`row-project-${p.id}`}
-                      className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/40 md:grid-cols-[72px_1fr_110px_110px_120px_20px]"
+                      className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/40 md:grid-cols-[minmax(0,1fr)_110px_100px_100px_90px]"
                     >
-                      <KeyChip value={p.key} />
                       <span className="min-w-0">
-                        <span className="flex items-center gap-2">
-                          <span className="truncate font-medium">{p.name}</span>
+                        <span className="flex flex-wrap items-center gap-2">
+                          <InlineProjectName project={p} href={projectBase(workspace.id, p.id)} />
                           {p.source !== 'fixture' && p.source !== 'backend' && <ScopeMarker kind="demo">{p.source === 'imported' ? 'Imported' : 'Local'}</ScopeMarker>}
                         </span>
                         <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">{p.description || p.product || 'No description'}</span>
@@ -173,8 +174,8 @@ export default function ProjectsPage() {
                       </span>
                       <span className="hidden md:block"><StatusPill status={p.status} label={PROJECT_STATUS_LABEL[p.status]} /></span>
                       <span className="hidden text-[13px] text-muted-foreground md:block">{relative(p.updatedAt)}</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </Link>
+                      <span className="flex flex-wrap items-center gap-1">{canManageProject(p) && <><Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon"><Link href={projectBase(workspace.id, p.id) + '/settings'} aria-label={`Settings for ${p.name}`}><Settings className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>Project settings</TooltipContent></Tooltip></>}</span>
+                    </div>
                   </li>
                 ))}
               </ul>

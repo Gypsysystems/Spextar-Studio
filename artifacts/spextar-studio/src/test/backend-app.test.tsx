@@ -11,10 +11,9 @@ describe('connected backend application flows', () => {
     fake.db.project_members[0].role = role;
     window.history.replaceState(null, '', '/workspaces/ws-a/projects/project-a');
     render(<App services={createSupabaseServices(fake.client)} />);
-    expect(await screen.findByText('No documents yet')).toBeVisible();
-    expect(screen.getByText(/explicit project Admin or Author can create/)).toBeVisible();
+    expect(await screen.findByText('This project has no documents')).toBeVisible();
+    expect(screen.getByText(role === 'admin' || role === 'author' ? 'Create a document to begin its topic outline.' : 'A project admin or author can create documents.')).toBeVisible();
     expect(screen.queryByText(/Document creation arrives in a later phase/)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('link', { name: /^Open Documents$/ }));
     expect(await screen.findByRole('heading', { name: /^Documents$/ })).toBeVisible();
     const create = screen.queryAllByRole('button', { name: /^Create document$/ });
     if (role === 'admin' || role === 'author') {
@@ -71,14 +70,14 @@ describe('connected backend application flows', () => {
     const services = createSupabaseServices(fake.client);
     const view = render(<App services={services} />);
     await userEvent.click(await screen.findByTestId('card-workspace-ws-a'));
-    await userEvent.click(await screen.findByRole('link', { name: /Project A/ }));
+    await userEvent.click(await screen.findByRole('link', { name: 'Project A' }));
     expect(await screen.findByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('Workspace A');
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('Project A');
     expect(await screen.findByRole('heading', { name: 'Project A' })).toBeVisible();
     expect(screen.queryByTestId('scope-demo')).not.toBeInTheDocument();
     view.unmount();
     render(<App services={createSupabaseServices(fake.client)} />);
-    expect(await screen.findByTestId('nav-documents')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Project Stats' })).toBeVisible();
     expect(screen.queryByTestId('button-sign-in')).not.toBeInTheDocument();
   });
   it('creates a workspace and project, then reloads them from the backend adapter', async () => {
@@ -92,11 +91,11 @@ describe('connected backend application flows', () => {
     await userEvent.type(await screen.findByTestId('input-project-name'), 'Persistence Project');
     expect(screen.queryByTestId('input-project-product')).not.toBeInTheDocument();
     await userEvent.click(screen.getByTestId('button-submit-create-project'));
-    expect(await screen.findByTestId('nav-documents')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Project Stats' })).toBeVisible();
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('Persistence Project');
     view.unmount();
     render(<App services={createSupabaseServices(fake.client)} />);
-    expect(await screen.findByTestId('nav-documents')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Project Stats' })).toBeVisible();
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('Persistence Workspace');
   });
   it('offers organization onboarding when the account has no memberships', async () => {

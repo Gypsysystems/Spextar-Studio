@@ -23,8 +23,8 @@ export function ReviewActions({ doc, canAct }: { doc: DocumentRecord; canAct: bo
   const targetStatus = open && confirmation ? confirmation.status : doc.status;
   const action = targetStatus === 'draft' ? 'Submit for review' : ['approved','published'].includes(targetStatus) ? 'Start new draft' : null;
   return <div className="space-y-2 text-sm">
-    <p className="text-muted-foreground">{doc.status === 'draft' ? 'Only saved content is submitted. Save all topic and metadata changes first.' : doc.status === 'in-review' ? 'In review · Author is read-only while the submitted content is reviewed.' : doc.status === 'approved' ? 'Approved · Start a new draft to edit this document.' : 'Published · Start a new draft to edit. Existing releases stay unchanged.'}</p>
-    {latest.data?.status === 'changes_requested' && <p className="rounded-md border bg-muted p-3">Changes requested: {latest.data.decision_note}</p>}
+    <p className="text-muted-foreground">{doc.status === 'draft' ? 'Only saved content is submitted. Save all topic and metadata changes first.' : doc.status === 'in-review' ? 'In review · Author is read-only while the submitted content is reviewed.' : doc.status === 'approved' ? 'Reviewed · Start a new draft to edit this document.' : 'Published · Start a new draft to edit. Existing releases stay unchanged.'}</p>
+    {latest.data?.status === 'changes_requested' && <p className="rounded-md border bg-muted p-3">Changes Recommended: {latest.data.decision_note}</p>}
     {latest.isError && <p role="alert">Review status could not load. <Button variant="outline" size="sm" onClick={() => void latest.refetch()}>Refresh review status</Button></p>}
     {action && canAct && <Dialog open={open} onOpenChange={value => { if (!mutation.isPending) {
       setConfirmation(value ? { status: doc.status, updatedAt: doc.updatedAt, reviewId: latest.data?.id ?? null } : null);

@@ -302,17 +302,16 @@ function SidebarBody({
           <>
             {!collapsed && (
               <div className="mx-0 mt-5 rounded-md border border-white/[0.06] bg-white/[0.025] px-3 py-2.5">
-                <span className="font-mono text-[10px] text-[hsl(253_100%_80%)]">{ctx.project.key}</span>
                 <p className="truncate text-[13px] text-white" title={ctx.project.name}>
                   {ctx.project.name}
                 </p>
               </div>
             )}
-            {groups.map((g) => (
+            {groups.filter(g => PROJECT_SECTIONS.some(s => s.group === g && !['documents', 'author', 'review', 'publish'].includes(s.id))).map((g) => (
               <div key={g}>
                 <GroupLabel collapsed={collapsed}>{g}</GroupLabel>
                 <ul className="space-y-0.5">
-                  {PROJECT_SECTIONS.filter((s) => s.group === g).map((s) => {
+                  {PROJECT_SECTIONS.filter((s) => s.group === g && !['documents', 'author', 'review', 'publish'].includes(s.id)).map((s) => {
                     const href = base + s.path;
                     const active = s.path === '' ? location === base : location === href || location.startsWith(href + '/');
                     return (

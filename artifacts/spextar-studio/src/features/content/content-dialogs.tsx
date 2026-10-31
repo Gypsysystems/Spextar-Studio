@@ -29,7 +29,7 @@ export function ContentDialog({ action, projectId, doc, topic, onTopic }: {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [slugEdited, setSlugEdited] = useState(false);
+
   const [description, setDescription] = useState('');
   const [parent, setParent] = useState('');
   const [position, setPosition] = useState('0');
@@ -40,7 +40,7 @@ export function ContentDialog({ action, projectId, doc, topic, onTopic }: {
     setOpen(next);
     if (next) {
       const value = action.startsWith('duplicate') ? `${topic?.title ?? doc?.title ?? ''} copy` : '';
-      setTitle(value); setSlug(slugify(value)); setSlugEdited(false); setDescription('');
+      setTitle(value); setSlug(slugify(value)); setDescription('');
       setParent(action === 'move' ? topic?.parentTopicId ?? '' : topic?.id ?? '');
       setPosition(String(topic?.sortOrder ?? 0)); mutation.reset();
     }
@@ -65,8 +65,8 @@ export function ContentDialog({ action, projectId, doc, topic, onTopic }: {
         } });
       }}>
         {action !== 'move' && <>
-          <label className="block text-sm">Title<Input aria-label={`${label} title`} required maxLength={500} value={title} onChange={(e) => { setTitle(e.target.value); if (!slugEdited) setSlug(slugify(e.target.value)); }} /></label>
-          <label className="block text-sm">Slug<Input aria-label={`${label} slug`} required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={(e) => { setSlugEdited(true); setSlug(e.target.value); }} /></label>
+          <label className="block text-sm">Title<Input aria-label={`${label} title`} required maxLength={500} value={title} onChange={(e) => { setTitle(e.target.value); setSlug(slugify(e.target.value) || 'content-' + crypto.randomUUID().slice(0, 8)); }} /></label>
+
         </>}
         {action === 'document' && <label className="block text-sm">Description<Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></label>}
         {(action === 'topic' || action === 'move') && <label className="block text-sm">Parent topic

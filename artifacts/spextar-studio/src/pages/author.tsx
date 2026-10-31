@@ -295,8 +295,9 @@ function AuthorWorkspace({ doc, base }: { doc: DocumentRecord; base: string }) {
         <h2 className="mt-7 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">Workflow</h2>
         <div className="mt-3 flex flex-col gap-2">
           <Button variant="outline" size="sm" asChild data-testid="link-inspector-review">
-            <Link href={`${base}/review`}>Go to Review</Link>
+            <Link href={`${base}/review?document=${encodeURIComponent(doc.id)}`}>Go to Review</Link>
           </Button>
+          <Button variant="outline" size="sm" asChild><Link href={`${base}/publish?document=${encodeURIComponent(doc.id)}`}>View Releases</Link></Button>
           <Button variant="outline" size="sm" asChild data-testid="link-inspector-history">
             <Link href={`${base}/history`}>View History</Link>
           </Button>

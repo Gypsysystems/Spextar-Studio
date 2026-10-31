@@ -70,19 +70,19 @@ describe('foundation routes and navigation', () => {
     expect(screen.queryByTestId('input-password')).not.toBeInTheDocument();
     await userEvent.click(await screen.findByTestId('button-enter-demo'));
     expect(await screen.findByRole('heading', { name: 'Documents' })).toBeVisible();
-    expect(window.location.pathname).toBe(base + '/documents');
+    expect(window.location.pathname).toBe(base);
   });
   it('navigates workspace → project → documents → Author with contextual breadcrumbs', async () => {
     const { user } = await mount();
     await user.click(await screen.findByTestId('card-workspace-product-docs'));
-    const project = await screen.findByRole('link', { name: /Meridian X4 User Guide/ });
+    const project = await screen.findByRole('link', { name: 'Meridian X4 User Guide' });
     await user.click(project);
-    expect(await screen.findByTestId('nav-documents')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Documents' })).toBeVisible();
+    expect(screen.queryByTestId('nav-documents')).not.toBeInTheDocument();
     expect(screen.queryByText('Actions unavailable')).not.toBeInTheDocument();
-    await user.click(screen.getByTestId('nav-documents'));
     await screen.findByText('Getting started with the Meridian X4');
-    await user.click(screen.getByTestId('nav-author'));
-    await user.click(await screen.findByTestId('link-author-pick-mx4-getting-started'));
+    await user.click(await screen.findByTestId('link-author-mx4-getting-started'));
+    await screen.findByTestId('author-workflow-scope');
     expect(screen.getByTestId('author-workflow-scope')).toHaveTextContent('Demo edits are session-only. Review shows sample content.');
     const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' });
     expect(within(crumbs).getByText('Workspaces')).toBeInTheDocument();
@@ -152,7 +152,7 @@ describe('foundation routes and navigation', () => {
     },
   );
   it('preserves the Publish route with explicit demo-unavailable behavior', async()=>{
-    await mount(`${base}/publish`);
+    await mount(`${base}/publish?document=mx4-getting-started`);
     expect(await screen.findByRole('heading',{name:'Publish'})).toBeVisible();
     expect(await screen.findByText('Publishing requires an authenticated backend with release support. Demo content cannot be published.')).toBeVisible();
     expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();

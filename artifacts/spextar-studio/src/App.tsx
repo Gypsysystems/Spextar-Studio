@@ -12,7 +12,7 @@ import SignInPage from '@/pages/sign-in';
 import WorkspacesPage from '@/pages/workspaces';
 import ProjectsPage from '@/pages/projects';
 import ProjectHomePage from '@/pages/project-home';
-import DocumentsPage from '@/pages/documents';
+import { LegacyProjectList } from '@/features/project/legacy-project-list';
 import { AuthorRoute } from '@/routes/author-route';
 import { ReusableContentRoute, VariablesConditionsRoute, ProjectSettingsRoute, ReviewRoute, PublishRoute } from '@/routes/management-routes';
 import { SectionPlaceholderPage } from '@/pages/section-placeholder';
@@ -38,11 +38,11 @@ function ApplicationRoutes() {
         <Route path="/workspaces" component={WorkspacesPage} />
         <Route path="/workspaces/:workspaceId/projects" component={ProjectsPage} />
         <Route path={P} component={ProjectHomePage} />
-        <Route path={`${P}/documents`} component={DocumentsPage} />
-        <Route path={`${P}/author`} component={AuthorRoute} />
+        <Route path={`${P}/documents`} >{() => <LegacyProjectList />}</Route>
+        <Route path={`${P}/author`} >{() => <LegacyProjectList status="draft" />}</Route>
         <Route path={`${P}/author/:documentId`} component={AuthorRoute} />
-        <Route path={`${P}/review`} component={ReviewRoute} />
-        <Route path={`${P}/publish`} component={PublishRoute} />
+        <Route path={`${P}/review`}>{() => <LegacyProjectList workflow="review"><ReviewRoute /></LegacyProjectList>}</Route>
+        <Route path={`${P}/publish`}>{() => <LegacyProjectList workflow="publish"><PublishRoute /></LegacyProjectList>}</Route>
         <Route path={`${P}/reusable-content`} component={ReusableContentRoute} />
         <Route path={`${P}/variables-conditions`} component={VariablesConditionsRoute} />
         <Route path={`${P}/style-guide`}>{() => <SectionPlaceholderPage section="style-guide" />}</Route>

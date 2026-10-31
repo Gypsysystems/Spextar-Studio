@@ -17,7 +17,7 @@ function backend(role: string | null = 'admin', status = 'in_review') {
   fake.db.document_reviews = [reviewFixture() as unknown as Record<string, unknown>];
   fake.db.project_members = role ? [{ project_id: 'project-a', user_id: 'user-a', role }] : [];
   const services = createSupabaseServices(fake.client);
-  window.history.replaceState(null, '', '/workspaces/ws-a/projects/project-a/review');
+  window.history.replaceState(null, '', '/workspaces/ws-a/projects/project-a/review?document=doc-a');
   return { ...fake, services, user: userEvent.setup(), mount: () => render(<App services={services} />) };
 }
 describe('Submitted review lifecycle', () => {
@@ -116,14 +116,14 @@ describe('Submitted review lifecycle', () => {
     expect(await screen.findByText('Submitted review did not load')).toBeVisible();
     expect(f.calls.some(c => c.table === 'topic_drafts')).toBe(false);
   });
-  it.each(['Approve', 'Request changes'])('confirms %s once and restores focus on cancel', async action => {
+  it.each(['Approve', 'Recommend changes'])('confirms %s once and restores focus on cancel', async action => {
     const f = backend('reviewer'); f.raw.rpc.mockResolvedValue({ data: 'review-a', error: null }); f.mount();
     const trigger = await screen.findByRole('button', { name: action });
     await f.user.click(trigger); await f.user.keyboard('{Escape}');
     await waitFor(() => expect(trigger).toHaveFocus()); await f.user.click(trigger);
     const dialog = screen.getByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: `Confirm ${action.toLowerCase()}` });
-    if (action === 'Request changes') {
+    if (action === 'Recommend changes') {
       expect(confirm).toBeDisabled();
       await f.user.type(within(dialog).getByRole('textbox', { name: 'Decision note' }), '   ');
       expect(confirm).toBeDisabled();

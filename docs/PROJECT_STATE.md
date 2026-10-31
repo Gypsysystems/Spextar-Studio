@@ -1,6 +1,6 @@
 # SPEXTAR Studio — Current Engineering State
 
-Recorded: 2026-10-30. Refresh this document when code, backend provenance, staging or validation changes. Durable operating rules live in root `AGENTS.md`.
+Recorded: 2026-10-31. Refresh this document when code, backend provenance, staging or validation changes. Durable operating rules live in root `AGENTS.md`.
 
 ## Evidence and authority
 
@@ -828,3 +828,106 @@ Final hosted checks/head are retained on unmerged PR #28; technical evidence is
 separate from independent product-owner acceptance and live rollout authorization.
 
 Issue #29 accessibility-fix checkpoint completion: retained focused units pass 38/38; controlled Author/Review/Publish regressions pass 12/12 across desktop 1440/1280 and mobile 390 dark/light, including named groups, selected-number computed contrast >=4.5, axe and overflow. Workspace typechecks and both backend-configured production builds pass; initial bundle 964,965/975,000 bytes with lazy boundaries retained. These pre-stop results were inspected and reused because the tested source is unchanged; no duplicate expensive run or live backend certification was performed. Full hosted CI is required on the fix PR. Existing build warnings remain; full live runtime/network and remaining manual acceptance stay incomplete. The resumed checkout was already dirty on the fix branch at accepted-main HEAD; existing changes/evidence were preserved and reviewed, rather than claiming a clean initial working tree.
+
+## Product-owner project-centric UX simplification — 2026-10-31
+
+Authorized request continues Spextar 2 and supersedes the historical frozen
+Documents/Author/Review/Publish list navigation. Branch
+`codex/feature-project-hub-ux` starts from verified accepted GitHub main
+`9ba35cc85cb2c20afb7d96d459a1d0a09c74af73`, with a clean checkout.
+
+Project Home now owns the complete document list, search, updated/title sorting,
+in-place status filter, creation and direct editor links, Project Stats and activity.
+The sidebar no longer offers redundant workflow lists. Existing `/documents`,
+`/author`, `/review`, `/publish` list links replace-redirect to Home (respectively
+All, In Progress, In Review, Reviewed). Editor document/topic links stay intact.
+Review/Publish links carrying `?document=<id>` retain document-specific immutable
+evidence/release workflows, without selecting an unrelated document for invalid IDs.
+The editor exposes View Releases even after starting a new Draft.
+
+| Persisted state / evidence | User-facing status |
+| --- | --- |
+| Document `draft` | In Progress |
+| Document `in_review` (domain `in-review`) | In Review |
+| Document `approved` | Reviewed |
+| Document `published` | Published |
+| Latest review `changes_requested`, working document `draft` | In Progress + Changes Recommended |
+
+The final feedback label is the user's 2026-10-31 correction: **Changes Recommended**;
+“Recommend changes” records the same existing backend decision and required note.
+Draft → In Review → Approved → Published, new-Draft rules, explicit Reviewer/Admin
+decisions, explicit Project Admin-only Publish and immutable releases are unchanged.
+
+Shared inline project rename uses existing Button/Input/Tooltip, fresh authorized
+settings reads, original timestamp CAS and awaited query invalidation. Enter/Save,
+Escape/Cancel, focus restoration and saved/error/saving states work on Home and
+workspace project rows. The summary role can include inherited administration;
+new controls require the explicit author-and-review capability intersection and
+services still recheck authority. Settings stays available for deeper administration.
+
+UAT-001: contained form/detail skeletons replace generic first-open loading text.
+UAT-003: audited existing global lifecycle/settings invalidation and document
+mutation list/count invalidation; document deletion returns directly to the hub.
+Workspace/Project archive/restore are implemented; Document/Topic and Reusable
+archive/restore contracts do not exist and were not invented.
+UAT-004: Manage workspace removed from Projects; manage it on Workspaces.
+UAT-005: normal project creation hides its internally generated key (database
+uniqueness remains authoritative); no slug/key edits on rename. Technical slug
+fields are also removed from standard organization, content, reusable and project
+settings forms; stored identifiers are preserved on edits.
+UAT-006: backend import has no persistence contract; the dead backend control is
+removed. The validated demo-only importer remains explicitly labeled. Backend import
+format, authorization, conflict handling and persistence remain product decisions.
+
+Reuses ProjectScope/PageHeader, document-list controls, existing status/empty/error/
+skeleton components, shell, approved Inter/Signature X assets and semantic
+card/border/muted/foreground/focus/violet tokens. The new visual composition is the
+hub plus shared inline rename, needed to remove intermediate navigation. No new
+design system, branding geometry, font, color or exact Figma-fidelity claim.
+
+Validation evidence is recorded below after the final checks. No live Supabase,
+RLS/Auth, migration/provenance, Replit, deployment, production, domain/DNS or billing
+change. Product-owner UAT/acceptance and merge remain external.
+
+### UX package verification
+
+Hosted [quality run 41183556499](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/41183556499)
+passed all three jobs on implementation `ced572700702becfcce8c4d1cc53bf13762c2889`:
+62 files / 1181 unit tests, locked install, typecheck, both builds, bundle guard,
+tracked-file integrity, recovered migration integrity and isolated native backend/
+PostgREST lifecycle/conflict checks. These are hosted Linux checks, not live Supabase.
+
+Controlled hub, atomic creation, Project Settings, workspace lifecycle, Review and
+Publishing browsers passed **176/176** on that implementation across desktop
+1440/1280 and mobile 390 dark/light, including axe/overflow, keyboard rename,
+read-only roles, explicit Admin-only publishing and immediate archive/restore
+refresh. Desktop hub and mobile hub/project rows were visually inspected. Tests
+save ignored hub/project-row screenshots; no generated reports/screenshots committed.
+
+A final small follow-up preserves the optional demo Product field and the demo
+adapter's existing default-admin behavior, with the backend capability requirement
+unchanged. Creation retains explicit inline validation before any RPC. Expanded
+hub/backend units passed 22/22; the final app follow-up passed 19/19. Final workspace
+typecheck, both production builds and bundle guard passed at **727340/975000 initial
+JS bytes**, with all lazy boundaries retained. The existing client-exposure detector
+found no categories in 33 emitted files. Existing non-failing build notices remain.
+Final creation/download follow-up and current-head hosted CI results are retained
+in the unmerged PR for `codex/feature-project-hub-ux`; a green pre-PR quality run is
+required before opening it.
+
+Earlier local runs exposed obsolete navigation/key/slug selectors, corrected to
+assert the new behavior; an initial 8-pass/4-fail hub browser run captured an open
+focus-restored tooltip during axe. Its settled-state follow-up closes the tooltip
+and retains axe assertions. The first broad browser attempt was interrupted after
+obsolete workspace-management/slug-field assumptions; it is not a green run.
+The final 176-case run above passes without skips, retries or weakened assertions.
+A subsequent demo navigation test matched both the title and the newly accessible
+Settings link; it now selects the exact project title and passes unchanged behavior.
+
+Full local Windows attempts encountered the known four symlink EPERM failures and
+54 setup-blocked predeployment cases and were stopped. The application-only run
+completed 1052 passed / 21 outdated-UX assertion failures before those assertions
+were updated; targeted follow-ups and the complete hosted run above cover the
+corrections. No full local green suite or manual/live UAT is claimed. Existing
+archive/restore invalidation was retained and verified rather than inventing new
+entity lifecycles. Product-owner acceptance and staging verification remain external.

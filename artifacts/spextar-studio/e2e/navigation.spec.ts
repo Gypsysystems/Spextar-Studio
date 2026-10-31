@@ -58,7 +58,7 @@ test('workspace/project navigation, mobile drawer, collapse preference, theme an
   await activate(page, page.getByTestId('card-workspace-ws-a'));
   await activate(page, page.getByRole('link', { name: /Project A/ }).first());
   await expect(page.getByRole('heading', { name: 'Project A', exact: true })).toBeVisible();
-  await navigate(page, 'nav-documents');
+  await page.goto(projectPath + '/documents');
   await expect(page.getByRole('heading', { name: 'Documents', exact: true })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('Workspace A');
   await noOverflow(page);

@@ -1,3 +1,4 @@
+import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation } from 'wouter';
 import type { LifecycleDetails, LifecycleScope } from '@/domain/lifecycle';
@@ -84,7 +85,7 @@ export function LifecycleDialog({ scope, open, onOpenChange, deleteOnly = false 
           : step === 'archive' ? 'Archiving keeps the content. Restore the workspace whenever you need it again.'
           : 'Manage details and availability. Changes require the appropriate administrator role.'}</DialogDescription>
       </DialogHeader>
-      {q.isLoading && <p role="status">Loading details…</p>}
+      {q.isLoading && <div role="status" aria-label="Preparing details" className="space-y-4 py-3"><Skeleton className="h-10 w-full" /><Skeleton className="h-24 w-full" /></div>}
       {q.isError && <ErrorState error={q.error} onRetry={() => void reload()} />}
       {notice && <p role="status" className="text-sm">{notice}</p>}
       {error && <div role="alert" className="space-y-2 text-sm text-destructive"><p>{error}</p>
@@ -94,11 +95,7 @@ export function LifecycleDialog({ scope, open, onOpenChange, deleteOnly = false 
         <fieldset disabled={!snapshot.canEdit || pending} className="space-y-4">
           <div className="space-y-1.5"><Label htmlFor="lifecycle-name">Name</Label>
             <Input id="lifecycle-name" minLength={3} maxLength={80} required value={name} onChange={(e) => setName(e.target.value)} /></div>
-          {scope.kind === 'organization' ? <div className="space-y-1.5"><Label htmlFor="lifecycle-slug">Address slug</Label>
-            <Input id="lifecycle-slug" required maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={(e) => setSlug(e.target.value)} />
-            <p className="text-xs text-muted-foreground">Use lowercase letters, numbers and single hyphens.</p></div>
-            : <div className="space-y-1.5"><Label htmlFor="lifecycle-description">Description</Label>
-              <Textarea id="lifecycle-description" maxLength={400} value={description} onChange={(e) => setDescription(e.target.value)} /></div>}
+          {scope.kind !== 'organization' && <div className="space-y-1.5"><Label htmlFor="lifecycle-description">Description</Label><Textarea id="lifecycle-description" maxLength={400} value={description} onChange={e => setDescription(e.target.value)} /></div>}
           <Button type="submit" disabled={!dirty}>{pending ? 'Saving…' : 'Save details'}</Button>
         </fieldset>
         {!snapshot.canEdit && <p role="note" className="text-sm text-muted-foreground">Only an administrator can change these details.</p>}

@@ -25,7 +25,7 @@ for (const role of ['admin', 'author', 'reviewer', 'viewer', null] satisfies Rol
       await expect(body).not.toContainText('BLOCKED');
     }
     await noOverflow(page);
-    await page.goto(projectPath + '/review');
+    await page.goto(projectPath + '/review?document=doc-a');
     await expect(body).toContainText('Current saved QA topic');
     await expect(body).toHaveAttribute('contenteditable', 'false');
     await body.focus(); await page.keyboard.type('BLOCKED');
@@ -39,7 +39,7 @@ for (const role of ['admin', 'author', 'reviewer', 'viewer', null] satisfies Rol
 }
 
 test('Review saved hierarchy, error/retry, frozen validation, lossless legacy content and empty eligibility', async ({ page, backend }) => {
-  await login(page, projectPath + '/review');
+  await login(page, projectPath + '/review?document=doc-a');
   const body = page.getByRole('textbox', { name: 'Topic body' });
   await expect(body).toContainText('Current saved QA topic');
   const topicLabels = await page.locator('[data-testid^="review-topic-"]').allTextContents();
@@ -76,7 +76,7 @@ test('initial graph excludes Author/editor; Review defers viewer until a saved d
   await login(page);
   await expect(page.getByTestId('card-workspace-ws-a')).toBeVisible();
   expect(backend.scripts.some(url => /\/(?:author|structured-editor|review-draft-viewer)-/.test(url))).toBe(false);
-  await page.goto(projectPath + '/review');
+  await page.goto(projectPath + '/review?document=doc-a');
   await expect(page.getByTestId('review-draft-missing')).toBeVisible();
   expect(backend.scripts.some(url => /\/(?:author|structured-editor|review-draft-viewer)-/.test(url))).toBe(false);
   backend.db.topic_drafts.push({ topic_id: 'topic-a', content: bodyContent(), revision: 3, updated_at: '2026-10-27T10:00:00Z', updated_by: 'user-a' });

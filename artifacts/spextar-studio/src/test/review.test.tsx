@@ -16,7 +16,7 @@ describe('Review demo inspection', () => {
     await services.auth.enterDemo();
     const get = vi.spyOn(services.topicDrafts, 'get'), save = vi.spyOn(services.topicDrafts, 'save');
     const fetch = vi.spyOn(globalThis, 'fetch');
-    window.history.replaceState(null, '', '/workspaces/product-docs/projects/meridian-x4-user-guide/review');
+    window.history.replaceState(null, '', '/workspaces/product-docs/projects/meridian-x4-user-guide/review?document=mx4-measurement');
     render(<App services={services} />);
     expect(await screen.findByTestId('review-demo-note')).toHaveTextContent('Not a saved draft, no revision exists');
     expect(await screen.findByRole('textbox', { name: 'Topic body' })).toHaveAttribute('contenteditable', 'false');

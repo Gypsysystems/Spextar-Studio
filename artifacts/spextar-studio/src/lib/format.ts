@@ -19,14 +19,14 @@ export function shortDate(iso: string): string {
 
 export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
   active: 'Active',
-  'in-review': 'In review',
+  'in-review': 'In Review',
   archived: 'Archived',
 };
 
 export const DOC_STATUS_LABEL: Record<DocumentStatus, string> = {
-  draft: 'Draft',
-  'in-review': 'In review',
-  approved: 'Approved',
+  draft: 'In Progress',
+  'in-review': 'In Review',
+  approved: 'Reviewed',
   published: 'Published',
 };
 

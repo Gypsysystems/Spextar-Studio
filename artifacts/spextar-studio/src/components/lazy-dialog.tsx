@@ -1,3 +1,4 @@
+import { Skeleton } from '@/components/ui/skeleton';
 import { lazy, Suspense, useRef, type ComponentType } from 'react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Button } from '@/components/ui/button';
@@ -20,12 +21,12 @@ export function createLazyDialog<P extends DialogProps>(
         <DialogHeader>
           <DialogTitle>{failed ? `${title} unavailable` : title}</DialogTitle>
           <DialogDescription>
-            {failed ? 'The form could not be downloaded. Reload Studio to try again, or close this dialog to continue.' : 'Loading form…'}
+            {failed ? 'The form could not be downloaded. Reload Studio to try again, or close this dialog to continue.' : 'Preparing your form.'}
           </DialogDescription>
         </DialogHeader>
-        <p role={failed ? 'alert' : 'status'} className="text-sm text-muted-foreground">
-          {failed ? 'No changes were made.' : 'Please wait while the form loads.'}
-        </p>
+        <div role={failed ? 'alert' : 'status'} className="text-sm text-muted-foreground">
+          {failed ? 'No changes were made.' : <div aria-label="Preparing form" className="block space-y-4 py-3"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-24 w-full" /></div>}
+        </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => props.onOpenChange(false)}>Cancel</Button>
           {failed && <Button onClick={() => window.location.reload()}>Reload Studio</Button>}
