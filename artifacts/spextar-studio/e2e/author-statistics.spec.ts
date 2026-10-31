@@ -13,6 +13,24 @@ test('workflow guidance matches available project lifecycle and Author submissio
   await accessible(page);
   await page.goto(projectPath + '/author/doc-a');
   await expect(page.getByTestId('body-save-status')).toContainText('Saved');
+  await expect(page.getByRole('group', { name: 'Topic metadata', exact: true })).toBeVisible();
+  const numberContrast = await page.getByRole('listbox', { name: 'Topics' }).getByRole('option', { selected: true }).locator('.topic-num').evaluate(el => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = getComputedStyle(el.parentElement!).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    const background = [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+    context.fillStyle = getComputedStyle(el).color;
+    context.fillRect(0, 0, 1, 1);
+    const foreground = [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+    const luminance = (rgb: number[]) => rgb.map(c => c / 255)
+      .map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+      .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+    const a = luminance(background), b = luminance(foreground);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  });
+  expect(numberContrast, 'Selected topic number meets normal-text contrast').toBeGreaterThanOrEqual(4.5);
   await expect(page.getByRole('button', { name: 'Submit for review', exact: true })).toBeEnabled();
   await expect(page.getByTestId('author-workflow-scope')).toContainText('Use Submit for review on a saved draft');
   await activate(page, page.getByTestId('link-inspector-review'));
