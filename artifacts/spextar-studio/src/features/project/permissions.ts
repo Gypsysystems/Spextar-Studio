@@ -5,5 +5,5 @@ import type { ProjectSummary } from '@/domain/types';
 export function canManageProject(project: ProjectSummary): boolean {
   return project.source === 'backend'
     ? project.canEditContent === true && project.canReview === true
-    : project.role === 'admin';
+    : (project.role ?? 'admin') === 'admin';
 }

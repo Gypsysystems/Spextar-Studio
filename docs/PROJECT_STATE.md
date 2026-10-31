@@ -888,3 +888,46 @@ design system, branding geometry, font, color or exact Figma-fidelity claim.
 Validation evidence is recorded below after the final checks. No live Supabase,
 RLS/Auth, migration/provenance, Replit, deployment, production, domain/DNS or billing
 change. Product-owner UAT/acceptance and merge remain external.
+
+### UX package verification
+
+Hosted [quality run 41183556499](https://github.com/Gypsysystems/Spextar-Studio/actions/runs/41183556499)
+passed all three jobs on implementation `ced572700702becfcce8c4d1cc53bf13762c2889`:
+62 files / 1181 unit tests, locked install, typecheck, both builds, bundle guard,
+tracked-file integrity, recovered migration integrity and isolated native backend/
+PostgREST lifecycle/conflict checks. These are hosted Linux checks, not live Supabase.
+
+Controlled hub, atomic creation, Project Settings, workspace lifecycle, Review and
+Publishing browsers passed **176/176** on that implementation across desktop
+1440/1280 and mobile 390 dark/light, including axe/overflow, keyboard rename,
+read-only roles, explicit Admin-only publishing and immediate archive/restore
+refresh. Desktop hub and mobile hub/project rows were visually inspected. Tests
+save ignored hub/project-row screenshots; no generated reports/screenshots committed.
+
+A final small follow-up preserves the optional demo Product field and the demo
+adapter's existing default-admin behavior, with the backend capability requirement
+unchanged. Creation retains explicit inline validation before any RPC. Expanded
+hub/backend units passed 22/22; the final app follow-up passed 19/19. Final workspace
+typecheck, both production builds and bundle guard passed at **727340/975000 initial
+JS bytes**, with all lazy boundaries retained. The existing client-exposure detector
+found no categories in 33 emitted files. Existing non-failing build notices remain.
+Final creation/download follow-up and current-head hosted CI results are retained
+in the unmerged PR for `codex/feature-project-hub-ux`; a green pre-PR quality run is
+required before opening it.
+
+Earlier local runs exposed obsolete navigation/key/slug selectors, corrected to
+assert the new behavior; an initial 8-pass/4-fail hub browser run captured an open
+focus-restored tooltip during axe. Its settled-state follow-up closes the tooltip
+and retains axe assertions. The first broad browser attempt was interrupted after
+obsolete workspace-management/slug-field assumptions; it is not a green run.
+The final 176-case run above passes without skips, retries or weakened assertions.
+A subsequent demo navigation test matched both the title and the newly accessible
+Settings link; it now selects the exact project title and passes unchanged behavior.
+
+Full local Windows attempts encountered the known four symlink EPERM failures and
+54 setup-blocked predeployment cases and were stopped. The application-only run
+completed 1052 passed / 21 outdated-UX assertion failures before those assertions
+were updated; targeted follow-ups and the complete hosted run above cover the
+corrections. No full local green suite or manual/live UAT is claimed. Existing
+archive/restore invalidation was retained and verified rather than inventing new
+entity lifecycles. Product-owner acceptance and staging verification remain external.

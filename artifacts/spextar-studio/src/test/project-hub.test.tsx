@@ -1,3 +1,4 @@
+import { createDemoServices } from '@/services/demo-adapter';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,9 +8,9 @@ import { supabaseDouble } from './supabase-double';
 import { reviewFixture } from './review-fixtures';
 
 const base = '/workspaces/ws-a/projects/project-a';
-async function mount(path = base, role = 'admin') {
+async function mount(path = base, role: string | null = 'admin') {
   const f = supabaseDouble();
-  f.db.project_members[0].role = role;
+  if (role) f.db.project_members[0].role = role; else f.db.project_members = [];
   f.db.documents = ['draft', 'in_review', 'approved', 'published'].map((status, i) => ({ id: `doc-${i}`, project_id: 'project-a', title: `Document ${i}`, slug: `doc-${i}`, status, description: null, settings: {}, created_by: 'user-a', created_at: '2026-10-27T10:00:00Z', updated_at: '2026-10-27T10:00:00Z' }));
   const services = createSupabaseServices(f.client);
   vi.spyOn(services.reviews!, 'latest').mockResolvedValue({ ...reviewFixture(), document_id: 'doc-0', status: 'changes_requested' });
@@ -19,6 +20,21 @@ async function mount(path = base, role = 'admin') {
   return { ...f, services, user: userEvent.setup() };
 }
 describe('Project document hub', () => {
+  it('keeps meaningful demo product details while generating a hidden project key', async () => {
+    const services = createDemoServices({ latencyMs: 0 });
+    await services.auth.enterDemo();
+    window.history.replaceState(null, '', '/workspaces/product-docs/projects');
+    render(<App services={services} />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId('button-create-project'));
+    await user.type(await screen.findByTestId('input-project-name'), 'Sample project');
+    expect(screen.queryByTestId('input-project-key')).not.toBeInTheDocument();
+    await user.type(screen.getByTestId('input-project-product'), 'Sample product');
+    await user.click(screen.getByTestId('button-submit-create-project'));
+    await screen.findByRole('heading', { name: 'Project Stats' });
+    const created = (await services.projects.listProjects('product-docs')).find(p => p.name === 'Sample project');
+    expect(created).toMatchObject({ product: 'Sample product', key: expect.stringMatching(/^P[A-F0-9]{9}$/) });
+  });
   it('lists every document, filters in place, searches, sorts and opens directly', async () => {
     const f = await mount();
     const list = screen.getByRole('region', { name: 'Project documents' });
@@ -65,7 +81,7 @@ describe('Project document hub', () => {
     expect(input).toHaveValue('My edit');
     expect(f.db.projects[0].name).toBe('Project A');
   });
-  it.each(['author', 'reviewer', 'viewer'])('keeps %s project administration unavailable', async role => {
+  it.each(['author', 'reviewer', 'viewer', null])('keeps %s project administration unavailable', async role => {
     await mount(base, role);
     expect(screen.queryByRole('button', { name: 'Edit project name' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument();

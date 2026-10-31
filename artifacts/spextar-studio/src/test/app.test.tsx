@@ -75,7 +75,7 @@ describe('foundation routes and navigation', () => {
   it('navigates workspace → project → documents → Author with contextual breadcrumbs', async () => {
     const { user } = await mount();
     await user.click(await screen.findByTestId('card-workspace-product-docs'));
-    const project = await screen.findByRole('link', { name: /Meridian X4 User Guide/ });
+    const project = await screen.findByRole('link', { name: 'Meridian X4 User Guide' });
     await user.click(project);
     expect(await screen.findByRole('heading', { name: 'Documents' })).toBeVisible();
     expect(screen.queryByTestId('nav-documents')).not.toBeInTheDocument();
