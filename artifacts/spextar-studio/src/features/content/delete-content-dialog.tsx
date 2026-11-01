@@ -7,6 +7,7 @@ import type { DocumentRecord, Topic } from '@/domain/types';
 import { useServices } from '@/providers/services-provider';
 import { useContentDeletion } from '@/hooks/use-content-deletion';
 import { ActionIcon } from '@/components/action-icon';
+import { IconActionButton } from '@/components/icon-action-button';
 
 export function DeleteContentDialog({ doc, topic, onTopicDeleted }: {
   doc: DocumentRecord; topic?: Topic; onTopicDeleted?: (id: string) => void;
@@ -37,7 +38,7 @@ export function DeleteContentDialog({ doc, topic, onTopicDeleted }: {
     setOpen(next);
     if (next) { setSnapshot({ doc, topic }); setConfirmation(''); mutation.reset(); }
   }}>
-    <DialogTrigger asChild><Button size="sm" variant="outline" className="text-destructive"><ActionIcon action="delete" />{label}</Button></DialogTrigger>
+    <DialogTrigger asChild><IconActionButton action="delete" label={label} className="text-destructive" /></DialogTrigger>
     <DialogContent onOpenAutoFocus={(event) => { event.preventDefault(); cancel.current?.focus(); }}>
       <DialogHeader><DialogTitle>{label}?</DialogTitle>
         <DialogDescription>This permanently deletes “{title}”. It cannot be undone. Unsaved local edits for this item will be discarded. Other documents and topics are not selected for deletion.</DialogDescription>

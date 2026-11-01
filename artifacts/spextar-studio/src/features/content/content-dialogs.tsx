@@ -11,9 +11,10 @@ import type { DocumentRecord, Topic } from '@/domain/types';
 import { topicDescendants } from '@/domain/topic-tree';
 import { MetadataEditor } from './metadata-editor';
 import { ActionIcon } from '@/components/action-icon';
+import { IconActionButton } from '@/components/icon-action-button';
 
 export function DocumentMetadataDialog({ doc }: { doc: DocumentRecord }) {
-  return <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Details</Button></DialogTrigger>
+  return <Dialog><DialogTrigger asChild><IconActionButton action="details" label="Details" /></DialogTrigger>
     <DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Document metadata</DialogTitle><DialogDescription>Metadata saves automatically. Topic bodies autosave separately in Author; saving does not submit content for review.</DialogDescription></DialogHeader>
       <MetadataEditor projectId={doc.projectId} doc={doc} />
     </DialogContent></Dialog>;
@@ -46,7 +47,9 @@ export function ContentDialog({ action, projectId, doc, topic, onTopic }: {
       setPosition(String(topic?.sortOrder ?? 0)); mutation.reset();
     }
   }}>
-    <DialogTrigger asChild><Button size="sm" variant={action === 'document' ? 'default' : 'outline'}>{action.startsWith('duplicate') && <ActionIcon action="duplicate" />}{label}</Button></DialogTrigger>
+    <DialogTrigger asChild>{action.startsWith('duplicate')
+      ? <IconActionButton action="duplicate" label={label} />
+      : <Button size="sm" variant={action === 'document' ? 'default' : 'outline'}>{label}</Button>}</DialogTrigger>
     <DialogContent><DialogHeader><DialogTitle>{label}</DialogTitle><DialogDescription>{action === 'move' ? 'The database validates hierarchy and sibling ordering.' : action.startsWith('duplicate') ? 'Copies start as drafts and include saved Topic bodies. Unsaved browser edits are not included.' : action === 'document' ? 'Create a document in this project. Topic bodies save separately when authored.' : 'New Topics have no saved body until their first body edit is saved.'}</DialogDescription></DialogHeader>
       <form className="space-y-4" onSubmit={(event) => {
         event.preventDefault();

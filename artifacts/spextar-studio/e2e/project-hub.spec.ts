@@ -31,14 +31,40 @@ test('project title and primary action open the complete document hub by click a
     await page.goto('/workspaces/ws-a/projects');
   }
   await row.getByRole('link', { name: 'Open project Project A', exact: true }).click();
+  await activate(page, page.getByRole('link', { name: 'QA document', exact: true }));
+  await expect(page.getByRole('textbox', { name: 'Topic body' })).toHaveAttribute('contenteditable', 'true');
+});
+
+test('compact document icons expose hover and focus tooltips and preserve keyboard navigation', async ({ page }) => {
+  await login(page, projectPath);
   const documentRow = page.getByTestId('row-document-doc-a');
-  await expect(documentRow.getByRole('button', { name: 'Details', exact: true, includeHidden: true })).toBeAttached();
+  const details = documentRow.getByRole('button', { name: 'Details', exact: true });
+  await expect(details).toBeVisible();
+  await details.focus();
+  await expect(page.getByRole('tooltip', { name: 'Details', exact: true })).toBeVisible();
+  await details.press('Enter');
+  await expect(page.getByRole('dialog', { name: 'Document metadata' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(details).toBeFocused();
   await expect(documentRow.getByRole('button', { name: 'Document metadata', exact: true, includeHidden: true })).toHaveCount(0);
   for (const label of ['Duplicate document', 'Delete document']) {
-    await expect(documentRow.getByRole('button', { name: label, exact: true, includeHidden: true }).locator('svg[aria-hidden="true"]')).toBeAttached();
+    const action = documentRow.getByRole('button', { name: label, exact: true });
+    await expect(action).toBeVisible();
+    await expect(action).toHaveText('');
+    await expect(action.locator('svg[aria-hidden="true"]')).toBeVisible();
+    await action.hover();
+    await expect(page.getByRole('tooltip', { name: label, exact: true })).toBeVisible();
   }
+  await expect(details).toHaveText('');
+  await expect(documentRow.getByRole('link', { name: 'Open', exact: true })).toHaveText('');
+  await expect(page.getByRole('button', { name: 'Create document', exact: true })).toHaveText('Create document');
+  await noOverflow(page);
+  await page.screenshot({ path: test.info().outputPath('document-icon-actions.png'), fullPage: true });
   await expect(documentRow.getByRole('link', { name: 'Open', exact: true }).locator('svg[aria-hidden="true"]')).toBeVisible();
-  await activate(page, page.getByRole('link', { name: 'QA document', exact: true }));
+  const open = documentRow.getByRole('link', { name: 'Open', exact: true });
+  await open.focus();
+  await expect(page.getByRole('tooltip', { name: 'Open', exact: true })).toBeVisible();
+  await open.press('Enter');
   await expect(page.getByRole('textbox', { name: 'Topic body' })).toHaveAttribute('contenteditable', 'true');
 });
 

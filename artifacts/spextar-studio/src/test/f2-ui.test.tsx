@@ -44,11 +44,12 @@ describe('F2 UI persistence and read-only states', () => {
     expect(within(dialog).getByRole('heading', { name: 'Document metadata' })).toBeVisible();
     expect(within(documentMetadata).queryByLabelText('Document slug')).not.toBeInTheDocument();
   });
-  it('keeps duplicate and delete text names with decorative icons and destructive styling', async () => {
+  it('keeps icon-only actions named with decorative icons and destructive styling', async () => {
     setup();
     const duplicate = await screen.findByRole('button', { name: 'Duplicate document' });
     const remove = screen.getByRole('button', { name: 'Delete document' });
     for (const button of [duplicate, remove]) {
+      expect(button.textContent).toBe('');
       expect(button.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
       expect(button.querySelector('svg')).toHaveAttribute('focusable', 'false');
     }

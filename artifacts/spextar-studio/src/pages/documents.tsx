@@ -17,7 +17,8 @@ import { ContentDialog, DocumentMetadataDialog } from '@/features/content/conten
 import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
 import { UserIdentity } from '@/components/user-identity';
 import { documentVersionLabel } from '@/lib/presentation';
-import { ActionIcon } from '@/components/action-icon';
+import { IconActionButton } from '@/components/icon-action-button';
+import { ArrowRight } from 'lucide-react';
 
 export function DocumentsBody({ project, base }: { project: ProjectSummary; base: string }) {
   const backend = useServices().mode === 'backend';
@@ -98,12 +99,12 @@ export function DocumentsBody({ project, base }: { project: ProjectSummary; base
                       </p>
                     </div>
                     <DocumentFeedback projectId={project.id} documentId={d.id} draft={d.status === 'draft'} /><StatusPill status={d.status} label={DOC_STATUS_LABEL[d.status]} className="shrink-0" />
-                    {backend && <div className="hidden lg:flex gap-2"><DocumentMetadataDialog doc={d} />{d.canEdit && <><ContentDialog action="duplicate-document" projectId={project.id} doc={d} /><DeleteContentDialog doc={d} /></>}</div>}
+                    {backend && <div className="flex gap-2"><DocumentMetadataDialog doc={d} />{d.canEdit && <><ContentDialog action="duplicate-document" projectId={project.id} doc={d} /><DeleteContentDialog doc={d} /></>}</div>}
                     {d.status === 'in-review' && <Button variant="outline" size="sm" asChild><Link href={`${base}/review?document=${encodeURIComponent(d.id)}`}>Review</Link></Button>}
                     {(d.status === 'approved' || d.status === 'published') && <Button variant="outline" size="sm" asChild><Link href={`${base}/publish?document=${encodeURIComponent(d.id)}`}>{d.status === 'published' ? 'Releases' : 'Publish / releases'}</Link></Button>}
-                    <Button variant="ghost" size="sm" asChild data-testid={`link-author-${d.id}`}>
-                      <Link href={`${base}/author/${d.id}`}><ActionIcon action="open" />Open</Link>
-                    </Button>
+                    <IconActionButton action="open" label="Open" variant="ghost" asChild data-testid={`link-author-${d.id}`}>
+                      <Link href={`${base}/author/${d.id}`}><ArrowRight aria-hidden="true" focusable="false" /></Link>
+                    </IconActionButton>
                   </div>
                   {open && (
                     <ol id={`outline-${d.id}`} className="border-t bg-muted/30 px-4 py-3 font-mono text-[12.5px]">
