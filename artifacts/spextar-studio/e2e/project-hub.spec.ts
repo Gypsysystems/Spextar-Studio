@@ -5,6 +5,35 @@ async function accessible(page: Parameters<typeof login>[0]) {
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 }
 
+test('project title and primary action open the complete document hub by click and keyboard', async ({ page, backend }) => {
+  const first = backend.db.documents[0];
+  for (let i = 1; i <= 12; i++) backend.db.documents.push({
+    ...first, id: `hub-doc-${i}`, title: `Hub document ${i}`, slug: `hub-${i}`,
+    status: ['draft', 'in_review', 'approved', 'published'][i % 4],
+  });
+  await login(page, '/workspaces/ws-a/projects');
+  await expect(page.getByText('Projects in this workspace.', { exact: true })).toBeVisible();
+  const row = page.getByTestId('row-project-project-a');
+  for (const target of ['title-click', 'title-keyboard', 'action-click', 'action-keyboard']) {
+    const link = target.startsWith('title')
+      ? row.getByRole('link', { name: 'Project A', exact: true })
+      : row.getByRole('link', { name: 'Open project Project A', exact: true });
+    await expect(link).toHaveAttribute('href', projectPath);
+    if (target.endsWith('keyboard')) { await link.focus(); await link.press('Enter'); }
+    else await link.click();
+    await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+    await expect(page.getByRole('heading', { name: 'Project Stats' })).toBeVisible();
+    await expect(page.getByText('Documents in this project.', { exact: true })).toBeVisible();
+    await expect(page.getByTestId(/^row-document-/)).toHaveCount(13);
+    await expect(page.getByTestId('text-doc-count')).toHaveText('13');
+    await noOverflow(page);
+    await page.goto('/workspaces/ws-a/projects');
+  }
+  await row.getByRole('link', { name: 'Open project Project A', exact: true }).click();
+  await activate(page, page.getByRole('link', { name: 'QA document', exact: true }));
+  await expect(page.getByRole('textbox', { name: 'Topic body' })).toHaveAttribute('contenteditable', 'true');
+});
+
 test('tablet project rows retain readable titles and reachable admin actions with expanded navigation', async ({ page, backend }) => {
   backend.setRole('admin'); backend.settings.enabled = true;
   backend.db.projects[0].name = 'SPEXTAR UAT';

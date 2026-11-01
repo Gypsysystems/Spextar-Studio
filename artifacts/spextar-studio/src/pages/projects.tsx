@@ -85,7 +85,7 @@ export default function ProjectsPage() {
         <PageHeader
           eyebrow={<span className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary">Projects</span>}
           title={workspace.name}
-          description={workspace.description}
+          description="Projects in this workspace."
           meta={workspace.status === 'archived' ? <span>Archived workspace · content is kept until permanently deleted</span> : undefined}
           actions={
             <>
@@ -174,7 +174,10 @@ export default function ProjectsPage() {
                       </span>
                       <span className="hidden lg:block"><StatusPill status={p.status} label={PROJECT_STATUS_LABEL[p.status]} /></span>
                       <span className="hidden text-[13px] text-muted-foreground lg:block">{relative(p.updatedAt)}</span>
-                      <span className="flex flex-wrap items-center gap-1">{canManageProject(p) && <><Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon"><Link href={projectBase(workspace.id, p.id) + '/settings'} aria-label={`Settings for ${p.name}`}><Settings className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>Project settings</TooltipContent></Tooltip></>}</span>
+                      <span className="flex flex-wrap items-center gap-1">
+                        <Button asChild variant="ghost" size="sm"><Link href={projectBase(workspace.id, p.id)} aria-label={`Open project ${p.name}`}>Open</Link></Button>
+                        {canManageProject(p) && <><Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon"><Link href={projectBase(workspace.id, p.id) + '/settings'} aria-label={`Settings for ${p.name}`}><Settings className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>Project settings</TooltipContent></Tooltip></>}
+                      </span>
                     </div>
                   </li>
                 ))}

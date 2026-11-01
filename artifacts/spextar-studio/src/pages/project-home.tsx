@@ -16,7 +16,7 @@ function HomeBody({ project, base }: { project: ProjectSummary; base: string }) 
   const docs = useDocuments(project.id);
   const activity = useActivity(project.id);
   return <div className="mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-10">
-    <PageHeader titleLabel={project.name} title={<InlineProjectName project={project} />} description={project.description || 'No description yet.'}
+    <PageHeader titleLabel={project.name} title={<InlineProjectName project={project} />} description="Documents in this project."
       actions={canManageProject(project) ? <Button asChild variant="outline"><Link href={`${base}/settings`}><Settings className="mr-1.5 h-4 w-4" />Settings</Link></Button> : undefined} />
     <section aria-labelledby="project-stats" className="mt-6 rounded-lg border bg-card p-5">
       <h2 id="project-stats" className="text-sm font-semibold">Project Stats</h2>

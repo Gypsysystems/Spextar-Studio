@@ -65,11 +65,8 @@ export default function SignInPage() {
         </div>
         <Wordmark tone="light" />
         <div className="relative mt-auto max-w-md">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[hsl(253_100%_80%)]">Structured authoring</p>
           <h2 className="mt-4 text-[40px] font-semibold leading-[1.08] tracking-tight">
-            Structure first.
-            <br />
-            <span className="text-white/55">Then every sentence has a place.</span>
+            Documentation workspace
           </h2>
           <div className="mt-10 rounded-lg border border-white/10 bg-white/[0.03] p-5 font-mono text-[12.5px]" aria-hidden>
             {OUTLINE.map((o, i) => (

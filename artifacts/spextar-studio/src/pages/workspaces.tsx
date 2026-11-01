@@ -45,8 +45,8 @@ export default function WorkspacesPage() {
               {org?.name ?? 'Organization'}
             </span>
           }
-          title={session ? `Good to see you, ${session.name.split(' ')[0]}` : 'Workspaces'}
-          description="Each workspace holds the projects for one documentation team. Pick up where the team left off."
+          title="Workspaces"
+          description="Workspaces in your organization."
           meta={!session ? <ScopeMarker kind="demo">Preview without sign-in</ScopeMarker> : undefined}
           actions={
             <Button onClick={() => setCreateOpen(true)} disabled={mode === 'backend' && !org} data-testid="button-create-workspace">
