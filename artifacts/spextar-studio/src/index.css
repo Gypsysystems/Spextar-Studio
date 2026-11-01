@@ -3,6 +3,13 @@
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
+/* Native stretched links keep secondary controls independent of row navigation. */
+.item-open-row { position: relative; isolation: isolate; }
+.item-open-link:hover { color: hsl(var(--accent-foreground)); }
+.item-open-link::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.item-open-link:focus-visible::after { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+.item-open-row :is(button, input, select, textarea, [data-row-action]) { position: relative; z-index: 2; }
+
 @custom-variant dark (&:is(.dark *));
 
 /* Foreground-only contrast variants. Approved action/selection fills stay #6236FF. */

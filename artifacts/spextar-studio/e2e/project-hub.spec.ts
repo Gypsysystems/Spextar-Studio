@@ -5,7 +5,7 @@ async function accessible(page: Parameters<typeof login>[0]) {
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 }
 
-test('project title and primary action open the complete document hub by click and keyboard', async ({ page, backend }) => {
+test('project rows open the complete document hub by click and keyboard without redundant Open actions', async ({ page, backend }) => {
   const first = backend.db.documents[0];
   for (let i = 1; i <= 12; i++) backend.db.documents.push({
     ...first, id: `hub-doc-${i}`, title: `Hub document ${i}`, slug: `hub-${i}`,
@@ -14,13 +14,15 @@ test('project title and primary action open the complete document hub by click a
   await login(page, '/workspaces/ws-a/projects');
   await expect(page.getByText('Projects in this workspace.', { exact: true })).toBeVisible();
   const row = page.getByTestId('row-project-project-a');
-  for (const target of ['title-click', 'title-keyboard', 'action-click', 'action-keyboard']) {
-    const link = target.startsWith('title')
-      ? row.getByRole('link', { name: 'Project A', exact: true })
-      : row.getByRole('link', { name: 'Open project Project A', exact: true });
+  for (const target of ['title-click', 'row-click', 'title-keyboard']) {
+    const link = row.getByRole('link', { name: 'Project A', exact: true });
     await expect(link).toHaveAttribute('href', projectPath);
-    if (target.startsWith('action')) await expect(link.locator('svg[aria-hidden="true"]')).toBeVisible();
+    await expect(row.getByRole('link', { name: /^Open/ })).toHaveCount(0);
     if (target.endsWith('keyboard')) { await link.focus(); await link.press('Enter'); }
+    else if (target === 'row-click') {
+      const bounds = await row.boundingBox();
+      await row.click({ position: { x: bounds!.width / 2, y: bounds!.height - 3 } });
+    }
     else await link.click();
     await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
     await expect(page.getByRole('heading', { name: 'Project Stats' })).toBeVisible();
@@ -30,12 +32,12 @@ test('project title and primary action open the complete document hub by click a
     await noOverflow(page);
     await page.goto('/workspaces/ws-a/projects');
   }
-  await row.getByRole('link', { name: 'Open project Project A', exact: true }).click();
+  await row.getByRole('link', { name: 'Project A', exact: true }).click();
   await activate(page, page.getByRole('link', { name: 'QA document', exact: true }));
   await expect(page.getByRole('textbox', { name: 'Topic body' })).toHaveAttribute('contenteditable', 'true');
 });
 
-test('compact document icons expose hover and focus tooltips and preserve keyboard navigation', async ({ page }) => {
+test('document rows open directly while secondary icons retain tooltips and independent dialogs', async ({ page }) => {
   await login(page, projectPath);
   const documentRow = page.getByTestId('row-document-doc-a');
   const details = documentRow.getByRole('button', { name: 'Details', exact: true });
@@ -54,16 +56,27 @@ test('compact document icons expose hover and focus tooltips and preserve keyboa
     await expect(action.locator('svg[aria-hidden="true"]')).toBeVisible();
     await action.hover();
     await expect(page.getByRole('tooltip', { name: label, exact: true })).toBeVisible();
+    await action.click();
+    await expect(page.getByRole('dialog', { name: label === 'Delete document' ? 'Delete document?' : label, exact: true })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+    await page.keyboard.press('Escape');
+    await expect(action).toBeFocused();
   }
   await expect(details).toHaveText('');
-  await expect(documentRow.getByRole('link', { name: 'Open', exact: true })).toHaveText('');
+  await expect(documentRow.getByRole('link', { name: 'Open', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Create document', exact: true })).toHaveText('Create document');
   await noOverflow(page);
   await page.screenshot({ path: test.info().outputPath('document-icon-actions.png'), fullPage: true });
-  await expect(documentRow.getByRole('link', { name: 'Open', exact: true }).locator('svg[aria-hidden="true"]')).toBeVisible();
-  const open = documentRow.getByRole('link', { name: 'Open', exact: true });
+  await documentRow.getByRole('button', { name: 'Expand outline for QA document' }).click();
+  await expect(documentRow.getByRole('link', { name: 'QA topic', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+  const header = documentRow.locator('.item-open-row').first();
+  const bounds = await header.boundingBox();
+  await header.click({ position: { x: bounds!.width / 2, y: bounds!.height - 3 } });
+  await expect(page).toHaveURL(new RegExp(`${projectPath}/author/doc-a`));
+  await page.goto(projectPath);
+  const open = documentRow.getByRole('link', { name: 'QA document', exact: true });
   await open.focus();
-  await expect(page.getByRole('tooltip', { name: 'Open', exact: true })).toBeVisible();
   await open.press('Enter');
   await expect(page.getByRole('textbox', { name: 'Topic body' })).toHaveAttribute('contenteditable', 'true');
 });
@@ -83,6 +96,9 @@ test('tablet project rows retain readable titles and reachable admin actions wit
   await expect(row.getByRole('link', { name: 'Settings for SPEXTAR UAT' })).toBeVisible();
   await accessible(page);
   await page.screenshot({ path: test.info().outputPath('tablet-project-actions.png'), fullPage: true });
+  await row.getByRole('link', { name: 'Settings for SPEXTAR UAT' }).click();
+  await expect(page).toHaveURL(new RegExp(`${projectPath}/settings$`));
+  await page.goto('/workspaces/ws-a/projects');
   await title.click();
   await expect(page.getByRole('heading', { name: 'Project Stats' })).toBeVisible();
 });

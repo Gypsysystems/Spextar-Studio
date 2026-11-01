@@ -38,7 +38,7 @@ export function InlineProjectName({ project, href }: { project: ProjectSummary; 
         });
       }}>{mutation.isPending ? 'Saving…' : 'Save'}</Button>
       <Button type="button" size="sm" variant="ghost" disabled={mutation.isPending} onClick={() => { setMessage(''); close(); }}>Cancel</Button>
-    </span> : <>{href ? <Link href={href} className="min-w-0 font-medium underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring [overflow-wrap:anywhere]">{project.name}</Link> : <span className="min-w-0 [overflow-wrap:anywhere]">{project.name}</span>}
+    </span> : <>{href ? <Link href={href} className="item-open-link min-w-0 font-medium underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring [overflow-wrap:anywhere]">{project.name}</Link> : <span className="min-w-0 [overflow-wrap:anywhere]">{project.name}</span>}
       {canManageProject(project) && <Tooltip><TooltipTrigger asChild><Button ref={opener} type="button" size="icon" variant="ghost" disabled={loading}
         aria-label="Edit project name" onClick={async () => {
           setLoading(true); setLoadError(false); setMessage(''); mutation.reset();

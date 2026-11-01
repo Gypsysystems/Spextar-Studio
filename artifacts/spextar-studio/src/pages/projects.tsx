@@ -19,8 +19,6 @@ import { PROJECT_STATUS_LABEL, relative } from '@/lib/format';
 import { useServices } from '@/providers/services-provider';
 import type { ProjectStatus } from '@/domain/types';
 import { cn } from '@/lib/utils';
-import { IconActionButton } from '@/components/icon-action-button';
-import { ArrowRight } from 'lucide-react';
 
 const CreateProjectDialog = createLazyDialog('Create project', () =>
   import('@/features/projects/create-project-dialog').then(module => ({ default: module.CreateProjectDialog })));
@@ -162,7 +160,7 @@ export default function ProjectsPage() {
                   <li key={p.id}>
                     <div
                       data-testid={`row-project-${p.id}`}
-                      className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/40 lg:grid-cols-[minmax(0,1fr)_110px_100px_100px_90px]"
+                      className="item-open-row group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-accent/40 lg:grid-cols-[minmax(0,1fr)_110px_100px_100px_90px]"
                     >
                       <span className="min-w-0">
                         <span className="flex flex-wrap items-center gap-2">
@@ -177,8 +175,7 @@ export default function ProjectsPage() {
                       <span className="hidden lg:block"><StatusPill status={p.status} label={PROJECT_STATUS_LABEL[p.status]} /></span>
                       <span className="hidden text-[13px] text-muted-foreground lg:block">{relative(p.updatedAt)}</span>
                       <span className="flex flex-wrap items-center gap-1">
-                        <IconActionButton action="open" label={`Open project ${p.name}`} variant="ghost" asChild><Link href={projectBase(workspace.id, p.id)}><ArrowRight aria-hidden="true" focusable="false" /></Link></IconActionButton>
-                        {canManageProject(p) && <><Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon"><Link href={projectBase(workspace.id, p.id) + '/settings'} aria-label={`Settings for ${p.name}`}><Settings className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>Project settings</TooltipContent></Tooltip></>}
+                        {canManageProject(p) && <><Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon"><Link data-row-action href={projectBase(workspace.id, p.id) + '/settings'} aria-label={`Settings for ${p.name}`}><Settings className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>Project settings</TooltipContent></Tooltip></>}
                       </span>
                     </div>
                   </li>
