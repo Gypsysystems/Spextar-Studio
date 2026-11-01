@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { ActionIcon } from '@/components/action-icon';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation } from 'wouter';
 import type { LifecycleDetails, LifecycleScope } from '@/domain/lifecycle';
@@ -109,7 +110,7 @@ export function LifecycleDialog({ scope, open, onOpenChange, deleteOnly = false 
           <p className="text-sm text-muted-foreground">{scope.kind === 'organization' ? 'Only the owner can delete this organization.'
             : 'Archive this item first. Deleting it permanently can remove related content.'}</p>
           <Button type="button" variant="destructive" disabled={!canDelete || pending || dirty} onClick={() => { setError(null); setTyped(''); setAcknowledged(false); setStep('delete'); }}>
-            Delete {scope.kind} permanently</Button>
+            <ActionIcon action="delete" />Delete {scope.kind} permanently</Button>
         </div>
       </form>}
       {snapshot && !q.isError && step === 'archive' && <div className="space-y-3">
@@ -130,7 +131,7 @@ export function LifecycleDialog({ scope, open, onOpenChange, deleteOnly = false 
           disabled={!canDelete || pending} onChange={(e) => setAcknowledged(e.target.checked)} />
           I understand this permanently deletes data and cannot be undone.</label>
         <Button type="submit" variant="destructive" disabled={!canDelete || pending || typed !== snapshot.name || !acknowledged}>
-          {pending ? 'Deleting…' : `Delete ${scope.kind} permanently`}</Button>
+          <ActionIcon action="delete" />{pending ? 'Deleting…' : `Delete ${scope.kind} permanently`}</Button>
       </form>}
       <DialogFooter>
         <Button id="lifecycle-cancel" variant="outline" disabled={pending} onClick={() => {

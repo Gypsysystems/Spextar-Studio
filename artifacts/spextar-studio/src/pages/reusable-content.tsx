@@ -1,7 +1,8 @@
+import { ActionIcon } from '@/components/action-icon';
 import { ReferenceUsage } from '@/features/content/reference-usage';
 import { useMemo, useState } from 'react';
 import { useParams } from 'wouter';
-import { Plus, FileText } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { ProjectScope, PageHeader } from '@/features/project/project-scope';
 import { ScopeMarker } from '@/components/states';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,7 @@ function ReusableBody({ context }: { context: ReusableContext }) {
                 <div className="rounded-lg border border-dashed p-4">
                   <h3 className="text-[14px] font-semibold">Body draft</h3>
                   <p className="mt-0.5 text-[12.5px] text-muted-foreground">The structured editor loads only when you open the draft.</p>
-                  <Button size="sm" variant="outline" className="mt-3" onClick={() => setDraftOpenFor(selected.id)} data-testid="reusable-body-open"><FileText className="mr-1.5 h-4 w-4" />Open draft</Button>
+                  <Button size="sm" variant="outline" className="mt-3" onClick={() => setDraftOpenFor(selected.id)} data-testid="reusable-body-open"><ActionIcon action="open" />Open draft</Button>
                 </div>
               )}
           </ReusableDetails>

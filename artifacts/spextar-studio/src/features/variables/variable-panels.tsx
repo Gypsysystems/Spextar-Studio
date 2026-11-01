@@ -1,4 +1,5 @@
 import { Search, Variable as VariableIcon, Link2 } from 'lucide-react';
+import { ActionIcon } from '@/components/action-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -108,7 +109,7 @@ export function VariableDetails({ variable, canEdit, pending, onEdit, onRename, 
         <p className="mt-0.5 text-[12.5px] text-muted-foreground">Rename preserves linked references. Deletion is unavailable to protect saved content.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onRename} disabled={disabled} data-testid="button-rename-variable">Rename</Button>
-          <Button variant="outline" size="sm" onClick={onDuplicate} disabled={disabled} data-testid="button-duplicate-variable">Duplicate</Button>
+          <Button variant="outline" size="sm" onClick={onDuplicate} disabled={disabled} data-testid="button-duplicate-variable"><ActionIcon action="duplicate" />Duplicate</Button>
         </div>
       </div>
     </section>

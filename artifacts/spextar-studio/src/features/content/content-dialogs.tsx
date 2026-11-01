@@ -10,9 +10,10 @@ import { slugify } from '@/domain/project-identifiers';
 import type { DocumentRecord, Topic } from '@/domain/types';
 import { topicDescendants } from '@/domain/topic-tree';
 import { MetadataEditor } from './metadata-editor';
+import { ActionIcon } from '@/components/action-icon';
 
 export function DocumentMetadataDialog({ doc }: { doc: DocumentRecord }) {
-  return <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Document metadata</Button></DialogTrigger>
+  return <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Details</Button></DialogTrigger>
     <DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Document metadata</DialogTitle><DialogDescription>Metadata saves automatically. Topic bodies autosave separately in Author; saving does not submit content for review.</DialogDescription></DialogHeader>
       <MetadataEditor projectId={doc.projectId} doc={doc} />
     </DialogContent></Dialog>;
@@ -45,7 +46,7 @@ export function ContentDialog({ action, projectId, doc, topic, onTopic }: {
       setPosition(String(topic?.sortOrder ?? 0)); mutation.reset();
     }
   }}>
-    <DialogTrigger asChild><Button size="sm" variant={action === 'document' ? 'default' : 'outline'}>{label}</Button></DialogTrigger>
+    <DialogTrigger asChild><Button size="sm" variant={action === 'document' ? 'default' : 'outline'}>{action.startsWith('duplicate') && <ActionIcon action="duplicate" />}{label}</Button></DialogTrigger>
     <DialogContent><DialogHeader><DialogTitle>{label}</DialogTitle><DialogDescription>{action === 'move' ? 'The database validates hierarchy and sibling ordering.' : action.startsWith('duplicate') ? 'Copies start as drafts and include saved Topic bodies. Unsaved browser edits are not included.' : action === 'document' ? 'Create a document in this project. Topic bodies save separately when authored.' : 'New Topics have no saved body until their first body edit is saved.'}</DialogDescription></DialogHeader>
       <form className="space-y-4" onSubmit={(event) => {
         event.preventDefault();
@@ -77,7 +78,7 @@ export function ContentDialog({ action, projectId, doc, topic, onTopic }: {
         </label>}
         {action === 'move' && <label className="block text-sm">Sibling sort order<Input aria-label="Sibling sort order" type="number" min={0} step={1} required value={position} onChange={(e) => setPosition(e.target.value)} /></label>}
         {mutation.error && <p role="alert" className="text-sm text-destructive">{mutation.error.message}</p>}
-        <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? 'Saving…' : label}</Button>
+        <Button type="submit" disabled={mutation.isPending}>{action.startsWith('duplicate') && <ActionIcon action="duplicate" />}{mutation.isPending ? 'Saving…' : label}</Button>
       </form>
     </DialogContent>
   </Dialog>;

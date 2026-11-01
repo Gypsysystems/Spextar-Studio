@@ -19,6 +19,7 @@ test('project title and primary action open the complete document hub by click a
       ? row.getByRole('link', { name: 'Project A', exact: true })
       : row.getByRole('link', { name: 'Open project Project A', exact: true });
     await expect(link).toHaveAttribute('href', projectPath);
+    if (target.startsWith('action')) await expect(link.locator('svg[aria-hidden="true"]')).toBeVisible();
     if (target.endsWith('keyboard')) { await link.focus(); await link.press('Enter'); }
     else await link.click();
     await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
@@ -30,6 +31,13 @@ test('project title and primary action open the complete document hub by click a
     await page.goto('/workspaces/ws-a/projects');
   }
   await row.getByRole('link', { name: 'Open project Project A', exact: true }).click();
+  const documentRow = page.getByTestId('row-document-doc-a');
+  await expect(documentRow.getByRole('button', { name: 'Details', exact: true, includeHidden: true })).toBeAttached();
+  await expect(documentRow.getByRole('button', { name: 'Document metadata', exact: true, includeHidden: true })).toHaveCount(0);
+  for (const label of ['Duplicate document', 'Delete document']) {
+    await expect(documentRow.getByRole('button', { name: label, exact: true, includeHidden: true }).locator('svg[aria-hidden="true"]')).toBeAttached();
+  }
+  await expect(documentRow.getByRole('link', { name: 'Open', exact: true }).locator('svg[aria-hidden="true"]')).toBeVisible();
   await activate(page, page.getByRole('link', { name: 'QA document', exact: true }));
   await expect(page.getByRole('textbox', { name: 'Topic body' })).toHaveAttribute('contenteditable', 'true');
 });

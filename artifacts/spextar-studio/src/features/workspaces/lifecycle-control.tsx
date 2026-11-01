@@ -3,6 +3,7 @@ import type { LifecycleScope } from '@/domain/lifecycle';
 import { Button } from '@/components/ui/button';
 import { createLazyDialog } from '@/components/lazy-dialog';
 import { useServices } from '@/providers/services-provider';
+import { ActionIcon } from '@/components/action-icon';
 
 const LifecycleDialog = createLazyDialog('Manage details', () =>
   import('./lifecycle-dialog').then((m) => ({ default: m.LifecycleDialog })));
@@ -17,7 +18,7 @@ export function LifecycleControl({ scope, label, disabled, deleteOnly = false }:
   return <>
     <Button type="button" variant={deleteOnly ? 'destructive' : 'outline'} size="sm"
       disabled={disabled} onClick={() => setOpen(true)} data-testid={`button-manage-${scope.kind}`}>
-      {label}
+      {deleteOnly && <ActionIcon action="delete" />}{label}
     </Button>
     {open && <LifecycleDialog scope={scope} deleteOnly={deleteOnly} open={open} onOpenChange={setOpen} />}
   </>;

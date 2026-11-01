@@ -19,6 +19,7 @@ import { PROJECT_STATUS_LABEL, relative } from '@/lib/format';
 import { useServices } from '@/providers/services-provider';
 import type { ProjectStatus } from '@/domain/types';
 import { cn } from '@/lib/utils';
+import { ActionIcon } from '@/components/action-icon';
 
 const CreateProjectDialog = createLazyDialog('Create project', () =>
   import('@/features/projects/create-project-dialog').then(module => ({ default: module.CreateProjectDialog })));
@@ -175,7 +176,7 @@ export default function ProjectsPage() {
                       <span className="hidden lg:block"><StatusPill status={p.status} label={PROJECT_STATUS_LABEL[p.status]} /></span>
                       <span className="hidden text-[13px] text-muted-foreground lg:block">{relative(p.updatedAt)}</span>
                       <span className="flex flex-wrap items-center gap-1">
-                        <Button asChild variant="ghost" size="sm"><Link href={projectBase(workspace.id, p.id)} aria-label={`Open project ${p.name}`}>Open</Link></Button>
+                        <Button asChild variant="ghost" size="sm"><Link href={projectBase(workspace.id, p.id)} aria-label={`Open project ${p.name}`}><ActionIcon action="open" />Open</Link></Button>
                         {canManageProject(p) && <><Tooltip><TooltipTrigger asChild><Button asChild variant="ghost" size="icon"><Link href={projectBase(workspace.id, p.id) + '/settings'} aria-label={`Settings for ${p.name}`}><Settings className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>Project settings</TooltipContent></Tooltip></>}
                       </span>
                     </div>

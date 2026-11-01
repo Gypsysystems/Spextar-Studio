@@ -38,10 +38,22 @@ describe('F2 UI persistence and read-only states', () => {
     const { user } = setup();
     const topicMetadata = await screen.findByRole('group', { name: 'Topic metadata' });
     expect(within(topicMetadata).queryByLabelText('Topic slug')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Document metadata' }));
+    await user.click(screen.getByRole('button', { name: 'Details' }));
     const dialog = await screen.findByRole('dialog');
     const documentMetadata = within(dialog).getByRole('group', { name: 'Document metadata' });
+    expect(within(dialog).getByRole('heading', { name: 'Document metadata' })).toBeVisible();
     expect(within(documentMetadata).queryByLabelText('Document slug')).not.toBeInTheDocument();
+  });
+  it('keeps duplicate and delete text names with decorative icons and destructive styling', async () => {
+    setup();
+    const duplicate = await screen.findByRole('button', { name: 'Duplicate document' });
+    const remove = screen.getByRole('button', { name: 'Delete document' });
+    for (const button of [duplicate, remove]) {
+      expect(button.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+      expect(button.querySelector('svg')).toHaveAttribute('focusable', 'false');
+    }
+    expect(remove).toHaveClass('text-destructive');
+    expect(screen.queryByRole('button', { name: 'Document metadata' })).not.toBeInTheDocument();
   });
   it('autosaves F2 metadata separately from F3 body through refetch', async () => {
     const { user, db, calls, raw } = setup();

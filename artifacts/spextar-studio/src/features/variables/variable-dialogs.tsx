@@ -1,3 +1,4 @@
+import { ActionIcon } from '@/components/action-icon';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,7 +158,7 @@ export function IdentityDialog({ open, mode, variable, existingKeys, pending, er
           <MutationError error={error} />
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={pending} data-testid="button-identity-cancel">Cancel</Button>
-            <Button type="submit" disabled={pending} data-testid="button-identity-save">{pending ? 'Saving…' : mode === 'rename' ? 'Rename' : 'Duplicate'}</Button>
+            <Button type="submit" disabled={pending} data-testid="button-identity-save">{mode !== 'rename' && <ActionIcon action="duplicate" />}{pending ? 'Saving…' : mode === 'rename' ? 'Rename' : 'Duplicate'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

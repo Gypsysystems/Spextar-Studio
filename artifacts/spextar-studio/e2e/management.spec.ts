@@ -170,7 +170,7 @@ for (const role of ['admin', 'author'] as const) {
 
   test(`${role}: Documents and Topics create with metadata/body autosave and creation retry`, async ({ page, backend }) => {
     backend.setRole(role);
-    await login(page, projectPath + '/documents');
+    await login(page, projectPath);
     await activate(page, page.getByRole('button', { name: /^Create document$/i }).first());
     await page.getByLabel(/create document title/i).fill('Acceptance document');
     backend.management.failNext = 'rpc/create_document';
@@ -179,7 +179,7 @@ for (const role of ['admin', 'author'] as const) {
     await save(page);
     await expect(page).toHaveURL(/author\/controlled-/);
     const doc = backend.db.documents.find(d => d.title === 'Acceptance document')!;
-    await activate(page, page.getByRole('button', { name: 'Document metadata', exact: true }));
+    await activate(page, page.getByRole('button', { name: 'Details', exact: true }));
     const metadata = page.getByRole('dialog');
     await expect(metadata).toContainText('Topic bodies autosave separately in Author');
     await metadata.getByLabel('Document description', { exact: true }).fill('Saved acceptance metadata');
@@ -271,7 +271,7 @@ for (const role of ['admin', 'author'] as const) {
   test(`${role}: Documents and Topics empty-document deletion requires explicit confirmation`, async ({ page, backend }) => {
     backend.setRole(role);
     // Empty-document deletion only: no test grants a cascading-delete contract.
-    await login(page, projectPath + '/documents');
+    await login(page, projectPath);
     await activate(page, page.getByRole('button', { name: /^Create document$/i }).first());
     await page.getByLabel(/create document title/i).fill('Disposable empty document');
     await save(page);
@@ -280,7 +280,7 @@ for (const role of ['admin', 'author'] as const) {
     await expect(dialog.getByRole('button', { name: /^Delete document$/i })).toBeDisabled();
     await dialog.getByRole('textbox').fill('Disposable empty document');
     await activate(page, dialog.getByRole('button', { name: /^Delete document$/i }));
-    await expect(page).toHaveURL(projectPath + '/documents');
+    await expect(page).toHaveURL(projectPath);
     expect(backend.db.documents.some(d => d.title === 'Disposable empty document')).toBe(false);
     expect(backend.management.probes).toEqual([]);
   });
@@ -290,7 +290,7 @@ for (const role of ['reviewer', 'viewer', null] satisfies Role[]) {
   test(`${role ?? 'inherited workspace admin'}: content management is read-only without explicit project authoring`, async ({ page, backend }) => {
     backend.setRole(role);
     backend.db.reusable_contents = [reusable()];
-    await login(page, projectPath + '/documents');
+    await login(page, projectPath);
     await expect(page.getByText('QA document', { exact: true }).first()).toBeVisible();
     await disabledOrAbsent(page.getByRole('button', { name: /^Create document$/i }));
     await page.goto(projectPath + '/author/doc-a');

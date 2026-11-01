@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import type { DocumentRecord, Topic } from '@/domain/types';
 import { useServices } from '@/providers/services-provider';
 import { useContentDeletion } from '@/hooks/use-content-deletion';
+import { ActionIcon } from '@/components/action-icon';
 
 export function DeleteContentDialog({ doc, topic, onTopicDeleted }: {
   doc: DocumentRecord; topic?: Topic; onTopicDeleted?: (id: string) => void;
@@ -36,7 +37,7 @@ export function DeleteContentDialog({ doc, topic, onTopicDeleted }: {
     setOpen(next);
     if (next) { setSnapshot({ doc, topic }); setConfirmation(''); mutation.reset(); }
   }}>
-    <DialogTrigger asChild><Button size="sm" variant="outline" className="text-destructive">{label}</Button></DialogTrigger>
+    <DialogTrigger asChild><Button size="sm" variant="outline" className="text-destructive"><ActionIcon action="delete" />{label}</Button></DialogTrigger>
     <DialogContent onOpenAutoFocus={(event) => { event.preventDefault(); cancel.current?.focus(); }}>
       <DialogHeader><DialogTitle>{label}?</DialogTitle>
         <DialogDescription>This permanently deletes “{title}”. It cannot be undone. Unsaved local edits for this item will be discarded. Other documents and topics are not selected for deletion.</DialogDescription>
@@ -54,7 +55,7 @@ export function DeleteContentDialog({ doc, topic, onTopicDeleted }: {
         {mutation.error && <p role="alert" className="text-sm text-destructive">{mutation.error.message}</p>}
         <div className="flex justify-end gap-2">
           <Button ref={cancel} type="button" variant="outline" disabled={mutation.isPending} onClick={() => setOpen(false)}>Cancel</Button>
-          <Button type="submit" variant="destructive" disabled={hasDependencies || confirmation !== title || mutation.isPending}>{mutation.isPending ? 'Deleting…' : label}</Button>
+          <Button type="submit" variant="destructive" disabled={hasDependencies || confirmation !== title || mutation.isPending}><ActionIcon action="delete" />{mutation.isPending ? 'Deleting…' : label}</Button>
         </div>
       </form>
     </DialogContent>

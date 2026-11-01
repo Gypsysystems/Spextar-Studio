@@ -1,4 +1,5 @@
 import { UserIdentity } from '@/components/user-identity';
+import { ActionIcon } from '@/components/action-icon';
 import { Search, Plus, Layers, Info, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -115,7 +116,7 @@ export function ReusableDetails({ item, pending, onEdit, onRename, onDuplicate, 
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={onEdit} disabled={disabled} data-testid="reusable-edit">Edit</Button>
           <Button variant="outline" size="sm" onClick={onRename} disabled={disabled} data-testid="reusable-rename">Rename</Button>
-          <Button variant="outline" size="sm" onClick={onDuplicate} disabled={!canDuplicate || pending} data-testid="reusable-duplicate">Duplicate</Button>
+          <Button variant="outline" size="sm" onClick={onDuplicate} disabled={!canDuplicate || pending} data-testid="reusable-duplicate"><ActionIcon action="duplicate" />Duplicate</Button>
         </div>
       </div>
       {!item.canEdit && <p className="text-[12.5px] text-muted-foreground" data-testid="reusable-readonly">Read-only. You cannot change {item.scope}-scoped content.</p>}

@@ -1,3 +1,4 @@
+import { ActionIcon } from '@/components/action-icon';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,7 +51,7 @@ function Footer({ pending, label, onClose, blocked }: { pending: boolean; label:
   return (
     <DialogFooter className="gap-2">
       <Button type="button" variant="outline" onClick={onClose} disabled={pending} data-testid="reusable-cancel">Cancel</Button>
-      <Button type="submit" disabled={pending || blocked} data-testid="reusable-submit">{pending ? 'Saving…' : label}</Button>
+      <Button type="submit" disabled={pending || blocked} data-testid="reusable-submit">{label === 'Duplicate' && <ActionIcon action="duplicate" />}{pending ? 'Saving…' : label}</Button>
     </DialogFooter>
   );
 }

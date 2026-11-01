@@ -17,6 +17,7 @@ import { ContentDialog, DocumentMetadataDialog } from '@/features/content/conten
 import { DeleteContentDialog } from '@/features/content/delete-content-dialog';
 import { UserIdentity } from '@/components/user-identity';
 import { documentVersionLabel } from '@/lib/presentation';
+import { ActionIcon } from '@/components/action-icon';
 
 export function DocumentsBody({ project, base }: { project: ProjectSummary; base: string }) {
   const backend = useServices().mode === 'backend';
@@ -101,7 +102,7 @@ export function DocumentsBody({ project, base }: { project: ProjectSummary; base
                     {d.status === 'in-review' && <Button variant="outline" size="sm" asChild><Link href={`${base}/review?document=${encodeURIComponent(d.id)}`}>Review</Link></Button>}
                     {(d.status === 'approved' || d.status === 'published') && <Button variant="outline" size="sm" asChild><Link href={`${base}/publish?document=${encodeURIComponent(d.id)}`}>{d.status === 'published' ? 'Releases' : 'Publish / releases'}</Link></Button>}
                     <Button variant="ghost" size="sm" asChild data-testid={`link-author-${d.id}`}>
-                      <Link href={`${base}/author/${d.id}`}>Open</Link>
+                      <Link href={`${base}/author/${d.id}`}><ActionIcon action="open" />Open</Link>
                     </Button>
                   </div>
                   {open && (
